@@ -1,15 +1,19 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { validateForm } from "../utils/formValidation";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const authContext = useAuth(); // Move this outside of async function
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,12 +37,35 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:3000/users/login", formData);
-      localStorage.setItem("token", response.data.token);
-      navigate("/"); // Redirect after login
+      await authContext.login(formData.email, formData.password);
+      
+      toast.success('Login Successful!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      });
+      
+      navigate("/", { replace: true });
     } catch (err) {
-      const errorResponse = err.response?.data;
-      setError(errorResponse?.message || "Login failed");
+      console.error('Login error in component:', err);
+      
+      // Check if it's an axios error with response
+      const errorMessage = err.response?.data?.message || 
+                          err.message || 
+                          "Login failed. Please try again.";
+      
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      });
     } finally {
       setLoading(false);
     }
@@ -70,14 +97,29 @@ const LoginPage = () => {
               {validationErrors.email && <p className="text-red-500 text-xs">{validationErrors.email}</p>}
             </div>
             <div>
-              <input
-                name="password"
-                type="password"
-                placeholder="Password"
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${validationErrors.password ? 'border-red-500' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
-                onChange={handleChange}
-                required
-              />
+              <div className="relative">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <i className="fas fa-eye-slash text-gray-400"></i>
+                  ) : (
+                    <i className="fas fa-eye text-gray-400"></i>
+                  )}
+                </button>
+              </div>
               {validationErrors.password && <p className="text-red-500 text-xs">{validationErrors.password}</p>}
             </div>
           </div>

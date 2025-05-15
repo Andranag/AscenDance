@@ -74,18 +74,6 @@ const getAllUsers = catchAsync(async (req, res) => {
   res.json({ message: "All users accessed" });
 });
 
-// Validate user token
-const validateToken = catchAsync(async (req, res) => {
-  // req.user is set by the protect middleware
-  res.json({
-    user: {
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.role
-    }
-  });
-});
 
 // Initiate password reset
 const initiatePasswordReset = catchAsync(async (req, res, next) => {
@@ -176,6 +164,62 @@ const completePasswordReset = catchAsync(async (req, res, next) => {
   res.status(200).json({ message: 'Password reset successful' });
 });
 
+// Validate User Token
+const validateToken = catchAsync(async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return next(new AppError('No token provided', 401));
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    const user = await User.findById(decoded.id).select('-password');
+    
+    if (!user) {
+      return next(new AppError('User not found', 401));
+    }
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      return next(new AppError('Invalid token', 401));
+    }
+    if (error.name === 'TokenExpiredError') {
+      return next(new AppError('Token expired', 401));
+    }
+    return next(new AppError('Authentication failed', 401));
+  }
+});
+
+// Debug method to log hashed password (USE ONLY IN DEVELOPMENT)
+const logHashedPassword = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+  
+  const user = await User.findOne({ email });
+  
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  // Log the hashed password to the console (IMPORTANT: ONLY USE IN DEVELOPMENT)
+  logger.info('Hashed Password Debug', { 
+    email: user.email, 
+    hashedPassword: user.password 
+  });
+
+  res.status(200).json({
+    message: 'Hashed password logged to server console',
+    email: user.email
+  });
+});
+
 module.exports = {
   registerUser,
   loginUser,
@@ -184,5 +228,6 @@ module.exports = {
   getAllUsers,
   validateToken,
   initiatePasswordReset,
-  completePasswordReset
+  completePasswordReset,
+  logHashedPassword
 };

@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from "../context/AuthContext";
 import Navigation from "../components/Navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -37,6 +39,7 @@ function App() {
             <Route path="/admin" element={<div>Admin Dashboard</div>} />
           </Route>
         </Routes>
+        <ToastContainer />
       </Router>
     </AuthProvider>
   );
