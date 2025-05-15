@@ -4,6 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from "../context/AuthContext";
 import Navigation from "../components/Navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
+import "./index.css";
 
 // Pages
 import Login from "../pages/Login";
