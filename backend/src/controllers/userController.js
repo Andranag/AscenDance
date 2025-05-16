@@ -169,7 +169,7 @@ const validateToken = catchAsync(async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
-    return next(new AppError('No token provided', 401));
+    return res.status(401).json({ error: 'No token provided' });
   }
 
   try {
@@ -178,7 +178,7 @@ const validateToken = catchAsync(async (req, res, next) => {
     const user = await User.findById(decoded.id).select('-password');
     
     if (!user) {
-      return next(new AppError('User not found', 401));
+      return res.status(401).json({ error: 'User not found' });
     }
 
     res.status(200).json({
@@ -189,12 +189,9 @@ const validateToken = catchAsync(async (req, res, next) => {
     });
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
-      return next(new AppError('Invalid token', 401));
+      return res.status(401).json({ error: 'Invalid token' });
     }
-    if (error.name === 'TokenExpiredError') {
-      return next(new AppError('Token expired', 401));
-    }
-    return next(new AppError('Authentication failed', 401));
+    return next(error);
   }
 });
 

@@ -64,24 +64,43 @@ export const AuthProvider = ({ children }) => {
 
   const validateToken = async (token) => {
     try {
-      const response = await api.get('/users/validate');
+      // Add token to Authorization header
+      const response = await api.get('/users/validate-token', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
-      // Ensure we have a valid user object
-      if (response.data && response.data.user) {
-        setUser(response.data.user);
+      // Check if we got a valid user object
+      if (response.data && response.data._id) {
+        // The server returns the user data directly
+        setUser(response.data);
         setIsAuthenticated(true);
+      } else if (response.data && response.data.error) {
+        // If we got an error response, handle it appropriately
+        throw new Error(response.data.error);
       } else {
-        throw new Error('Invalid user data');
+        // If we don't have a user object, but also no error, keep the token
+        setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (error) {
       const errorMessage = handleAxiosError(error);
       console.error('Token validation failed:', errorMessage);
       
       // Only remove token if it's an authentication error
-      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        localStorage.removeItem('token');
-        setUser(null);
-        setIsAuthenticated(false);
+      if (error.response) {
+        if (error.response.status === 401 || error.response.status === 403) {
+          localStorage.removeItem('token');
+          setUser(null);
+          setIsAuthenticated(false);
+        } else {
+          // For other errors, keep the token and try again later
+          console.warn('Non-authentication error. Keeping token for retry.');
+        }
+      } else {
+        // For network errors, keep the token and try again later
+        console.warn('Network error. Keeping token for retry.');
       }
     } finally {
       setLoading(false);

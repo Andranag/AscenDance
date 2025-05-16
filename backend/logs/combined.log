@@ -74,3 +74,7 @@
 {"body":{},"level":"error","message":"FAIL - Authentication failed","method":"GET","path":"/users/validate","service":"ascendance-backend","stack":"Error: Authentication failed\n    at C:\\Users\\andra\\OneDrive\\Documents\\AscenDance\\backend\\src\\controllers\\userController.js:197:17\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at runNextTicks (node:internal/process/task_queues:69:3)\n    at process.processTimers (node:internal/timers:526:9)","timestamp":"2025-05-16 15:33:05","user":"unauthenticated"}
 {"level":"info","message":"Server running on port 3000","service":"ascendance-backend","timestamp":"2025-05-16 15:39:23"}
 {"level":"info","message":"MongoDB connected","service":"ascendance-backend","timestamp":"2025-05-16 15:39:24"}
+{"level":"info","message":"Server running on port 3000","service":"ascendance-backend","timestamp":"2025-05-16 15:43:25"}
+{"level":"info","message":"MongoDB connected","service":"ascendance-backend","timestamp":"2025-05-16 15:43:26"}
+{"level":"info","message":"Server running on port 3000","service":"ascendance-backend","timestamp":"2025-05-16 15:43:38"}
+{"level":"info","message":"MongoDB connected","service":"ascendance-backend","timestamp":"2025-05-16 15:43:39"}
