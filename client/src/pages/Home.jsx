@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Play, Star, Users, Calendar, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Play, Star, Users, Calendar, ArrowRight, User, Menu, X, LogOut } from 'lucide-react';
 import Logo from '../components/common/Logo';
 import Button from '../components/common/Button';
 
@@ -46,24 +46,129 @@ const Home = () => {
     }
   ];
 
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) {
+      // Fetch user data from API
+      fetch('http://localhost:3050/api/user/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(response => response.json())
+      .then(data => setUser(data));
+    }
+  }, []);
+
+  const [showMenu, setShowMenu] = useState(false);
+  const [isAuthed, setIsAuthed] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    setIsAuthed(!!token);
+  }, []);
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Navigation */}
       <nav className="border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Logo />
-            <div className="flex items-center gap-4">
-              <Link to="/login" className="text-white/80 hover:text-white transition-colors">
-                Sign In
-              </Link>
-              <Link to="/register">
-                <Button variant="primary" className="!py-2">
-                  Join Now
-                </Button>
-              </Link>
+            <div className="flex items-center gap-6">
+              <Logo />
+              {isAuthed && (
+                <>
+                  <div className="hidden md:flex items-center gap-4">
+                    <Link 
+                      to="/student/dashboard" 
+                      className="px-4 py-2 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link 
+                      to="/student/courses" 
+                      className="px-4 py-2 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-colors"
+                    >
+                      Courses
+                    </Link>
+                    <Link 
+                      to="/student/profile" 
+                      className="px-4 py-2 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-colors"
+                    >
+                      Profile
+                    </Link>
+                  </div>
+                  <button 
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="md:hidden text-white hover:text-white/80"
+                  >
+                    {showMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-6">
+              {isAuthed ? (
+                <div className="flex items-center gap-4">
+                  <User className="w-6 h-6 text-white/80 hover:text-white transition-colors" />
+                  <span className="text-white/80 hover:text-white transition-colors">Student</span>
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('token');
+                      sessionStorage.removeItem('token');
+                      setIsAuthed(false);
+                      navigate('/');
+                    }}
+                    className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <Link 
+                    to="/login" 
+                    className="text-white/80 hover:text-white transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link 
+                    to="/register"
+                    className="text-white/80 hover:text-white transition-colors"
+                  >
+                    Join Now
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
+          
+          {/* Mobile Menu */}
+          {isAuthed && showMenu && (
+            <div className="md:hidden mt-4">
+              <div className="border-t border-white/10 pt-4">
+                <div className="px-4 py-3 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-colors">
+                  <Link to="/student/dashboard" onClick={() => setShowMenu(false)}>
+                    Dashboard
+                  </Link>
+                </div>
+                <div className="px-4 py-3 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-colors">
+                  <Link to="/student/courses" onClick={() => setShowMenu(false)}>
+                    Courses
+                  </Link>
+                </div>
+                <div className="px-4 py-3 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-colors">
+                  <Link to="/student/profile" onClick={() => setShowMenu(false)}>
+                    Profile
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -81,17 +186,36 @@ const Home = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
           <div className="max-w-3xl">
             <h1 className="text-5xl md:text-6xl font-['Playfair_Display'] font-medium mb-6">
-              Dance Your Way to Excellence
+              {user ? (
+                <>
+                  Welcome back, {user.name}!
+                  <br />
+                  Ready to dance?
+                </>
+              ) : (
+                "Dance Your Way to Excellence"
+              )}
             </h1>
             <p className="text-xl text-white/80 mb-8 font-light">
-              Join our online dance classes and learn from world-class instructors. 
-              Whether you're a beginner or advanced dancer, we have the perfect class for you.
+              {user ? (
+                "Continue your dance journey with our online classes and expert instructors."
+              ) : (
+                "Join our online dance classes and learn from world-class instructors. Whether you're a beginner or advanced dancer, we have the perfect class for you."
+              )}
             </p>
-            <Link to="/register">
-              <Button variant="primary" className="!text-lg">
-                Start Your Journey <ArrowRight className="ml-2" />
-              </Button>
-            </Link>
+            {user ? (
+              <Link to="/student/dashboard">
+                <Button variant="primary" className="!text-lg">
+                  Go to Dashboard <ArrowRight className="ml-2" />
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/register">
+                <Button variant="primary" className="!text-lg">
+                  Start Your Journey <ArrowRight className="ml-2" />
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
