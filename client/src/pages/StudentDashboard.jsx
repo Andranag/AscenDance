@@ -3,11 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Play, BookOpen, Clock, User, Edit2, Award, ChevronRight } from 'lucide-react';
 import Button from '../components/common/Button';
 import { toast } from 'react-toastify';
-import { useAuth } from '../contexts/AuthContext';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const isAuthenticated = !!token;
   const [courses, setCourses] = useState([]);
   const [profile, setProfile] = useState({});
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -53,7 +53,13 @@ const StudentDashboard = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('http://localhost:3050/api/profile', {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      const userId = payload.userId;
+
+      const response = await fetch(`http://localhost:3050/user/profile/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -79,7 +85,7 @@ const StudentDashboard = () => {
   const handleEditProfile = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3050/api/profile', {
+      const response = await fetch('http://localhost:3050/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -98,8 +104,8 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Sidebar */}
+    <div className="flex bg-black text-white">
+      {/* Profile Header */}
       <div className="w-64 border-r border-white/10 bg-black/40 backdrop-blur-xl p-6">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
@@ -109,28 +115,14 @@ const StudentDashboard = () => {
               <p className="text-sm text-white/70">{profile.email}</p>
             </div>
           </div>
-          <nav className="space-y-2">
-            <Link to="/student/dashboard" className="flex items-center px-4 py-3 text-white bg-white/10 rounded-lg">
-              <Play className="w-5 h-5 mr-3" />
-              Dashboard
-            </Link>
-            <Link to="/student/courses" className="flex items-center px-4 py-3 text-white/70 hover:bg-white/5 rounded-lg transition-colors">
-              <BookOpen className="w-5 h-5 mr-3" />
-              Courses
-            </Link>
-            <Link to="/student/profile" className="flex items-center px-4 py-3 text-white/70 hover:bg-white/5 rounded-lg transition-colors">
-              <User className="w-5 h-5 mr-3" />
-              Profile
-            </Link>
-          </nav>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         {/* Header */}
-        <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0">
-          <div className="px-8 py-6">
+        <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl">
+          <div className="px-8 py-4">
             <h1 className="text-2xl font-medium">Welcome Back, {profile.name || 'Student'}!</h1>
           </div>
         </header>

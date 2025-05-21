@@ -51,7 +51,7 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch('http://localhost:3050/api/profile', {
+      const response = await fetch(`http://localhost:3050/user/profile/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -93,27 +93,13 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Sidebar */}
+      {/* Profile Header */}
       <div className="w-64 border-r border-white/10 bg-black/40 backdrop-blur-xl p-6">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <User className="w-6 h-6 text-purple-400" />
             <h3 className="font-medium">{profile.name}</h3>
           </div>
-          <nav className="space-y-2">
-            <Link to="/student/dashboard" className="flex items-center px-4 py-3 text-white/70 hover:bg-white/5 rounded-lg transition-colors">
-              <User className="w-5 h-5 mr-3" />
-              Dashboard
-            </Link>
-            <Link to="/student/profile" className="flex items-center px-4 py-3 text-white bg-white/10 rounded-lg">
-              <User className="w-5 h-5 mr-3" />
-              Profile
-            </Link>
-            <Link to="/student/courses" className="flex items-center px-4 py-3 text-white/70 hover:bg-white/5 rounded-lg transition-colors">
-              <CheckCircle className="w-5 h-5 mr-3" />
-              My Courses
-            </Link>
-          </nav>
         </div>
       </div>
 

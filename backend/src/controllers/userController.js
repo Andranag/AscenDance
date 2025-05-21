@@ -9,7 +9,7 @@ const logger = require("../utils/logger");
 
 // Generate JWT Token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign({ userId: id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
 // Register User
@@ -67,7 +67,8 @@ const logoutUser = catchAsync(async (req, res) => {
 });
 
 const getUserProfile = catchAsync(async (req, res) => {
-  res.json({ message: "User profile accessed" });
+  const user = await User.findById(req.user.id).select('-password');
+  res.json(user);
 });
 
 const getAllUsers = catchAsync(async (req, res) => {

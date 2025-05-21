@@ -68,13 +68,12 @@ const Login = () => {
       });
 
       if (response.data.token) {
-        if (formData.rememberMe) {
-          localStorage.setItem('token', response.data.token);
-        } else {
-          sessionStorage.setItem('token', response.data.token);
-        }
+        // Store token based on remember me preference
+        const storage = formData.rememberMe ? localStorage : sessionStorage;
+        storage.setItem('token', response.data.token);
+        storage.setItem('user', JSON.stringify(response.data.user));
         toast.success('Successfully logged in!');
-        navigate('/');
+        navigate('/student/dashboard');
       }
     } catch (error) {
       const errorMessage = error.response?.data?.msg || 'Login failed. Please try again.';

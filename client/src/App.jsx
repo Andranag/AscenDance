@@ -6,6 +6,7 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import Navbar from "./components/Navbar";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Login from "./pages/Login";
@@ -15,84 +16,62 @@ import StudentDashboard from "./pages/StudentDashboard";
 import CourseView from "./pages/CourseView";
 import CourseContent from "./pages/CourseContent";
 import Profile from "./pages/Profile";
-import { AuthProvider } from "./contexts/AuthContext";
-import { useAuth } from "./contexts/AuthContext";
+
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) {
+  // Check token existence
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  
+  if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
 };
 
-function App() {
+// Wrap the app with AuthProvider
+const App = () => {
   return (
     <Router>
-      <AuthProvider>
+      <Navbar>
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route
-            path="/student/dashboard"
-            element={
-              <ProtectedRoute>
-                <StudentDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/courses"
-            element={
-              <ProtectedRoute>
-                <StudentDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/course/:id"
-            element={
-              <ProtectedRoute>
-                <CourseView />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/course/:courseId/content/:contentId"
-            element={
-              <ProtectedRoute>
-                <CourseContent />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
+          
+          {/* Protected routes */}
+          <Route path="/student/*" element={
+            <ProtectedRoute>
+              <Routes>
+                <Route path="dashboard" element={<StudentDashboard />} />
+                <Route path="courses" element={<StudentDashboard />} />
+                <Route path="course/:id" element={<CourseView />} />
+                <Route path="course/:courseId/content/:contentId" element={<CourseContent />} />
+                <Route path="profile" element={<Profile />} />
+              </Routes>
+            </ProtectedRoute>
+          } />
+          
+          {/* Catch-all route */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
-      </AuthProvider>
+      </Navbar>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </Router>
   );
 }

@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Play, Star, Users, Calendar, ArrowRight, User, Menu, X, LogOut } from 'lucide-react';
 import Logo from '../components/common/Logo';
 import Button from '../components/common/Button';
-import Navbar from '../components/Navbar';
 
 const Home = () => {
   const features = [
@@ -110,8 +109,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Navbar />
-      <main className="pt-16">
+      <main className="">
         {/* Hero Section */}
         <section className="relative h-screen flex items-center justify-center">
           <div className="absolute inset-0">
