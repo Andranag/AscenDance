@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Play, BookOpen, Clock, User, Edit2, Award, ChevronRight } from 'lucide-react';
 import Button from '../components/common/Button';
 import { toast } from 'react-toastify';
+import { useAuth } from '../contexts/AuthContext';
 
 const StudentDashboard = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [courses, setCourses] = useState([]);
   const [profile, setProfile] = useState({});
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -13,6 +16,11 @@ const StudentDashboard = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
     // Fetch courses and profile data
     Promise.all([fetchCourses(), fetchProfile()])
       .catch(error => {
@@ -20,12 +28,12 @@ const StudentDashboard = () => {
         setLoading(false);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAuthenticated]);
 
   const fetchCourses = async () => {
     try {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      const response = await fetch('http://localhost:3050/api/courses', {
+      const response = await fetch('http://localhost:3050/classes', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -47,17 +55,25 @@ const StudentDashboard = () => {
     try {
       const response = await fetch('http://localhost:3050/api/profile', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
-      if (response.ok) {
-        const data = await response.json();
-        setProfile(data);
-        setEditProfileData(data);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile');
       }
+
+      const data = await response.json();
+      setProfile(data);
+      setEditProfileData(data);
     } catch (error) {
-      toast.error('Failed to fetch profile');
+      setError(error.message);
+      throw error;
     }
+  };
+
+  const handleCourseClick = (courseId) => {
+    navigate(`/student/course/${courseId}`);
   };
 
   const handleEditProfile = async (e) => {
