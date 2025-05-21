@@ -1,13 +1,24 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../models/userModel")
+const User = require("../models/userModel");
+
+// Debug route to check users
+const checkUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error checking users:", error);
+    res.status(500).send({ msg: "Server error checking users" });
+  }
+};
 
 const saltRound = Number(process.env.SALT_ROUND);
 const secretKey = process.env.SECRET_KEY;
 
 // Password validation function
 const isPasswordValid = (password) => {
-  const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{8,}$/;
+  const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-=\[\]{};':"\|,.<>/?]).{8,}$/;
   return regex.test(password);
 };
 
@@ -99,23 +110,20 @@ const loginUser = async (req, res) => {
 // GET USER PROFILE
 const userProfile = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const user = await User.findById(id).select("-password");
+    const userId = req.params.id;
+    const user = await User.findById(userId);
+    
     if (!user) {
-      return res.status(404).send({ msg: "User not found." });
+      return res.status(404).send({ msg: "User not found" });
     }
 
-    res.status(200).json({
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    });
+    // Remove sensitive information
+    const { password, ...userProfile } = user._doc;
+    
+    return res.status(200).json(userProfile);
   } catch (error) {
     console.error("Profile error:", error);
-    return res.status(500).send({ msg: "Server error while retrieving user." });
+    return res.status(500).send({ msg: "Server error fetching profile" });
   }
 };
 

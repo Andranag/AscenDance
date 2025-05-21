@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { User, Edit2, Trash2, CheckCircle } from 'lucide-react';
 import Button from '../components/common/Button';
 import { toast } from 'react-toastify';
@@ -17,7 +17,18 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('http://localhost:3050/api/profile', {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      const userId = payload.userId;
+
+      const response = await fetch(`http://localhost:3050/user/profile/${userId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
         }
