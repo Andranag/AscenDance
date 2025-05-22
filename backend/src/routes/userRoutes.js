@@ -1,40 +1,31 @@
-const express = require("express");
-const { protect, authorize } = require("../middleware/authMiddleware");
-const { 
-  registerUser, 
-  loginUser, 
-  logoutUser, 
-  getUserProfile, 
-  getAllUsers, 
-  validateToken, 
-  initiatePasswordReset, 
-  completePasswordReset,
-  logHashedPassword
-} = require("../controllers/userController");
+const express = require('express');
 const router = express.Router();
+const { registerUser, loginUser, getUserProfile, getAllUsers } = require('../controllers/userController');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Admin can view all users
-router.get("/users", protect, authorize(["admin"]), getAllUsers);
+// Login route
+router.post('/login', loginUser);
 
-// Logged-in users can access their own profile
-router.get("/profile", protect, getUserProfile);
+// Register route
+router.post('/register', registerUser);
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
-router.post("/logout", logoutUser);
+// Profile route (protected)
+router.get('/profile', protect, getUserProfile);
 
-// Token validation route
-// Token Validation Route (public)
-router.get("/validate-token", validateToken);
+// Admin-only user management routes
+router.get('/users', protect, authorize(['admin']), getAllUsers);
 
-// Password reset routes
-router.post("/forgot-password", initiatePasswordReset);
-router.post("/reset-password", completePasswordReset);
-
-// Protected routes
-router.get("/validate", protect, validateToken);
-
-// Debug route for logging hashed password (DEVELOPMENT ONLY)
-router.post("/debug-hash", logHashedPassword);
+// Verify token
+router.get('/verify', protect, (req, res) => {
+  res.json({
+    success: true,
+    user: {
+      id: req.user._id,
+      username: req.user.username,
+      email: req.user.email,
+      role: req.user.role
+    }
+  });
+});
 
 module.exports = router;

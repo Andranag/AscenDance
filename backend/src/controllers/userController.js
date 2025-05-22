@@ -72,7 +72,12 @@ const getUserProfile = catchAsync(async (req, res) => {
 });
 
 const getAllUsers = catchAsync(async (req, res) => {
-  res.json({ message: "All users accessed" });
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    throw new AppError('Error fetching users', 500);
+  }
 });
 
 
