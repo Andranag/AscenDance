@@ -84,3 +84,6 @@
 {"level":"info","message":"MongoDB connected","service":"ascendance-backend","timestamp":"2025-05-16 17:26:37"}
 {"level":"info","message":"Server running on port 3000","service":"ascendance-backend","timestamp":"2025-05-16 17:30:45"}
 {"level":"info","message":"MongoDB connected","service":"ascendance-backend","timestamp":"2025-05-16 17:30:46"}
+{"level":"info","message":"Server is running on port 3050","service":"ascendance-backend","timestamp":"2025-05-22 13:35:16"}
+{"level":"info","message":"Server is running on port 3050","service":"ascendance-backend","timestamp":"2025-05-22 13:37:05"}
+{"level":"info","message":"Server is running on port 3050","service":"ascendance-backend","timestamp":"2025-05-22 13:37:16"}
