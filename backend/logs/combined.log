@@ -2570,3 +2570,19 @@
 {"envPath":"C:\\Users\\andra\\OneDrive\\Documents\\AscenDance\\backend\\.env","hasMongodbUri":true,"hasPort":true,"level":"debug","message":"Environment variables loaded:","service":"ascendance-backend","timestamp":"2025-05-25 02:09:03"}
 {"level":"info","message":"Server running in development mode on port 3050","service":"ascendance-backend","timestamp":"2025-05-25 02:09:03"}
 {"db":"test","level":"info","message":"MongoDB Connected successfully to Atlas","service":"ascendance-backend","timestamp":"2025-05-25 02:09:04"}
+{"ip":"::1","level":"info","message":"POST /api/auth/login","service":"ascendance-backend","timestamp":"2025-05-24T23:10:03.931Z"}
+{"ip":"::1","level":"info","message":"POST /api/user/login","service":"ascendance-backend","timestamp":"2025-05-24T23:10:44.219Z"}
+{"email":"emily_tsimidaki@hotmail.com","hasPassword":true,"level":"debug","message":"Login request received:","service":"ascendance-backend","timestamp":"2025-05-25 02:10:44","username":""}
+{"0":"e","1":"m","10":"i","11":"d","12":"a","13":"k","14":"i","15":"@","16":"h","17":"o","18":"t","19":"m","2":"i","20":"a","21":"i","22":"l","23":".","24":"c","25":"o","26":"m","3":"l","4":"y","5":"_","6":"t","7":"s","8":"i","9":"m","level":"debug","message":"Attempting login with identifier:","service":"ascendance-backend","timestamp":"2025-05-25 02:10:44"}
+{"level":"debug","message":"User found:","service":"ascendance-backend","timestamp":"2025-05-25 02:10:44","userId":"6825bfe5e9bcbae65808056e"}
+{"identifier":"emily_tsimidaki@hotmail.com","level":"info","message":"Login successful","role":"student","service":"ascendance-backend","timestamp":"2025-05-25 02:10:44","userId":"6825bfe5e9bcbae65808056e"}
+{"ip":"::1","level":"info","message":"POST /api/user/login","service":"ascendance-backend","timestamp":"2025-05-24T23:11:25.581Z"}
+{"email":"emily_tsimidaki@hotmail.com","hasPassword":true,"level":"debug","message":"Login request received:","service":"ascendance-backend","timestamp":"2025-05-25 02:11:25","username":""}
+{"0":"e","1":"m","10":"i","11":"d","12":"a","13":"k","14":"i","15":"@","16":"h","17":"o","18":"t","19":"m","2":"i","20":"a","21":"i","22":"l","23":".","24":"c","25":"o","26":"m","3":"l","4":"y","5":"_","6":"t","7":"s","8":"i","9":"m","level":"debug","message":"Attempting login with identifier:","service":"ascendance-backend","timestamp":"2025-05-25 02:11:25"}
+{"level":"debug","message":"User found:","service":"ascendance-backend","timestamp":"2025-05-25 02:11:25","userId":"6825bfe5e9bcbae65808056e"}
+{"identifier":"emily_tsimidaki@hotmail.com","level":"info","message":"Login successful","role":"student","service":"ascendance-backend","timestamp":"2025-05-25 02:11:25","userId":"6825bfe5e9bcbae65808056e"}
+{"ip":"::1","level":"info","message":"POST /api/user/login","service":"ascendance-backend","timestamp":"2025-05-24T23:12:08.093Z"}
+{"email":"emily_tsimidaki@hotmail.com","hasPassword":true,"level":"debug","message":"Login request received:","service":"ascendance-backend","timestamp":"2025-05-25 02:12:08","username":""}
+{"0":"e","1":"m","10":"i","11":"d","12":"a","13":"k","14":"i","15":"@","16":"h","17":"o","18":"t","19":"m","2":"i","20":"a","21":"i","22":"l","23":".","24":"c","25":"o","26":"m","3":"l","4":"y","5":"_","6":"t","7":"s","8":"i","9":"m","level":"debug","message":"Attempting login with identifier:","service":"ascendance-backend","timestamp":"2025-05-25 02:12:08"}
+{"level":"debug","message":"User found:","service":"ascendance-backend","timestamp":"2025-05-25 02:12:08","userId":"6825bfe5e9bcbae65808056e"}
+{"identifier":"emily_tsimidaki@hotmail.com","level":"info","message":"Login successful","role":"student","service":"ascendance-backend","timestamp":"2025-05-25 02:12:08","userId":"6825bfe5e9bcbae65808056e"}

@@ -12,18 +12,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       console.log('Attempting login with credentials:', credentials);
-      const response = await api.post('/auth/login', credentials);
-      console.log('Login response received:', response);
+      const response = await api.post('/user/login', credentials);
+      console.log('Login response received:', response.data);
       
-      if (!response.success) {
-        throw new Error(response.message || 'Login failed');
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Login failed');
       }
       
-      setToken(response.token);
-      setTokenState(response.token);
-      setUser(response.user);
+      setToken(response.data.token);
+      setTokenState(response.data.token);
+      setUser(response.data.user);
       
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Login error:', error.response?.data);
       const errorMessage = error.response?.data?.message || 'Login failed';
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post('/auth/logout');
+      await api.post('/user/logout');
       setTokenState(null);
       setUser(null);
       clearToken();
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateUserProfile = async (userData) => {
     try {
-      const response = await api.put('/auth/profile', userData);
+      const response = await api.put('/user/profile', userData);
       setUser(response.data.user);
       return response.data.user;
     } catch (error) {

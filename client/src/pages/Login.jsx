@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowRight, Eye, EyeOff, Facebook, Github, Mail, AlertCircle } from 'lucide-react';
@@ -10,7 +10,8 @@ import SocialButton from '../components/forms/SocialButton';
 import Logo from '../components/common/Logo';
 
 const Login = () => {
-  const { login, navigateToDashboard } = useAuth();
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     identifier: '',
     password: '',
@@ -84,14 +85,12 @@ const Login = () => {
         password: formData.password
       };
       
-      const response = await login(loginData);
-      if (response?.success && response?.token) {
-        // Reset login attempts on successful login
-        setLoginAttempts(0);
-        setRetryAfter(null);
-        toast.success('Successfully logged in!');
-        navigateToDashboard();
-      }
+      await login(loginData);
+      // Reset login attempts on successful login
+      setLoginAttempts(0);
+      setRetryAfter(null);
+      toast.success('Successfully logged in!');
+      navigate('/dashboard');
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
       toast.error(errorMessage);
