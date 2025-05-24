@@ -3,6 +3,17 @@ import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:3050/api/auth';
 
+// Initialize axios headers with token if present
+const initializeAxiosHeaders = () => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token') || getCookie('token');
+  if (token) {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  }
+};
+
+// Initialize headers when module loads
+initializeAxiosHeaders();
+
 export const checkAuth = async () => {
   try {
     // Get token from cookie first
@@ -32,6 +43,7 @@ export const checkAuth = async () => {
 export const logout = () => {
   localStorage.removeItem('token');
   sessionStorage.removeItem('token');
+  clearAxiosHeaders();
   toast.success('Successfully logged out');
 };
 

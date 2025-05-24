@@ -6,16 +6,28 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true
+      required: [true, 'Name is required'],
+      trim: true,
+      minlength: [3, 'Name must be at least 3 characters long']
     },
     email: {
       type: String,
-      required: true,
-      unique: true
+      required: [true, 'Email is required'],
+      unique: true,
+      trim: true,
+      lowercase: true,
+      match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address']
     },
     password: {
       type: String,
-      required: true
+      required: [true, 'Password is required'],
+      minlength: [8, 'Password must be at least 8 characters long'],
+      validate: {
+        validator: function(value) {
+          return /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};:'"\\|,.<>/?]).{8,}$/.test(value);
+        },
+        message: 'Password must contain at least one uppercase letter, one number, and one special character'
+      }
     },
     role: {
       type: String,
@@ -30,10 +42,18 @@ const userSchema = new mongoose.Schema(
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  try {
+    if (!this.isModified('password')) return next();
 
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
+    if (!this.password) {
+      return next(new Error('Password is required'));
+    }
+
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Method to compare passwords

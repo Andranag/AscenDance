@@ -33,7 +33,7 @@ const StudentDashboard = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await axios.get('http://localhost:3050/api/courses');
+      const response = await axios.get('http://localhost:3050/api/courses/my-courses');
       setCourses(response.data);
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to fetch courses');

@@ -12,7 +12,7 @@ import PasswordStrength from '../components/forms/PasswordStrength';
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -46,10 +46,10 @@ const Register = () => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
+    if (!formData.name.trim()) {
+      newErrors.name = 'Full name is required';
+    } else if (formData.name.length < 3) {
+      newErrors.name = 'Full name must be at least 3 characters';
     }
     
     if (!formData.email.trim()) {
@@ -87,25 +87,115 @@ const Register = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await axios.post('http://localhost:3050/user/register', {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password
+      const response = await axios.post('http://localhost:3050/api/auth/register', {
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        role: 'student'
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        toast.success('Registration successful! Welcome to DanceFlow!');
-        navigate('/');
+      // Check if response is successful
+      if (response.status === 201) {
+        handleBackendResponse(response);
+      } else {
+        throw new Error('Registration failed');
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.msg || 'Registration failed. Please try again later.';
+      // Log full error details for debugging
+      console.error('Registration error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: error.config,
+        message: error.message,
+        stack: error.stack
+      });
+
+      // Handle different error cases
+      if (error.response) {
+        // Server responded with an error
+        let errorMessage = error.response.data?.message || error.response.data?.error || error.response.data?.msg || error.response.statusText;
+        
+        // Check for specific error types
+        if (error.response.status === 400) {
+          if (error.response.data?.errors) {
+            // Validation errors
+            Object.entries(error.response.data.errors).forEach(([field, message]) => {
+              toast.error(`${field}: ${message}`);
+            });
+          } else {
+            toast.error(errorMessage);
+          }
+        } else if (error.response.status === 500) {
+          toast.error('Internal server error. Please try again later.');
+        }
+      } else {
+        // Network error or other error
+        toast.error('Network error. Please check your connection and try again.');
+      }
+
+      let errorMessage = 'Registration failed. Please try again later.';
+      let errorDetails = [];
+      
+      if (error.response) {
+        // Server responded with an error
+        errorMessage = error.response.data?.message || error.response.data?.error || error.response.data?.msg || error.response.statusText;
+        
+        // Check for specific error types
+        if (error.response.status === 500) {
+          errorMessage = 'Internal server error. Please try again later.';
+        } else if (error.response.status === 400) {
+          if (error.response.data?.errors) {
+            errorMessage = 'Please fix the following errors:';
+            errorDetails = Object.entries(error.response.data.errors).map(([field, message]) => 
+              `${field.charAt(0).toUpperCase() + field.slice(1)}: ${message}`
+            );
+          } else {
+            errorMessage = error.response.data?.message || 'Invalid input data';
+          }
+        }
+      } else if (error.request) {
+        // Request made but no response
+        errorMessage = 'No response from server. Please check your connection.';
+      }
+
       toast.error(errorMessage);
       setErrors({
-        general: errorMessage
+        general: errorMessage,
+        details: errorDetails
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleBackendResponse = (response) => {
+    if (response.data && response.data.message === 'Registration successful') {
+      const token = response.data.token;
+      
+      // Store token in cookie with SameSite=Lax for security
+      document.cookie = `token=${token}; path=/; SameSite=Lax`;
+      
+      // Also store in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
+        id: response.data._id,
+        name: response.data.name,
+        email: response.data.email,
+        role: response.data.role
+      }));
+      
+      // Set in axios headers
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      toast.success('Registration successful! Welcome to DanceFlow!');
+      navigate('/');
+    } else {
+      toast.error('Registration failed. Please try again later.');
     }
   };
 
@@ -131,13 +221,13 @@ const Register = () => {
           
           <form onSubmit={handleSubmit} className="space-y-5">
             <InputField
-              label="Username"
+              label="Full Name"
               type="text"
-              name="username"
-              value={formData.username}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
-              error={errors.username}
-              placeholder="Choose a username"
+              error={errors.name}
+              placeholder="Enter your full name"
               icon={<User size={18} className="text-white/50" />}
               className="text-white"
             />

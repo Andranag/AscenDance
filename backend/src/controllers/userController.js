@@ -9,30 +9,123 @@ const logger = require("../utils/logger");
 
 // Generate JWT Token
 const generateToken = (id) => {
-  return jwt.sign({ userId: id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  // Check if JWT_SECRET is set
+  if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET is not set in environment variables');
+    throw new Error('JWT_SECRET is not configured');
+  }
+  
+  try {
+    const token = jwt.sign({ userId: id }, process.env.JWT_SECRET, { 
+      expiresIn: "7d",
+      algorithm: 'HS256'
+    });
+    
+    // Log successful token generation
+    console.log('Token generated successfully');
+    return token;
+  } catch (error) {
+    console.error('JWT signing failed:', error);
+    throw error;
+  }
 };
 
 // Register User
 const registerUser = catchAsync(async (req, res, next) => {
-  const { name, email, password, role } = req.body;
+  try {
+    const { name, email, password, role } = req.body;
 
-  const userExists = await User.findOne({ email });
-  if (userExists) return next(new AppError("User already exists", 400));
+    if (!name || !email || !password) {
+      console.log('Missing required fields:', { name, email, password });
+      return next(new AppError('Missing required fields', 400));
+    }
 
-  const user = await User.create({
-    name, 
-    email, 
-    password, 
-    role
-  });
+    console.log('Registration attempt:', { email });
 
-  res.status(201).json({
-    _id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    message: 'Registration successful'
-  });
+    // Check if user exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      console.log('Registration failed - User already exists:', { email });
+      return next(new AppError("User already exists", 400));
+    }
+
+    // Create user with proper validation
+    console.log('Creating user with data:', { 
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      role: role || 'student'
+    });
+
+    const user = await User.create({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      role: role || 'student'
+    });
+
+    console.log('User created successfully:', { userId: user._id });
+
+    // Generate token using User model method
+    try {
+      console.log('Generating token for user:', { userId: user._id });
+      const token = await user.generateToken();
+      
+      console.log('Token generated successfully:', { userId: user._id });
+      
+      return res.status(201).json({
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        message: 'Registration successful',
+        token: token
+      });
+    } catch (tokenError) {
+      console.error('Token generation failed:', {
+        error: tokenError.message,
+        stack: tokenError.stack,
+        userId: user._id,
+        email
+      });
+      
+      // Clean up the user if token generation fails
+      await User.findByIdAndDelete(user._id);
+      
+      return next(new AppError('Failed to generate token', 500));
+    }
+
+  } catch (error) {
+    console.error('Registration error:', {
+      error: error.message,
+      stack: error.stack,
+      email: req.body.email
+    });
+
+    if (error.name === 'ValidationError') {
+      console.error('Validation error details:', error.errors);
+      const validationErrors = {};
+      Object.keys(error.errors).forEach(key => {
+        validationErrors[key] = error.errors[key].message;
+      });
+      
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: validationErrors
+      });
+    }
+
+    if (error.code === 11000) {
+      console.error('Duplicate key error:', error);
+      return res.status(400).json({
+        message: 'Duplicate email address',
+        errors: {
+          email: 'Email address is already registered'
+        }
+      });
+    }
+
+    return next(new AppError('Internal server error', 500));
+  }
 });
 
 // Login User

@@ -1,9 +1,17 @@
-require("dotenv").config({ path: __dirname + '/.env' }); // Load environment variables
 const express = require("express");
 const cors = require("cors");
 const rateLimiter = require("./src/middleware/rateLimiter.js");
 const logger = require("./src/utils/logger.js");
 const { errorHandler } = require("./src/utils/errorHandler.js");
+
+require("dotenv").config({ path: __dirname + '/.env' }); // Load environment variables
+
+// Log loaded environment variables
+logger.info('Environment variables loaded:', {
+  hasJWTSecret: !!process.env.JWT_SECRET,
+  hasMongoUri: !!process.env.MONGODB_URI,
+  port: process.env.PORT
+});
 
 const { connectDB, mongoose } = require("./src/config/db.js");
 const authRoutes = require("./src/routes/authRoutes.js");
