@@ -59,8 +59,27 @@ const connectDB = async () => {
       tlsAllowInvalidCertificates: true // Only for development
     };
 
+    // Connect to MongoDB
     await mongoose.connect(uri, options);
-    logger.info("MongoDB Connected successfully to Atlas");
+    logger.info("MongoDB Connected successfully to Atlas", {
+      db: mongoose.connection.name
+    });
+
+    // Test connection after successful connection
+    mongoose.connection.on('connected', async () => {
+      try {
+        const testUser = await mongoose.connection.db.collection('users').findOne({});
+        logger.info("Database connection test passed", {
+          hasUsers: !!testUser,
+          db: mongoose.connection.name
+        });
+      } catch (testError) {
+        logger.error("Database connection test failed after initial connection", {
+          error: testError.message,
+          stack: testError.stack
+        });
+      }
+    });
 
     // Handle connection events
     mongoose.connection.on('connected', () => {

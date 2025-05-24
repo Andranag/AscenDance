@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Play, BookOpen, Clock, User, Edit2, Award, ChevronRight } from 'lucide-react';
 import Button from '../components/common/Button';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const StudentDashboard = () => {
     // Fetch courses and profile data
     Promise.all([fetchCourses(), fetchProfile()])
       .catch(error => {
-        setError(error.message);  
+        setError(error.response?.data?.message || error.message);
         setLoading(false);
       })
       .finally(() => setLoading(false));
@@ -32,48 +33,30 @@ const StudentDashboard = () => {
 
   const fetchCourses = async () => {
     try {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      const response = await fetch('http://localhost:3050/classes', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch courses');
-      }
-
-      const data = await response.json();
-      setCourses(data);
+      const response = await axios.get('http://localhost:3050/api/courses');
+      setCourses(response.data);
     } catch (error) {
-      setError(error.message);
+      setError(error.response?.data?.message || 'Failed to fetch courses');
       throw error;
     }
   };
 
   const fetchProfile = async () => {
     try {
+      // Get user ID from token
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) throw new Error('No token found');
+
+      // Extract user ID from token
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const payload = JSON.parse(window.atob(base64));
       const userId = payload.userId;
 
-      const response = await fetch(`http://localhost:3050/user/profile/${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch profile');
-      }
-
-      const data = await response.json();
-      setProfile(data);
-      setEditProfileData(data);
+      const response = await axios.get(`http://localhost:3050/api/user/profile/${userId}`);
+      setProfile(response.data);
     } catch (error) {
-      setError(error.message);
+      setError(error.response?.data?.message || 'Failed to fetch profile');
       throw error;
     }
   };

@@ -72,10 +72,17 @@ const Login = () => {
       });
 
       if (response.data.token) {
+        // Store token in both cookie and storage
+        document.cookie = `token=${response.data.token}; path=/; SameSite=Lax`;
+        
         // Store token based on remember me preference
         const storage = formData.rememberMe ? localStorage : sessionStorage;
         storage.setItem('token', response.data.token);
         storage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Set token in axios default headers
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        
         toast.success('Successfully logged in!');
         navigate('/student/dashboard');
       }

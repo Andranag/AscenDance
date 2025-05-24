@@ -1,15 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, getUserProfile, getAllUsers } = require('../controllers/userController');
+const { getUserProfile, getAllUsers } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Login route
-router.post('/login', loginUser);
+// Profile route (protected) - by ID
+router.get('/profile/:id', protect, getUserProfile);
 
-// Register route
-router.post('/register', registerUser);
-
-// Profile route (protected)
+// Profile route (protected) - current user
 router.get('/profile', protect, getUserProfile);
 
 // Admin-only user management routes

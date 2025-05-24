@@ -43,7 +43,9 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
 
 // Method to generate JWT token
 userSchema.methods.generateToken = function() {
-  return jwt.sign({ userId: this._id }, process.env.JWT_SECRET, { 
+  // Use environment variable or fallback to a default secret
+  const secret = process.env.JWT_SECRET || 'ascendance-secret-key-2025';
+  return jwt.sign({ userId: this._id }, secret, { 
     expiresIn: '7d' 
   });
 };

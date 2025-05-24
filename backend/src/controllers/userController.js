@@ -37,28 +37,71 @@ const registerUser = catchAsync(async (req, res, next) => {
 
 // Login User
 const loginUser = catchAsync(async (req, res, next) => {
-  const { email, password } = req.body;
+  try {
+    const { email, username, password } = req.body;
+    let identifier = email || username;
 
-  const user = await User.findOne({ email });
+    if (!identifier || !password) {
+      return next(new AppError('Please provide identifier (email/username) and password', 400));
+    }
 
-  if (!user) {
-    return next(new AppError("Invalid credentials", 401));
+    logger.debug('Attempting login with identifier:', identifier);
+
+    // Find user by email or username
+    const user = await User.findOne({
+      $or: [
+        { email: identifier },
+        { username: identifier }
+      ]
+    }).select('+password');
+
+    if (!user) {
+      logger.warn('Login attempt failed - User not found', { identifier });
+      return next(new AppError("Invalid credentials", 401));
+    }
+
+    // Check if password matches
+    const isPasswordMatch = await user.matchPassword(password);
+    if (!isPasswordMatch) {
+      logger.warn('Login attempt failed - Invalid password', { identifier });
+      return next(new AppError("Invalid credentials", 401));
+    }
+
+    try {
+      // Generate token using User model method
+      const token = await user.generateToken();
+      logger.info('Login successful', { 
+        userId: user._id,
+        identifier,
+        role: user.role
+      });
+      res.status(200).json({
+        success: true,
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      });
+    } catch (tokenError) {
+      logger.error('Token generation failed:', {
+        error: tokenError.message,
+        stack: tokenError.stack,
+        userId: user._id,
+        identifier
+      });
+      return next(new AppError('Failed to generate token', 500));
+    }
+  } catch (error) {
+    logger.error('Login error:', {
+      error: error.message,
+      stack: error.stack,
+      identifier: req.body.email || req.body.username
+    });
+    return next(new AppError('Internal server error', 500));
   }
-
-  // Check if password matches
-  const isPasswordMatch = await user.matchPassword(password);
-  if (!isPasswordMatch) {
-    return next(new AppError("Invalid credentials", 401));
-  }
-
-
-  res.json({
-    _id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    token: generateToken(user._id),
-  });
 });
 
 // Logout User
@@ -66,9 +109,44 @@ const logoutUser = catchAsync(async (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-const getUserProfile = catchAsync(async (req, res) => {
-  const user = await User.findById(req.user.id).select('-password');
-  res.json(user);
+const getUserProfile = catchAsync(async (req, res, next) => {
+  try {
+    // If user ID is provided in params, get that user's profile
+    if (req.params.id) {
+      const user = await User.findById(req.params.id).select('-password');
+      if (!user) {
+        return next(new AppError('User not found', 404));
+      }
+      res.status(200).json({
+        success: true,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      });
+    } else {
+      // Get current user's profile
+      const user = await User.findById(req.user.id).select('-password');
+      res.status(200).json({
+        success: true,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      });
+    }
+  } catch (error) {
+    logger.error('Error getting user profile:', {
+      error: error.message,
+      userId: req.params.id || req.user.id,
+      stack: error.stack
+    });
+    return next(new AppError('Internal server error', 500));
+  }
 });
 
 const getAllUsers = catchAsync(async (req, res) => {
@@ -143,84 +221,109 @@ const initiatePasswordReset = catchAsync(async (req, res, next) => {
 
 // Complete password reset
 const completePasswordReset = catchAsync(async (req, res, next) => {
-  const { token, password } = req.body;
+  try {
+    const { token, password } = req.body;
 
-  // Hash the token
-  const hashedToken = crypto
-    .createHash('sha256')
-    .update(token)
-    .digest('hex');
+    // Hash the token
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
 
-  // Find user with valid reset token
-  const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetTokenExpires: { $gt: Date.now() }
-  });
+    // Find user with valid reset token
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetTokenExpires: { $gt: Date.now() }
+    });
 
-  if (!user) {
-    return next(new AppError('Invalid or expired token', 400));
+    if (!user) {
+      return next(new AppError('Invalid or expired token', 400));
+    }
+
+    // Set new password
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetTokenExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    logger.error('Password reset failed', {
+      error: error.message,
+      stack: error.stack
+    });
+    return next(new AppError('Password reset failed', 400));
   }
-
-  // Set new password
-  user.password = password;
-  user.passwordResetToken = undefined;
-  user.passwordResetTokenExpires = undefined;
-  await user.save();
-
-  res.status(200).json({ message: 'Password reset successful' });
 });
 
 // Validate User Token
 const validateToken = catchAsync(async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
   try {
+    // Get token from Authorization header or cookie
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    }
+    
+    if (!token) {
+      return next(new AppError('No token provided', 401));
+    }
+
+    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    const user = await User.findById(decoded.id).select('-password');
+    // Find user
+    const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      return next(new AppError('User not found', 401));
     }
 
     res.status(200).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-    return next(error);
+    logger.error('Token validation failed', {
+      error: error.message,
+      stack: error.stack
+    });
+    return next(new AppError('Invalid token', 401));
   }
 });
 
-// Debug method to log hashed password (USE ONLY IN DEVELOPMENT)
-const logHashedPassword = catchAsync(async (req, res, next) => {
-  const { email } = req.body;
-  
-  const user = await User.findOne({ email });
-  
-  if (!user) {
-    return next(new AppError('User not found', 404));
+const getUserProfileById = catchAsync(async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    logger.error('Error getting user profile by ID:', {
+      error: error.message,
+      userId: req.params.id,
+      stack: error.stack
+    });
+    return next(new AppError('Internal server error', 500));
   }
-
-  // Log the hashed password to the console (IMPORTANT: ONLY USE IN DEVELOPMENT)
-  logger.info('Hashed Password Debug', { 
-    email: user.email, 
-    hashedPassword: user.password 
-  });
-
-  res.status(200).json({
-    message: 'Hashed password logged to server console',
-    email: user.email
-  });
 });
 
 module.exports = {
@@ -232,5 +335,5 @@ module.exports = {
   validateToken,
   initiatePasswordReset,
   completePasswordReset,
-  logHashedPassword
+  getUserProfileById
 };

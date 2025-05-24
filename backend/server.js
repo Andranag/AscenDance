@@ -3,8 +3,10 @@ const express = require("express");
 const cors = require("cors");
 const rateLimiter = require("./src/middleware/rateLimiter.js");
 const logger = require("./src/utils/logger.js");
+const { errorHandler } = require("./src/utils/errorHandler.js");
 
 const { connectDB, mongoose } = require("./src/config/db.js");
+const authRoutes = require("./src/routes/authRoutes.js");
 const userRoutes = require("./src/routes/userRoutes.js");
 const courseRoutes = require("./src/routes/courseRoutes.js");
 const progressRoutes = require("./src/routes/progressRoutes.js");
@@ -17,21 +19,8 @@ const dbConnection = connectDB();
 
 // Check if database is connected
 if (!dbConnection) {
-  logger.warn('Database connection failed, running in degraded mode');
-  
-  // Add a middleware to handle database-related requests
-  app.use((req, res, next) => {
-    if (req.path.startsWith('/api/')) {
-      return res.status(503).json({
-        message: 'Service unavailable - Database connection failed',
-        timestamp: new Date().toISOString(),
-        retryAfter: process.env.NODE_ENV === 'development' ? 5 : 30 // seconds
-      });
-    }
-    next();
-  });
-} else {
-  logger.info('Database connection established');
+  logger.error('Database connection failed');
+  process.exit(1); // Exit if database connection fails
 }
 
 // Configure CORS to allow requests from the frontend
@@ -58,8 +47,13 @@ app.use((req, res, next) => {
 app.use('/api/auth', rateLimiter.authLimiter);
 app.use('/api', rateLimiter.apiLimiter);
 
-// API routes
-app.use('/api/auth', userRoutes);
+// Public auth routes (no authentication required)
+app.use('/api/auth', authRoutes);
+
+// Protected user routes
+app.use('/api/user', userRoutes);
+
+// Course and progress routes
 app.use('/api/courses', courseRoutes);
 app.use('/api/progress', progressRoutes);
 
@@ -68,47 +62,21 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  logger.error(`Error: ${err.message}`, { 
-    stack: err.stack,
-    timestamp: new Date().toISOString(),
-    path: req.path
-  });
-  
-  // Handle path-to-regexp error specifically
-  if (err.name === 'TypeError' && err.message.includes('Missing parameter name')) {
-    logger.error('Path-to-regexp error detected:', {
-      path: req.path,
-      method: req.method
-    });
-    return res.status(400).json({
-      message: 'Invalid route format',
-      timestamp: new Date().toISOString()
-    });
-  }
-
-  res.status(500).json({
-    message: "Internal server error",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined
-  });
+// Legacy routes - redirect to API version
+app.get('/classes', (req, res) => {
+  res.redirect('/api/courses');
 });
 
-// Error handling for unmatched routes
-app.use((req, res) => {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ 
-      message: 'Route not found',
-      timestamp: new Date().toISOString()
-    });
-  }
-  res.status(404).json({ message: 'Route not found' });
+app.get('/user/profile/:id', (req, res) => {
+  res.redirect(`/api/user/profile/${req.params.id}`);
 });
+
+// Use the proper error handler
+app.use(errorHandler);
 
 // Start server
 const server = app.listen(port, () => {
-  logger.info(`Server is running on port ${port}`);
-  console.log(`Server is running on port ${port}`);
+  logger.info(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`);
 });
 
 // Handle server errors
