@@ -88,10 +88,44 @@ const enrollInCourse = catchAsync(async (req, res, next) => {
 // Get enrolled courses for a user
 const getUserCourses = catchAsync(async (req, res, next) => {
   try {
+    // Ensure we have a user object
+    if (!req.user) {
+      return next(new AppError('Not authorized', 401));
+    }
+
+    // Log the user ID for debugging
+    logger.debug('Fetching courses for user:', {
+      userId: req.user._id,
+      userEmail: req.user.email
+    });
+
     // Find courses where user is enrolled
+    const userId = req.user._id.toString();
     const courses = await Course.find({
-      enrolledStudents: req.user._id
+      enrolledStudents: userId
     }).populate('enrolledStudents', 'name email');
+
+    if (!courses) {
+      return res.status(200).json({
+        success: true,
+        courses: []
+      });
+    }
+
+    // If courses is an empty array, return empty array
+    if (courses.length === 0) {
+      return res.status(200).json({
+        success: true,
+        courses: []
+      });
+    }
+
+    // Log the courses found
+    logger.debug('Found courses for user:', {
+      userId,
+      courseCount: courses.length,
+      courseTitles: courses.map(c => c.title)
+    });
 
     res.status(200).json({
       success: true,
@@ -100,7 +134,8 @@ const getUserCourses = catchAsync(async (req, res, next) => {
   } catch (error) {
     logger.error('Error fetching user courses:', {
       error: error.message,
-      userId: req.user._id
+      userId: req.user._id,
+      stack: error.stack
     });
     return next(new AppError('Failed to fetch user courses', 500));
   }

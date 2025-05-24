@@ -34,7 +34,8 @@ const StudentDashboard = () => {
   const fetchCourses = async () => {
     try {
       const response = await api.get('/courses/user-courses');
-      setCourses(response.data);
+      // Handle the backend's response structure
+      setCourses(response.data.courses || []);
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to fetch courses');
       throw error;
@@ -172,7 +173,7 @@ const StudentDashboard = () => {
                   <h2 className="text-xl font-medium mb-6">Available Courses</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {courses.map((course) => (
-                      <div key={course.id} className="bg-black/40 backdrop-blur-xl rounded-lg p-6 hover:bg-black/50 transition-colors cursor-pointer">
+                      <div key={course._id} className="bg-black/40 backdrop-blur-xl rounded-lg p-6 hover:bg-black/50 transition-colors cursor-pointer">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-xl font-medium">{course.title}</h3>
                           <Award className="w-5 h-5 text-purple-500" />

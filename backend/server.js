@@ -79,6 +79,16 @@ app.get('/user/profile/:id', (req, res) => {
   res.redirect(`/api/user/${req.params.id}`);
 });
 
+// Redirect all non-API requests to API version
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api')) {
+    const newPath = req.path.startsWith('/') ? `/api${req.path}` : `/api/${req.path}`;
+    res.redirect(newPath);
+  } else {
+    next();
+  }
+});
+
 // Use the proper error handler
 app.use(errorHandler);
 
