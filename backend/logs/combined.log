@@ -481,3 +481,11 @@
 {"hasJWTSecret":false,"hasMongoUri":true,"level":"info","message":"Environment variables loaded:","port":"3050","service":"ascendance-backend","timestamp":"2025-05-24 23:24:40"}
 {"level":"info","message":"Server running in development mode on port 3050","service":"ascendance-backend","timestamp":"2025-05-24 23:24:41"}
 {"db":"test","level":"info","message":"MongoDB Connected successfully to Atlas","service":"ascendance-backend","timestamp":"2025-05-24 23:24:42"}
+{"hasJWTSecret":false,"hasMongoUri":true,"level":"info","message":"Environment variables loaded:","port":"3050","service":"ascendance-backend","timestamp":"2025-05-24 23:24:57"}
+{"level":"info","message":"Server running in development mode on port 3050","service":"ascendance-backend","timestamp":"2025-05-24 23:24:58"}
+{"db":"test","level":"info","message":"MongoDB Connected successfully to Atlas","service":"ascendance-backend","timestamp":"2025-05-24 23:24:58"}
+{"ip":"::1","level":"info","message":"POST /api/auth/register","service":"ascendance-backend","timestamp":"2025-05-24T20:25:07.980Z"}
+{"ip":"::1","level":"info","message":"GET /user/profile/68322b2459d46fadd6eafb5c","service":"ascendance-backend","timestamp":"2025-05-24T20:25:08.357Z"}
+{"ip":"::1","level":"info","message":"GET /user/profile/68322b2459d46fadd6eafb5c","service":"ascendance-backend","timestamp":"2025-05-24T20:25:08.363Z"}
+{"ip":"::1","level":"info","message":"GET /api/user/profile/68322b2459d46fadd6eafb5c","service":"ascendance-backend","timestamp":"2025-05-24T20:25:08.402Z"}
+{"ip":"::1","level":"info","message":"GET /api/user/profile/68322b2459d46fadd6eafb5c","service":"ascendance-backend","timestamp":"2025-05-24T20:25:08.523Z"}
