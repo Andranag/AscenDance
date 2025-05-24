@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import { ArrowRight, Eye, EyeOff, Mail, User, AlertCircle } from 'lucide-react';
 import DanceBackground from '../components/DanceBackround'
 import InputField from '../components/forms/InputField';
@@ -10,7 +10,7 @@ import Logo from '../components/common/Logo';
 import PasswordStrength from '../components/forms/PasswordStrength';
 
 const Register = () => {
-  const navigate = useNavigate();
+  const { register, navigateToDashboard } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -80,40 +80,30 @@ const Register = () => {
     e.preventDefault();
     
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      toast.error('Please fix the errors below');
       return;
     }
-    
+
     setIsSubmitting(true);
-    
     try {
-      const response = await axios.post('http://localhost:3050/api/auth/register', {
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-        role: 'student'
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      const authData = await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
       });
 
-      // Check if response is successful
-      if (response.status === 201) {
-        handleBackendResponse(response);
+      if (authData) {
+        toast.success('Registration successful!');
+        navigateToDashboard();
       } else {
         throw new Error('Registration failed');
       }
     } catch (error) {
-      // Log full error details for debugging
       console.error('Registration error:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        config: error.config,
         message: error.message,
         stack: error.stack
       });
+      toast.error(error.response?.data?.message || 'Registration failed');
 
       // Handle different error cases
       if (error.response) {

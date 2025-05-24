@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { getToken } from '../utils/auth';
+import { getToken } from '../utils/tokenManager';
 
-const API_URL = 'http://localhost:3050/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3050/api';
 
 const createAxiosInstance = () => {
   const instance = axios.create({

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Award, ChevronRight } from 'lucide-react';
-import { Button } from '../../../components/common/Button';
+import Button from "../common/Button";
 
 const CourseCard = ({ course, onClick }) => {
   return (

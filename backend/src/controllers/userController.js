@@ -130,9 +130,15 @@ const registerUser = async (req, res, next) => {
 const loginUser = async (req, res, next) => {
   try {
     const { email, username, password } = req.body;
+    logger.debug('Login request received:', { email, username, hasPassword: !!password });
+    
     let identifier = email || username;
-
     if (!identifier || !password) {
+      logger.error('Invalid login request:', { 
+        hasIdentifier: !!identifier,
+        hasPassword: !!password,
+        identifierType: email ? 'email' : username ? 'username' : 'none'
+      });
       return next(new AppError('Please provide identifier (email/username) and password', 400));
     }
 
@@ -151,10 +157,15 @@ const loginUser = async (req, res, next) => {
       return next(new AppError("Invalid credentials", 401));
     }
 
+    logger.debug('User found:', { userId: user._id });
+
     // Check if password matches
     const isPasswordMatch = await user.matchPassword(password);
     if (!isPasswordMatch) {
-      logger.warn('Login attempt failed - Invalid password', { identifier });
+      logger.warn('Login attempt failed - Invalid password', { 
+        userId: user._id,
+        identifier
+      });
       return next(new AppError("Invalid credentials", 401));
     }
 
@@ -179,9 +190,7 @@ const loginUser = async (req, res, next) => {
     } catch (tokenError) {
       logger.error('Token generation failed:', {
         error: tokenError.message,
-        stack: tokenError.stack,
-        userId: user._id,
-        identifier
+        userId: user._id
       });
       return next(new AppError('Failed to generate token', 500));
     }

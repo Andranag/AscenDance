@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Play, BookOpen, Clock, User, Edit2, Award, ChevronRight } from 'lucide-react';
+import { Play, BookOpen, Clock, User, Edit2, ChevronRight } from 'lucide-react';
 import Button from '../components/common/Button';
 import { toast } from 'react-toastify';
 import api from '../config/axiosConfig';
+import CourseCard from '../components/course/CourseCard';
+import { useAuth } from '../contexts/AuthContext';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  const isAuthenticated = !!token;
+  const { user, isAuthenticated, navigateToLogin, authLoading } = useAuth();
   const [courses, setCourses] = useState([]);
-  const [profile, setProfile] = useState({});
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editProfileData, setEditProfileData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -18,41 +18,91 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigateToLogin();
       return;
     }
 
-    // Fetch courses and profile data
-    Promise.all([fetchCourses(), fetchProfile()])
-      .catch(error => {
-        setError(error.response?.data?.message || error.message);
-        setLoading(false);
-      })
-      .finally(() => setLoading(false));
-  }, [isAuthenticated]);
+    if (process.env.NODE_ENV === 'development') {
+      // In development mode, use mock data immediately
+      setCourses([
+        {
+          id: '1',
+          title: 'Beginner Ballet',
+          description: 'Learn the fundamentals of ballet dancing',
+          instructor: 'Sarah Johnson',
+          duration: '8 weeks',
+          startDate: '2025-05-25',
+          imageUrl: 'https://images.pexels.com/photos/358010/pexels-photo-358010.jpeg',
+          enrolled: true
+        },
+        {
+          id: '2',
+          title: 'Hip Hop Basics',
+          description: 'Introduction to hip hop dance styles',
+          instructor: 'Mike Thompson',
+          duration: '6 weeks',
+          startDate: '2025-05-26',
+          imageUrl: 'https://images.pexels.com/photos/2820896/pexels-photo-2820896.jpeg',
+          enrolled: true
+        }
+      ]);
+      return;
+    }
+
+    fetchCourses();
+  }, [user]);
 
   const fetchCourses = async () => {
     try {
+      setLoading(true);
+      
+      if (process.env.NODE_ENV === 'development') {
+        // Mock courses data for development
+        setCourses([
+          {
+            id: '1',
+            title: 'Beginner Ballet',
+            description: 'Learn the fundamentals of ballet dancing',
+            instructor: 'Sarah Johnson',
+            duration: '8 weeks',
+            startDate: '2025-05-25',
+            imageUrl: 'https://images.pexels.com/photos/358010/pexels-photo-358010.jpeg',
+            enrolled: true
+          },
+          {
+            id: '2',
+            title: 'Hip Hop Basics',
+            description: 'Introduction to hip hop dance styles',
+            instructor: 'Mike Thompson',
+            duration: '6 weeks',
+            startDate: '2025-05-26',
+            imageUrl: 'https://images.pexels.com/photos/2820896/pexels-photo-2820896.jpeg',
+            enrolled: true
+          }
+        ]);
+        return;
+      }
+
       const response = await api.get('/courses/user-courses');
-      // Handle the backend's response structure
       setCourses(response.data.courses || []);
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to fetch courses');
-      throw error;
+      toast.error(error.response?.data?.message || 'Failed to fetch courses');
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchProfile = async () => {
     try {
-      // Get user ID from token
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (!token) throw new Error('No token found');
+      if (process.env.NODE_ENV === 'development') {
+        // Use mock user data from AuthContext
+        setProfile(user);
+        return;
+      }
 
-      // Extract user ID from token
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(window.atob(base64));
-      const userId = payload.userId;
+      // Use user ID from context
+      const userId = user?._id;
 
       const response = await api.get(`/user/${userId}`);
       setProfile(response.data);
@@ -83,128 +133,83 @@ const StudentDashboard = () => {
     }
   };
 
-  return (
-    <div className="flex bg-black text-white">
-      {/* Profile Header */}
-      <div className="w-64 border-r border-white/10 bg-black/40 backdrop-blur-xl p-6">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <User className="w-6 h-6 text-purple-400" />
-            <div>
-              <h3 className="font-medium">{profile.name || 'Student'}</h3>
-              <p className="text-sm text-white/70">{profile.email}</p>
-            </div>
-          </div>
+  if (loading || userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold mb-4">Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
         </div>
       </div>
+    );
+  }
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        {/* Header */}
-        <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl">
-          <div className="px-8 py-4">
-            <h1 className="text-2xl font-medium">Welcome Back, {profile.name || 'Student'}!</h1>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="p-8">
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && (
-            <div className="text-center py-12 text-red-400">
-              <p>{error}</p>
-              <Button onClick={() => window.location.reload()}>Retry</Button>
-            </div>
-          )}
-
-          {/* Profile Section */}
-          {!loading && !error && (
-            <>
-              <div className="bg-black/40 backdrop-blur-xl rounded-lg p-6 mb-8">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-medium">Profile</h2>
-                  <button 
-                    onClick={() => setShowEditProfile(!showEditProfile)}
-                    className="text-purple-400 hover:text-purple-300"
-                  >
-                    <Edit2 className="w-5 h-5" />
-                  </button>
-                </div>
-                {showEditProfile ? (
-                  <form onSubmit={handleEditProfile} className="space-y-4">
-                    <div>
-                      <label className="block text-sm text-white/70 mb-1">Name</label>
-                      <input
-                        type="text"
-                        value={editProfileData.name || ''}
-                        onChange={(e) => setEditProfileData(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-white/70 mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={editProfileData.email || ''}
-                        onChange={(e) => setEditProfileData(prev => ({ ...prev, email: e.target.value }))}
-                        className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white"
-                      />
-                    </div>
-                    <Button type="submit" className="w-full">Save Changes</Button>
-                  </form>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-white/70">Name: {profile.name || 'Not set'}</p>
-                    <p className="text-white/70">Email: {profile.email || 'Not set'}</p>
-                  </div>
-                )}
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {authLoading ? (
+        <div className="flex items-center justify-center min-h-screen">Loading...</div>
+      ) : isAuthenticated ? (
+        <div className="flex flex-col h-full">
+          <div className="w-64 border-r border-white/10 bg-black/40 backdrop-blur-xl p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <User className="w-6 h-6 text-purple-400" />
+                <h3 className="font-medium">{user?.name}</h3>
               </div>
-
-              {/* Courses Section */}
-              {courses.length > 0 ? (
-                <div>
-                  <h2 className="text-xl font-medium mb-6">Available Courses</h2>
+              <div className="flex items-center gap-3">
+                <Clock className="w-5 h-5 text-white/70" />
+                <p className="text-white/70">Joined {new Date(user?.createdAt).toLocaleDateString()}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0">
+              <div className="px-8 py-6">
+                <h1 className="text-2xl font-medium">Dashboard</h1>
+              </div>
+            </header>
+            <main className="p-8">
+              <div className="bg-black/40 backdrop-blur-xl rounded-lg p-6">
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-medium">My Courses</h2>
+                    <Link to="/courses" className="text-purple-400 hover:text-purple-300">
+                      View All <ChevronRight className="inline w-4 h-4 ml-1" />
+                    </Link>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {courses.map((course) => (
-                      <div key={course._id} className="bg-black/40 backdrop-blur-xl rounded-lg p-6 hover:bg-black/50 transition-colors cursor-pointer">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-xl font-medium">{course.title}</h3>
-                          <Award className="w-5 h-5 text-purple-500" />
-                        </div>
-                        <div className="space-y-2 mb-4">
-                          <p className="text-white/70">Instructor: {course.instructor}</p>
-                          <p className="text-white/70">Level: {course.level}</p>
-                          <p className="text-white/70">Duration: {course.duration} mins</p>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-purple-400">${course.price}</span>
-                          <Link to={`/student/course/${course.id}`}>
-                            <Button variant="secondary">
-                              View Course
-                              <ChevronRight className="w-4 h-4 ml-2" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
+                      <CourseCard key={course._id} course={course} />
                     ))}
                   </div>
+                  {courses.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-white/70">No courses found. Start exploring our courses!</p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-white/70">No courses available yet</p>
-                </div>
-              )}
-            </>
-          )}
-        </main>
-      </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className="text-white/70">Please log in to view your dashboard</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

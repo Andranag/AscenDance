@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Play, Star, Users, Calendar, ArrowRight, User, Menu, X, LogOut } from 'lucide-react';
 import Logo from '../components/common/Logo';
 import Button from '../components/common/Button';
+import { useAuth } from '../contexts/AuthContext';
 
 const Home = () => {
+  const auth = useAuth();
   const features = [
     {
       icon: <Play className="w-6 h-6 text-purple-400" />,
@@ -53,47 +55,25 @@ const Home = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // In development mode, use mock data from AuthContext
+    if (process.env.NODE_ENV === 'development') {
+      setUser({
+        id: '123',
+        name: 'Developer User',
+        email: 'developer@example.com',
+        role: 'student'
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Production mode - use real API
     const checkAuth = async () => {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (!token) {
-        setIsAuthed(false);
-        setLoading(false);
-        return;
-      }
-
-      setIsAuthed(true);
       try {
-        // Extract user ID from token (assuming JWT format)
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (!token) {
-          throw new Error('No token found');
+        if (!auth.user) {
+          throw new Error('No user data found');
         }
-
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const payload = JSON.parse(window.atob(base64));
-        
-        if (!payload.userId) {
-          throw new Error('Invalid token - no userId found');
-        }
-
-        const userId = payload.userId;
-
-        const response = await fetch(`http://localhost:3050/user/profile/${userId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('User not found');
-          }
-          throw new Error('Failed to fetch user data');
-        }
-
-        const data = await response.json();
-        setUser(data);
+        setUser(auth.user);
       } catch (err) {
         console.error('Auth error:', err);
         setError('Failed to load user data');
@@ -103,7 +83,7 @@ const Home = () => {
     };
 
     checkAuth();
-  }, []);
+  }, [auth.user]);
 
   const [showMenu, setShowMenu] = useState(false);
 

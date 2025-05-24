@@ -29,15 +29,15 @@ const Navbar = ({ children }) => {
             <div className="flex items-center space-x-4">
               {token ? (
                 <>
-                  <Link to="/student/dashboard" className="text-white hover:text-gray-100 transition-colors flex items-center gap-2">
+                  <Link to="/student-dashboard" className="text-white hover:text-gray-100 transition-colors flex items-center gap-2">
                     <Grid className="w-6 h-6" />
                     Dashboard
                   </Link>
-                  <Link to="/student/courses" className="text-white hover:text-gray-100 transition-colors flex items-center gap-2">
+                  <Link to="/my-courses" className="text-white hover:text-gray-100 transition-colors flex items-center gap-2">
                     <User className="w-6 h-6" />
                     Courses
                   </Link>
-                  <Link to="/student/profile" className="text-white hover:text-gray-100 transition-colors flex items-center gap-2">
+                  <Link to="/profile" className="text-white hover:text-gray-100 transition-colors flex items-center gap-2">
                     <User className="w-6 h-6" />
                     My Profile
                   </Link>
@@ -58,10 +58,8 @@ const Navbar = ({ children }) => {
         </div>
       </nav>
       
-      <div className="flex flex-col min-h-screen pt-16">
-        <main className="flex-1 bg-black text-white">
-          {children}
-        </main>
+      <div className="pt-16">
+        {children}
       </div>
     </>
   );

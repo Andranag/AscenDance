@@ -1,11 +1,11 @@
 const rateLimit = require('express-rate-limit');
 const logger = require('../utils/logger');
 
-// Rate limiter configuration
+// Rate limiter configuration - more lenient for development
 const rateLimiterConfig = {
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
-  message: 'Too many requests from this IP, please try again later',
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 200, // More lenient limit
+  message: 'Too many requests from this IP, please try again in 5 minutes',
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
@@ -23,13 +23,13 @@ const rateLimiterConfig = {
     
     // Add rate limit headers
     res.setHeader('X-RateLimit-Limit', options.limit);
-    res.setHeader('X-RateLimit-Remaining', options.remaining);
-    res.setHeader('X-RateLimit-Reset', options.resetTime);
+    res.setHeader('X-RateLimit-Remaining', Math.max(0, options.limit - options.current));
+    res.setHeader('X-RateLimit-Reset', Math.floor(options.resetTime / 1000));
     
     // Send response
     res.status(options.statusCode).json({
       message: options.message,
-      retryAfter: options.resetTime - Date.now()
+      retryAfter: Math.floor((options.resetTime - Date.now()) / 1000)
     });
   }
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import { ArrowRight, Eye, EyeOff, Facebook, Github, Mail, AlertCircle } from 'lucide-react';
 import DanceBackground from '../components/DanceBackround'
 import InputField from '../components/forms/InputField';
@@ -10,7 +10,7 @@ import SocialButton from '../components/forms/SocialButton';
 import Logo from '../components/common/Logo';
 
 const Login = () => {
-  const navigate = useNavigate();
+  const { login, navigateToDashboard } = useAuth();
   const [formData, setFormData] = useState({
     identifier: '',
     password: '',
@@ -19,6 +19,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [retryAfter, setRetryAfter] = useState(null);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -44,6 +46,14 @@ const Login = () => {
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters long';
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one uppercase letter';
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one number';
+    } else if (!/[!@#$%^&*()_\-+=\[\]{};:'"\\|,.<>/?]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one special character';
     }
     
     setErrors(newErrors);
@@ -53,42 +63,48 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      toast.error('Please fill in all required fields');
+    if (!validateForm()) return;
+
+    if (isSubmitting) {
+      toast.warning('Please wait for the current login attempt to complete.');
       return;
     }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const response = await axios.post('http://localhost:3050/api/auth/login', {
-        email: formData.identifier.includes('@') ? formData.identifier : undefined,
-        username: !formData.identifier.includes('@') ? formData.identifier : undefined,
-        password: formData.password
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
 
-      if (response.data.token) {
-        // Store token in both cookie and storage
-        document.cookie = `token=${response.data.token}; path=/; SameSite=Lax`;
-        
-        // Store token based on remember me preference
-        const storage = formData.rememberMe ? localStorage : sessionStorage;
-        storage.setItem('token', response.data.token);
-        storage.setItem('user', JSON.stringify(response.data.user));
-        
-        // Set token in axios default headers
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-        
+    if (loginAttempts >= 3) {
+      toast.error('Too many login attempts. Please wait before trying again.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Transform identifier to either email or username
+      const loginData = {
+        email: formData.identifier.includes('@') ? formData.identifier : '',
+        username: !formData.identifier.includes('@') ? formData.identifier : '',
+        password: formData.password
+      };
+      
+      const response = await login(loginData);
+      if (response?.success && response?.token) {
+        // Reset login attempts on successful login
+        setLoginAttempts(0);
+        setRetryAfter(null);
         toast.success('Successfully logged in!');
-        navigate('/student/dashboard');
+        navigateToDashboard();
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
       toast.error(errorMessage);
+      
+      // Handle rate limiting
+      if (error.response?.status === 429) {
+        setLoginAttempts(3);
+        setRetryAfter(error.response.data.retryAfter);
+        toast.error('Too many login attempts. Please wait before trying again.');
+      } else {
+        setLoginAttempts(prev => prev + 1);
+      }
+
       setErrors({
         general: errorMessage
       });

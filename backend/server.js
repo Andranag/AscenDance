@@ -14,7 +14,6 @@ logger.info('Environment variables loaded:', {
 });
 
 const { connectDB, mongoose } = require("./src/config/db.js");
-const authRoutes = require("./src/routes/authRoutes.js");
 const userRoutes = require("./src/routes/userRoutes.js");
 const courseRoutes = require("./src/routes/courseRoutes.js");
 const progressRoutes = require("./src/routes/progressRoutes.js");
@@ -55,10 +54,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', rateLimiter.authLimiter);
 app.use('/api', rateLimiter.apiLimiter);
 
-// Public auth routes (no authentication required)
-app.use('/api/auth', authRoutes);
-
-// Protected user routes
+// User routes (includes both auth and protected endpoints)
 app.use('/api/user', userRoutes);
 
 // Course and progress routes

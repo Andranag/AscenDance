@@ -1,17 +1,20 @@
 const winston = require('winston');
 const path = require('path');
 
-// Load environment variables if not already loaded
-if (!process.env.LOG_LEVEL) {
-  require('dotenv').config();
-}
-
 // Ensure logs directory exists
 const logsDir = path.join(__dirname, '..', '..', 'logs');
 
 // Create a custom logger
 const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
+  level: 'debug', // Set to debug for more detailed logs
+  format: winston.format.combine(
+    winston.format.timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss'
+    }),
+    winston.format.errors({ stack: true }),
+    winston.format.splat(),
+    winston.format.json()
+  ),
   format: winston.format.combine(
     winston.format.timestamp({
       format: 'YYYY-MM-DD HH:mm:ss'

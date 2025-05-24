@@ -14,17 +14,18 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
 import StudentDashboard from "./pages/StudentDashboard";
+import MyCourses from "./pages/MyCourses";
 import CourseView from "./pages/CourseView";
 import CourseContent from "./pages/CourseContent";
 import Profile from "./pages/Profile";
-import { checkAuth } from "./utils/auth";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const { token } = useAuth();
   const isAuthenticated = !!token;
 
   useEffect(() => {
@@ -63,46 +64,80 @@ const ErrorBoundary = ({ children }) => {
 // Wrap the app with AuthProvider
 const App = () => {
   return (
-    <ErrorBoundary>
-      <Router>
-        <Navbar>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/course/:id" element={<CourseView />} />
-            <Route path="/course/:courseId/content/:contentId" element={<CourseContent />} />
-            
-            {/* Protected routes */}
-            <Route path="/student/*" element={
-              <ProtectedRoute>
-                <Routes>
-                  <Route path="dashboard" element={<StudentDashboard />} />
-                  <Route path="courses" element={<StudentDashboard />} />
-                  <Route path="profile" element={<Profile />} />
-                </Routes>
-              </ProtectedRoute>
-            } />
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Navbar>
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
-      </Router>
-    </ErrorBoundary>
+    <AuthProvider>
+      <ErrorBoundary>
+        <Router>
+          <div className="min-h-screen">
+            <Navbar />
+            <ToastContainer
+              position="top-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="dark"
+            />
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Home />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <StudentDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-courses"
+                element={
+                  <ProtectedRoute>
+                    <MyCourses />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/courses/:courseId"
+                element={
+                  <ProtectedRoute>
+                    <CourseView />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/courses/:courseId/content/:contentId"
+                element={
+                  <ProtectedRoute>
+                    <CourseContent />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+        </Router>
+      </ErrorBoundary>
+    </AuthProvider>
   );
 };
 
