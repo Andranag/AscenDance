@@ -2566,3 +2566,7 @@
 {"envPath":"C:\\Users\\andra\\OneDrive\\Documents\\AscenDance\\backend\\.env","hasMongodbUri":true,"hasPort":true,"level":"debug","message":"Environment variables loaded:","service":"ascendance-backend","timestamp":"2025-05-25 02:05:40"}
 {"level":"info","message":"Server running in development mode on port 3050","service":"ascendance-backend","timestamp":"2025-05-25 02:05:41"}
 {"db":"test","level":"info","message":"MongoDB Connected successfully to Atlas","service":"ascendance-backend","timestamp":"2025-05-25 02:05:42"}
+{"hasJWTSecret":true,"hasMongoUri":true,"level":"info","message":"Environment variables loaded:","port":"3050","service":"ascendance-backend","timestamp":"2025-05-25 02:09:02"}
+{"envPath":"C:\\Users\\andra\\OneDrive\\Documents\\AscenDance\\backend\\.env","hasMongodbUri":true,"hasPort":true,"level":"debug","message":"Environment variables loaded:","service":"ascendance-backend","timestamp":"2025-05-25 02:09:03"}
+{"level":"info","message":"Server running in development mode on port 3050","service":"ascendance-backend","timestamp":"2025-05-25 02:09:03"}
+{"db":"test","level":"info","message":"MongoDB Connected successfully to Atlas","service":"ascendance-backend","timestamp":"2025-05-25 02:09:04"}
