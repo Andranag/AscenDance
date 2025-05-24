@@ -25,24 +25,28 @@ const protect = async (req, res, next) => {
       return next(new AppError('Not authorized, no token', 401));
     }
 
+    // Use JWT_SECRET with fallback value
+    const secret = process.env.JWT_SECRET || 'ascendance-secret-key-2025';
+
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ascendance-secret-key-2025');
-      
+      const decoded = jwt.verify(token, secret);
+      req.decoded = decoded;
+
       // Find user by ID
       const user = await User.findById(decoded.userId).select("-password");
       
       if (!user) {
         logger.warn('User not found for token', {
           userId: decoded.userId,
-          token: token.substring(0, 10) + '...' // Log first 10 chars of token for debugging
+          token: token.substring(0, 10) + '...'
         });
-        return next(new AppError('User not found', 401));
+        return next(new AppError('Not authorized, user not found', 401));
       }
 
       req.user = user;
       next();
     } catch (error) {
-      logger.error('Token verification failed', {
+      logger.error('Authentication failed', {
         error: error.message,
         token: token.substring(0, 10) + '...',
         stack: error.stack

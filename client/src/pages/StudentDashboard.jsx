@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Play, BookOpen, Clock, User, Edit2, Award, ChevronRight } from 'lucide-react';
 import Button from '../components/common/Button';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import api from '../config/axiosConfig';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ const StudentDashboard = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await axios.get('http://localhost:3050/api/courses/my-courses');
+      const response = await api.get('/courses/user-courses');
       setCourses(response.data);
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to fetch courses');
@@ -53,7 +53,7 @@ const StudentDashboard = () => {
       const payload = JSON.parse(window.atob(base64));
       const userId = payload.userId;
 
-      const response = await axios.get(`http://localhost:3050/api/user/profile/${userId}`);
+      const response = await api.get(`/user/${userId}`);
       setProfile(response.data);
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to fetch profile');
@@ -68,21 +68,17 @@ const StudentDashboard = () => {
   const handleEditProfile = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3050/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
-        },
-        body: JSON.stringify(editProfileData)
+      const response = await api.put('/user/profile', {
+        name: editProfileData.name || profile.name,
+        email: editProfileData.email || profile.email,
+        phone: editProfileData.phone || profile.phone
       });
-      if (response.ok) {
-        toast.success('Profile updated successfully');
-        setShowEditProfile(false);
-        fetchProfile();
-      }
+      setProfile(response.data);
+      toast.success('Profile updated successfully');
+      setShowEditProfile(false);
     } catch (error) {
-      toast.error('Failed to update profile');
+      setError(error.response?.data?.message || 'Failed to update profile');
+      throw error;
     }
   };
 

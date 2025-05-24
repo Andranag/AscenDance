@@ -4,7 +4,7 @@ const rateLimiter = require("./src/middleware/rateLimiter.js");
 const logger = require("./src/utils/logger.js");
 const { errorHandler } = require("./src/utils/errorHandler.js");
 
-require("dotenv").config({ path: __dirname + '/.env' }); // Load environment variables
+require("dotenv").config({ path: __dirname + '/../.env' }); // Load environment variables from root directory
 
 // Log loaded environment variables
 logger.info('Environment variables loaded:', {
@@ -76,7 +76,7 @@ app.get('/classes', (req, res) => {
 });
 
 app.get('/user/profile/:id', (req, res) => {
-  res.redirect(`/api/user/profile/${req.params.id}`);
+  res.redirect(`/api/user/${req.params.id}`);
 });
 
 // Use the proper error handler

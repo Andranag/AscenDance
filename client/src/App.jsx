@@ -24,22 +24,16 @@ const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const isAuthenticated = !!token;
+
   useEffect(() => {
-    const checkAuthAndRedirect = async () => {
-      try {
-        const isAuthenticated = await checkAuth();
-        if (!isAuthenticated) {
-          navigate("/login", { state: { from: location }, replace: true });
-        }
-      } catch (error) {
-        navigate("/login", { replace: true });
-      }
-    };
+    if (!isAuthenticated) {
+      navigate("/login", { state: { from: location }, replace: true });
+    }
+  }, [location, navigate, isAuthenticated]);
 
-    checkAuthAndRedirect();
-  }, [location, navigate]);
-
-  return children;
+  return isAuthenticated ? children : null;
 };
 
 // Error Boundary component

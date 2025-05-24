@@ -3,20 +3,18 @@ const jwt = require("jsonwebtoken");
 const crypto = require('crypto');
 
 const { AppError } = require("../utils/errorHandler");
-const { catchAsync } = require("../utils/errorHandler");
 const logger = require("../utils/logger");
-
 
 // Generate JWT Token
 const generateToken = (id) => {
-  // Check if JWT_SECRET is set
-  if (!process.env.JWT_SECRET) {
-    console.error('JWT_SECRET is not set in environment variables');
-    throw new Error('JWT_SECRET is not configured');
+  // Check if SECRET_KEY is set
+  if (!process.env.SECRET_KEY) {
+    console.error('SECRET_KEY is not set in environment variables');
+    throw new Error('SECRET_KEY is not configured');
   }
   
   try {
-    const token = jwt.sign({ userId: id }, process.env.JWT_SECRET, { 
+    const token = jwt.sign({ userId: id }, process.env.SECRET_KEY, { 
       expiresIn: "7d",
       algorithm: 'HS256'
     });
@@ -31,7 +29,7 @@ const generateToken = (id) => {
 };
 
 // Register User
-const registerUser = catchAsync(async (req, res, next) => {
+const registerUser = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
 
@@ -126,10 +124,10 @@ const registerUser = catchAsync(async (req, res, next) => {
 
     return next(new AppError('Internal server error', 500));
   }
-});
+};
 
 // Login User
-const loginUser = catchAsync(async (req, res, next) => {
+const loginUser = async (req, res, next) => {
   try {
     const { email, username, password } = req.body;
     let identifier = email || username;
@@ -195,65 +193,67 @@ const loginUser = catchAsync(async (req, res, next) => {
     });
     return next(new AppError('Internal server error', 500));
   }
-});
+};
 
 // Logout User
-const logoutUser = catchAsync(async (req, res) => {
-  res.json({ message: "Logged out successfully" });
-});
+const logoutUser = async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully"
+  });
+};
 
-const getUserProfile = catchAsync(async (req, res, next) => {
+const getUserProfile = async (req, res) => {
   try {
     // If user ID is provided in params, get that user's profile
-    if (req.params.id) {
-      const user = await User.findById(req.params.id).select('-password');
-      if (!user) {
-        return next(new AppError('User not found', 404));
-      }
-      res.status(200).json({
-        success: true,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        }
-      });
-    } else {
-      // Get current user's profile
-      const user = await User.findById(req.user.id).select('-password');
-      res.status(200).json({
-        success: true,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        }
-      });
+    const userId = req.params.id || req.user._id;
+    
+    if (!userId) {
+      res.status(400).json({
+      success: false,
+      message: 'No user ID provided'
+    });
     }
+
+    const user = await User.findById(userId).select('-password');
+    
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
     logger.error('Error getting user profile:', {
       error: error.message,
-      userId: req.params.id || req.user.id,
-      stack: error.stack
+      stack: error.stack,
+      userId: req.params.id || req.user._id
     });
     return next(new AppError('Internal server error', 500));
   }
-});
+};
 
-const getAllUsers = catchAsync(async (req, res) => {
+const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
     res.json(users);
   } catch (error) {
-    throw new AppError('Error fetching users', 500);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching users'
+    });
   }
-});
-
+};
 
 // Initiate password reset
-const initiatePasswordReset = catchAsync(async (req, res, next) => {
+const initiatePasswordReset = async (req, res, next) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
 
@@ -310,10 +310,10 @@ const initiatePasswordReset = catchAsync(async (req, res, next) => {
       message: 'Password reset link sent to email'
     });
   }
-});
+};
 
 // Complete password reset
-const completePasswordReset = catchAsync(async (req, res, next) => {
+const completePasswordReset = async (req, res, next) => {
   try {
     const { token, password } = req.body;
 
@@ -330,7 +330,10 @@ const completePasswordReset = catchAsync(async (req, res, next) => {
     });
 
     if (!user) {
-      return next(new AppError('Invalid or expired token', 400));
+      return res.status(400).json({
+      success: false,
+      message: 'Invalid or expired token'
+    });
     }
 
     // Set new password
@@ -345,12 +348,15 @@ const completePasswordReset = catchAsync(async (req, res, next) => {
       error: error.message,
       stack: error.stack
     });
-    return next(new AppError('Password reset failed', 400));
+    res.status(400).json({
+      success: false,
+      message: 'Password reset failed'
+    });
   }
-});
+};
 
 // Validate User Token
-const validateToken = catchAsync(async (req, res, next) => {
+const validateToken = async (req, res, next) => {
   try {
     // Get token from Authorization header or cookie
     let token;
@@ -361,7 +367,10 @@ const validateToken = catchAsync(async (req, res, next) => {
     }
     
     if (!token) {
-      return next(new AppError('No token provided', 401));
+      return res.status(401).json({
+      success: false,
+      message: 'No token provided'
+    });
     }
 
     // Verify token
@@ -371,7 +380,10 @@ const validateToken = catchAsync(async (req, res, next) => {
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
-      return next(new AppError('User not found', 401));
+      return res.status(401).json({
+      success: false,
+      message: 'User not found'
+    });
     }
 
     res.status(200).json({
@@ -388,16 +400,22 @@ const validateToken = catchAsync(async (req, res, next) => {
       error: error.message,
       stack: error.stack
     });
-    return next(new AppError('Invalid token', 401));
+    res.status(401).json({
+      success: false,
+      message: 'Invalid token'
+    });
   }
-});
+};
 
-const getUserProfileById = catchAsync(async (req, res, next) => {
+const getUserProfileById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     
     if (!user) {
-      return next(new AppError('User not found', 404));
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
     }
 
     res.status(200).json({
@@ -410,23 +428,65 @@ const getUserProfileById = catchAsync(async (req, res, next) => {
       }
     });
   } catch (error) {
-    logger.error('Error getting user profile by ID:', {
+    logger.error('Error getting user profile:', {
       error: error.message,
-      userId: req.params.id,
-      stack: error.stack
+      stack: error.stack,
+      userId: req.params.id
     });
-    return next(new AppError('Internal server error', 500));
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
   }
-});
+};
+
+const updateUserProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    logger.error('Error updating user profile:', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user._id
+    });
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
 
 module.exports = {
   registerUser,
-  loginUser,
+  login: loginUser,
   logoutUser,
   getUserProfile,
   getAllUsers,
-  validateToken,
   initiatePasswordReset,
   completePasswordReset,
-  getUserProfileById
+  validateToken,
+  getUserProfileById,
+  updateUserProfile
 };

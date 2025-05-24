@@ -1,14 +1,36 @@
-import axios from 'axios';
+import api from '../config/axiosConfig';
 import { toast } from 'react-toastify';
 
-const API_URL = 'http://localhost:3050/api/auth';
+// Cookie handling functions
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
+
+const setCookie = (name, value, days) => {
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = date.toUTCString();
+  document.cookie = `${name}=${value};expires=${expires};path=/;SameSite=Lax`;
+};
+
+const clearCookie = (name) => {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax`;
+};
 
 // Initialize axios headers with token if present
 const initializeAxiosHeaders = () => {
   const token = localStorage.getItem('token') || sessionStorage.getItem('token') || getCookie('token');
   if (token) {
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
+};
+
+// Clear axios headers
+const clearAxiosHeaders = () => {
+  delete axios.defaults.headers.common['Authorization'];
 };
 
 // Initialize headers when module loads
@@ -16,26 +38,13 @@ initializeAxiosHeaders();
 
 export const checkAuth = async () => {
   try {
-    // Get token from cookie first
-    let token = getCookie('token');
-    if (!token) {
-      // If not in cookie, check localStorage and sessionStorage
-      token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    }
-    if (!token) return false;
-
-    // Verify token with backend
-    const response = await axios.get(`${API_URL}/verify`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
+    const response = await api.get('/auth/verify');
     return response.data.isValid;
   } catch (error) {
     // Remove invalid token
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
+    clearCookie('token');
     return false;
   }
 };
@@ -43,20 +52,18 @@ export const checkAuth = async () => {
 export const logout = () => {
   localStorage.removeItem('token');
   sessionStorage.removeItem('token');
+  clearCookie('token');
   clearAxiosHeaders();
   toast.success('Successfully logged out');
 };
 
 export const setToken = (token, rememberMe = false) => {
-  // Set token in cookie with SameSite=Lax for security
-  document.cookie = `token=${token}; path=/; SameSite=Lax`;
-  
-  // Also store in localStorage/sessionStorage
-  const storage = rememberMe ? localStorage : sessionStorage;
-  storage.setItem('token', token);
-  
-  // Set in axios headers
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  if (rememberMe) {
+    setCookie('token', token, 7); // 7 days
+  } else {
+    localStorage.setItem('token', token);
+  }
+  initializeAxiosHeaders();
 };
 
 export const getToken = () => {

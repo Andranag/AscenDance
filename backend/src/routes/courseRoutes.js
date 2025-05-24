@@ -30,6 +30,6 @@ router.delete('/:id', protect, authorize(['admin']), deleteCourse);
 router.post('/:id/enroll', protect, enrollInCourse);
 
 // Get user's enrolled courses
-router.get('/my-courses', protect, getUserCourses);
+router.get('/user-courses', protect, getUserCourses);
 
 module.exports = router;

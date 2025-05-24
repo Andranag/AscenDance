@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { getUserProfile, getAllUsers } = require('../controllers/userController');
+const { getUserProfileById, getAllUsers, updateUserProfile } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Profile route (protected) - by ID
-router.get('/profile/:id', protect, getUserProfile);
+// Get user profile by ID
+router.get('/:id', protect, getUserProfileById);
 
-// Profile route (protected) - current user
-router.get('/profile', protect, getUserProfile);
+// Get current user profile
+router.get('/', protect, getUserProfileById);
+
+// Update user profile
+router.put('/profile', protect, updateUserProfile);
 
 // Admin-only user management routes
 router.get('/users', protect, authorize(['admin']), getAllUsers);
