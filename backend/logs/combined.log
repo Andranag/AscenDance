@@ -949,3 +949,11 @@
 {"ip":"::1","level":"info","message":"GET /api/user/6825bfe5e9bcbae65808056e","service":"ascendance-backend","timestamp":"2025-05-24T21:11:06.961Z"}
 {"ip":"::1","level":"info","message":"GET /api/user/6825bfe5e9bcbae65808056e","service":"ascendance-backend","timestamp":"2025-05-24T21:11:07.125Z"}
 {"ip":"::1","level":"info","message":"GET /api/courses/user-courses","service":"ascendance-backend","timestamp":"2025-05-24T21:11:07.185Z"}
+{"ip":"::1","level":"info","message":"GET /user/profile/6825bfe5e9bcbae65808056e","service":"ascendance-backend","timestamp":"2025-05-24T21:11:39.967Z"}
+{"ip":"::1","level":"info","message":"GET /user/profile/6825bfe5e9bcbae65808056e","service":"ascendance-backend","timestamp":"2025-05-24T21:11:39.972Z"}
+{"ip":"::1","level":"info","message":"GET /api/user/6825bfe5e9bcbae65808056e","service":"ascendance-backend","timestamp":"2025-05-24T21:11:39.980Z"}
+{"ip":"::1","level":"info","message":"GET /api/user/6825bfe5e9bcbae65808056e","service":"ascendance-backend","timestamp":"2025-05-24T21:11:40.091Z"}
+{"ip":"::1","level":"info","message":"GET /api/courses/user-courses","service":"ascendance-backend","timestamp":"2025-05-24T21:11:41.102Z"}
+{"ip":"::1","level":"info","message":"GET /api/user/6825bfe5e9bcbae65808056e","service":"ascendance-backend","timestamp":"2025-05-24T21:11:41.107Z"}
+{"ip":"::1","level":"info","message":"GET /api/user/6825bfe5e9bcbae65808056e","service":"ascendance-backend","timestamp":"2025-05-24T21:11:41.222Z"}
+{"ip":"::1","level":"info","message":"GET /api/courses/user-courses","service":"ascendance-backend","timestamp":"2025-05-24T21:11:41.280Z"}
