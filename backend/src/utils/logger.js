@@ -1,6 +1,10 @@
 const winston = require('winston');
 const path = require('path');
-require('dotenv').config();
+
+// Load environment variables if not already loaded
+if (!process.env.LOG_LEVEL) {
+  require('dotenv').config();
+}
 
 // Ensure logs directory exists
 const logsDir = path.join(__dirname, '..', '..', 'logs');

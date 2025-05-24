@@ -61,10 +61,14 @@ const Login = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await axios.post('http://localhost:3050/user/login', {
+      const response = await axios.post('http://localhost:3050/api/auth/login', {
         email: formData.identifier.includes('@') ? formData.identifier : undefined,
         username: !formData.identifier.includes('@') ? formData.identifier : undefined,
         password: formData.password
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
       if (response.data.token) {
@@ -76,7 +80,7 @@ const Login = () => {
         navigate('/student/dashboard');
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.msg || 'Login failed. Please try again.';
+      const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
       toast.error(errorMessage);
       setErrors({
         general: errorMessage
