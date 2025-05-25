@@ -6,13 +6,13 @@ const { protect } = require('../middleware/authMiddleware');
 // Apply protection middleware to all routes
 router.use(protect);
 
-// Get all courses
+// Get all courses (requires auth)
 router.get('/', getAllCourses);
 
-// Get course by ID
+// Get course by ID (requires auth)
 router.get('/:id', getCourseById);
 
-// Mark lesson as complete
+// Mark lesson as complete (requires auth)
 router.post('/:id/lessons/:lessonId/complete', markLessonComplete);
 
 module.exports = router;

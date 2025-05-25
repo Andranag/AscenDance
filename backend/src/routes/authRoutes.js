@@ -10,6 +10,6 @@ router.post('/login', login);
 // Protected routes
 router.use(protect);
 router.get('/profile', getProfile);
-router.patch('/profile', updateProfile);
+router.put('/profile', updateProfile);
 
 module.exports = router;

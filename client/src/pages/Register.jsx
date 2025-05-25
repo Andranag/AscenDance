@@ -1,59 +1,69 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Form, Button } from 'semantic-ui-react';
+import { Container, Message } from 'semantic-ui-react';
+import { fetchPublic } from '../api';
 
 const Register = () => {
   const navigate = useNavigate();
+  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: formData.get('name'),
-        email: formData.get('email'),
-        password: formData.get('password')
-      })
-    });
-
-    if (!response.ok) throw new Error('Registration failed');
+    setLoading(true);
+    setError('');
     
-    const data = await response.json();
-    localStorage.setItem('token', data.token);
-    navigate('/courses');
+    const formData = new FormData(e.target);
+    try {
+      const data = await fetchPublic('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: formData.get('name'),
+          email: formData.get('email'),
+          password: formData.get('password')
+        })
+      });
+      
+      if (!data.token) {
+        throw new Error('Registration failed');
+      }
+      
+      localStorage.setItem('token', data.token);
+      navigate('/courses');
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError(error.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Container style={{ marginTop: '4em' }}>
-      <Form onSubmit={handleSubmit}>
-        <Form.Input
-          fluid
-          icon='user'
-          iconPosition='left'
-          name='name'
-          placeholder='Name'
-        />
-        <Form.Input
-          fluid
-          icon='mail'
-          iconPosition='left'
-          name='email'
-          placeholder='Email'
-        />
-        <Form.Input
-          fluid
-          icon='lock'
-          iconPosition='left'
-          name='password'
-          type='password'
-          placeholder='Password'
-        />
-        <Button type='submit' fluid primary>Register</Button>
-      </Form>
+      <h2>Register</h2>
+      {error && (
+        <Message negative>
+          <Message.Header>Error</Message.Header>
+          <p>{error}</p>
+        </Message>
+      )}
+      <form onSubmit={handleSubmit} className="ui form">
+        <div className="field">
+          <label>Name</label>
+          <input name="name" placeholder="Name" required />
+        </div>
+        <div className="field">
+          <label>Email</label>
+          <input name="email" type="email" placeholder="Email" required />
+        </div>
+        <div className="field">
+          <label>Password</label>
+          <input name="password" type="password" placeholder="Password" required />
+        </div>
+        <button type="submit" className="ui primary button" disabled={loading}>
+          {loading ? 'Registering...' : 'Register'}
+        </button>
+      </form>
     </Container>
   );
 };

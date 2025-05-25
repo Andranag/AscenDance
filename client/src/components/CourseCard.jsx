@@ -1,4 +1,4 @@
-import { Card, Button } from 'semantic-ui-react';
+import { Card } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 
 const CourseCard = ({ course }) => (
@@ -8,8 +8,8 @@ const CourseCard = ({ course }) => (
       <Card.Description>{course.description}</Card.Description>
     </Card.Content>
     <Card.Content extra>
-      <Link to={`/course/${course._id}`}>
-        <Button primary>Start Course</Button>
+      <Link to={`/course/${course._id}`} className='ui primary button'>
+        Start Course
       </Link>
     </Card.Content>
   </Card>
