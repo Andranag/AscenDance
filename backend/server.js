@@ -52,7 +52,10 @@ app.options('/api/auth/profile', (req, res) => {
 
 app.use(express.json());
 
+// Public routes
 app.use('/api/auth', authRoutes);
+
+// Mount course routes directly
 app.use('/api/courses', courseRoutes);
 
 // Health check endpoint

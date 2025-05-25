@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container as UIContainer, Grid as UIGrid } from 'semantic-ui-react';
 import CourseCard from '../components/CourseCard';
 import { Link } from 'react-router-dom';
-import { fetchWithAuth } from '../api';
+import { fetchWithAuth, fetchPublic } from '../api';
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -13,17 +13,8 @@ const Courses = () => {
     const fetchCourses = async () => {
       try {
         console.log('Fetching courses from:', '/api/courses');
-        const response = await fetchWithAuth('/api/courses');
+        const response = await fetchPublic('/api/courses');
         console.log('Raw response:', response);
-        
-        if (response.error) {
-          console.error('Error response:', {
-            error: response.error,
-            message: response.message
-          });
-          setError(response.message || 'Failed to load courses');
-          return;
-        }
         
         // Handle both array and object responses
         const courses = Array.isArray(response) ? response : response.data || [];
@@ -34,10 +25,11 @@ const Courses = () => {
             type: typeof courses,
             value: courses
           });
-          setError('Invalid response format from server');
+          setError('Failed to load courses. Please try again.');
           return;
         }
         
+        // Filter out courses with missing required fields
         const validCourses = courses.filter(course => 
           course && course.title && course.description
         );

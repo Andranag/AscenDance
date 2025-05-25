@@ -131,11 +131,23 @@ export const fetchPublic = async (endpoint, options = {}) => {
     });
     clearTimeout(timeoutId);
     
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || response.statusText);
+    // Handle both JSON and empty responses
+    const contentType = response.headers.get('content-type');
+    let data = null;
+    
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch (err) {
+        console.error('Error parsing JSON response:', err);
+      }
     }
-    return data;
+    
+    if (!response.ok) {
+      throw new Error(data?.message || response.statusText);
+    }
+    
+    return data || {}; // Return empty object if no data
   } catch (error) {
     console.error('API error:', error);
     throw error;
