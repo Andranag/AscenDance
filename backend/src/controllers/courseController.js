@@ -60,7 +60,7 @@ const unmarkLesson = async (req, res) => {
     });
 
     const { id, lessonIndex } = req.params;
-    const userId = req.user._id;
+    const userId = req.user._id.toString();
     const course = await Course.findById(id);
 
     if (!course) {
@@ -88,7 +88,7 @@ const unmarkLesson = async (req, res) => {
       index: course.lessons.indexOf(lesson)
     });
 
-    const progress = course.progress.find(p => p.userId.equals(userId));
+    const progress = course.progress.find(p => p.userId.toString() === userId);
     if (!progress) {
       console.error('User progress not found:', {
         userId,
@@ -97,7 +97,7 @@ const unmarkLesson = async (req, res) => {
       return res.status(404).json({ error: 'User progress not found' });
     }
 
-    const lessonIndexToRemove = progress.completedLessons.findIndex(cl => cl.lessonId.equals(lesson._id));
+    const lessonIndexToRemove = progress.completedLessons.findIndex(cl => cl.lessonId.toString() === lesson._id.toString());
     if (lessonIndexToRemove === -1) {
       console.error('Lesson not marked as complete:', {
         userId,
@@ -164,7 +164,7 @@ const markLessonComplete = async (req, res) => {
       index: course.lessons.indexOf(lesson)
     });
 
-    const progress = course.progress.find(p => p.userId.equals(userId));
+    const progress = course.progress.find(p => p.userId.toString() === userId.toString());
     if (progress) {
       progress.completedLessons.push({ lessonId: lesson._id });
     } else {
