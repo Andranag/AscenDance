@@ -1,6 +1,7 @@
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Header, Segment, Button, List } from 'semantic-ui-react';
-import { useState, useEffect } from 'react';
+import { Container, Header, Segment, List, Button } from 'semantic-ui-react';
+import { fetchWithAuth } from '../api';
 
 const CoursePage = () => {
   const { courseId } = useParams();
@@ -11,11 +12,10 @@ const CoursePage = () => {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const response = await fetch(`/api/courses/${courseId}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch course: ${response.status}`);
+        const data = await fetchWithAuth(`/api/courses/${courseId}`);
+        if (!data) {
+          throw new Error('Failed to fetch course data');
         }
-        const data = await response.json();
         setCourse(data);
         setError(null);
       } catch (err) {
