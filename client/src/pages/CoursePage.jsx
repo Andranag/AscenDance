@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Header, Segment, List, Button } from 'semantic-ui-react';
+import { Container, Header, Segment, List } from 'semantic-ui-react';
 import { fetchWithAuth } from '../api';
 
 const CoursePage = () => {
@@ -53,7 +53,7 @@ const CoursePage = () => {
       <Container>
         <Header as='h1'>Error</Header>
         <p>{error}</p>
-        <Button primary onClick={() => navigate('/courses')}>Back to Courses</Button>
+        <button className="ui primary button" onClick={() => navigate('/courses')}>Back to Courses</button>
       </Container>
     );
   }
@@ -68,25 +68,25 @@ const CoursePage = () => {
 
   return (
     <Container>
-      <Header as='h1'>{course.title}</Header>
+      <Header as='h1'>{course?.title}</Header>
       <Segment>
-        <p>{course.description}</p>
+        <p>{course?.description}</p>
       </Segment>
       
       <Header as='h2'>Lessons</Header>
       <List>
-        {course.lessons.map((lesson) => (
+        {course?.lessons?.map((lesson) => (
           <List.Item key={lesson._id}>
             <List.Content>
               <List.Header>{lesson.title}</List.Header>
               <List.Description>{lesson.content}</List.Description>
-              <Button 
-                primary 
+              <button 
+                className="ui primary button" 
                 onClick={() => handleComplete(lesson._id)}
                 disabled={lesson.completed}
               >
                 {lesson.completed ? 'Completed' : 'Mark as Complete'}
-              </Button>
+              </button>
             </List.Content>
           </List.Item>
         ))}
