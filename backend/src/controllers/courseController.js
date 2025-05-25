@@ -163,27 +163,38 @@ const unmarkLesson = async (req, res) => {
       lessonIndex: req.params.lessonIndex,
       userId: req.user._id
     });
-    res.status(500).json({ error: 'Failed to unmark lesson' });
+    res.status(500).json({ 
+      error: 'Failed to unmark lesson',
+      message: 'An unexpected error occurred while unmarking the lesson'
+    });
   }
-};
 
 const markLessonComplete = async (req, res) => {
   try {
     // Extract and validate parameters
     const { id: courseId, lessonIndex: lessonIndexStr } = req.params;
     if (!courseId || !lessonIndexStr) {
-      return res.status(400).json({ error: 'Missing required parameters' });
+      return res.status(400).json({ 
+        error: 'Missing required parameters',
+        message: 'Course ID and lesson index are required'
+      });
     }
 
     // Validate user authentication
     if (!req.user || !req.user._id) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'User authentication required'
+      });
     }
 
     // Convert lesson index
     const lessonIndex = parseInt(lessonIndexStr);
     if (isNaN(lessonIndex) || lessonIndex < 0) {
-      return res.status(400).json({ error: 'Invalid lesson index' });
+      return res.status(400).json({ 
+        error: 'Invalid lesson index',
+        message: 'Lesson index must be a non-negative number'
+      });
     }
 
     // Get user ID as string
@@ -254,9 +265,11 @@ const markLessonComplete = async (req, res) => {
     await course.save();
     console.log('Successfully marked lesson as complete:', {
       courseId,
+      lessonIndex,
       lessonId,
       userId,
-      totalLessons: userProgress.completedLessons.length
+      totalLessons: course.lessons.length,
+      completedLessons: userProgress.completedLessons.length
     });
 
     res.json({
@@ -276,6 +289,7 @@ const markLessonComplete = async (req, res) => {
       message: 'An error occurred while marking the lesson as complete'
     });
   }
+}
 };
 
 module.exports = {

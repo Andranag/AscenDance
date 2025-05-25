@@ -111,6 +111,9 @@ const CoursePage = () => {
     } catch (err) {
       console.error('Error marking lesson as complete:', err);
       setError('Failed to mark lesson as complete. Please try again.');
+      setTimeout(() => {
+        setError(null);
+      }, 3000);
     } finally {
       setLoading(false);
     }
