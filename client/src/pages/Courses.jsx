@@ -12,6 +12,7 @@ const Courses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
+        setLoading(true);
         console.log('Fetching courses from:', '/api/courses');
         const response = await fetchPublic('/api/courses');
         console.log('Raw response:', response);
@@ -26,6 +27,7 @@ const Courses = () => {
             value: courses
           });
           setError('Failed to load courses. Please try again.');
+          setLoading(false);
           return;
         }
         
@@ -38,6 +40,7 @@ const Courses = () => {
         if (validCourses.length === 0) {
           console.error('No valid courses found:', courses);
           setError('No valid courses found');
+          setLoading(false);
           return;
         }
         
@@ -46,6 +49,8 @@ const Courses = () => {
       } catch (error) {
         console.error('Error fetching courses:', error);
         setError('Failed to load courses. Please try again.');
+        setLoading(false);
+      } finally {
         setLoading(false);
       }
     };
@@ -73,6 +78,7 @@ const Courses = () => {
   }
 
   if (courses.length === 0) {
+    console.log('Courses data:', courses);
     return (
       <UIContainer>
         <h2>No courses available</h2>

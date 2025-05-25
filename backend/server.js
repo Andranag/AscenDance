@@ -27,6 +27,20 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ascendanc
 
 const app = express();
 
+// Debug endpoint to check available courses
+app.get('/api/debug/courses', async (req, res) => {
+  try {
+    const courses = await Course.find({}, 'title _id');
+    res.json({
+      count: courses.length,
+      courses
+    });
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    res.status(500).json({ error: 'Failed to fetch courses' });
+  }
+});
+
 // Ensure JWT_SECRET is configured
 if (!process.env.JWT_SECRET) {
   console.warn('JWT_SECRET not configured in environment. Using default value.');
@@ -55,7 +69,7 @@ app.use(express.json());
 // Public routes
 app.use('/api/auth', authRoutes);
 
-// Mount course routes directly
+// Mount course routes at /api/courses
 app.use('/api/courses', courseRoutes);
 
 // Health check endpoint
@@ -102,6 +116,11 @@ app.use((err, req, res, next) => {
   });
 });
 
+app.use((req, res, next) => {
+  console.warn('Unhandled route:', req.method, req.originalUrl);
+  next();
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -134,7 +153,7 @@ mongoose.connect(MONGODB_URI, {
     });
 
     // Start server after database connection
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT || 3050;
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

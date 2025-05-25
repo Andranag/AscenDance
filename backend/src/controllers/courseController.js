@@ -53,27 +53,62 @@ const getCourseById = async (req, res) => {
 
 const markLessonComplete = async (req, res) => {
   try {
-    const { courseId, lessonId } = req.params;
+    console.log('Mark lesson complete request received:', {
+      courseId: req.params.id,
+      lessonIndex: req.params.lessonIndex,
+      userId: req.user._id
+    });
+
+    const { id, lessonIndex } = req.params;
     const userId = req.user._id;
-    const course = await Course.findById(courseId);
+    const course = await Course.findById(id);
 
     if (!course) {
+      console.error('Course not found:', { courseId: id });
       return res.status(404).json({ error: 'Course not found' });
     }
 
+    console.log('Found course:', {
+      title: course.title,
+      lessonCount: course.lessons.length
+    });
+
+    // Find the lesson by its numeric index
+    const lesson = course.lessons[parseInt(lessonIndex)];
+    if (!lesson) {
+      console.error('Lesson not found:', {
+        courseId: id,
+        lessonIndex,
+        lessonCount: course.lessons.length
+      });
+      return res.status(404).json({ error: 'Lesson not found' });
+    }
+
+    console.log('Found lesson:', {
+      title: lesson.title,
+      index: course.lessons.indexOf(lesson)
+    });
+
     const progress = course.progress.find(p => p.userId.equals(userId));
     if (progress) {
-      progress.completedLessons.push({ lessonId });
+      progress.completedLessons.push({ lessonId: lesson._id });
     } else {
       course.progress.push({
         userId,
-        completedLessons: [{ lessonId }]
+        completedLessons: [{ lessonId: lesson._id }]
       });
     }
 
     await course.save();
+    console.log('Successfully marked lesson as complete:', {
+      courseId: id,
+      lessonId: lesson._id,
+      userId
+    });
     res.json(course);
   } catch (error) {
+    console.log(`[markLessonComplete] courseId=${id}, lessonId=${lessonIndex}, user=${userId}`);
+    console.error('Error marking lesson complete:', error);
     res.status(500).json({ error: 'Failed to mark lesson complete' });
   }
 };

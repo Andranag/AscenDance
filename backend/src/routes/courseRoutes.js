@@ -10,10 +10,7 @@ router.get('/', getAllCourses);
 // Protected: Access course content and track progress
 router.use(protect);
 router.get('/:id', getCourseById);
-router.post('/:id/lessons/:lessonId/complete', markLessonComplete);
+router.put('/:id/lessons/:lessonIndex/complete', protect, markLessonComplete);
 
-module.exports = router;
-
-
-
+console.log('Course routes loaded');
 module.exports = router;
