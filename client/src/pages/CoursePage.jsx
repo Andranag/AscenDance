@@ -6,6 +6,17 @@ import { fetchWithAuth } from '../api';
 const CoursePage = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const { courseId } = useParams();
+  const [course, setCourse] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // Check if user is authenticated
+  useEffect(() => {
+    if (!token) {
+      navigate('/login', { replace: true });
+    }
+  }, [token, navigate]);
 
   // Check if a lesson is completed for the current user
   const isLessonCompleted = (lessonId) => {
@@ -16,19 +27,6 @@ const CoursePage = () => {
     if (!userProgress) return false;
     return userProgress.completedLessons.some(cl => cl.lessonId.toString() === lessonId.toString());
   };
-
-  // Check if user is authenticated
-  useEffect(() => {
-    if (!token) {
-      navigate('/login', { replace: true });
-    }
-  }, [token, navigate]);
-
-  const { courseId } = useParams();
-  console.log('Route params:', useParams());
-  const [course, setCourse] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     console.log('Fetching course with ID:', courseId);
@@ -54,50 +52,58 @@ const CoursePage = () => {
   }, [courseId]);
 
   const handleComplete = async (lessonIndex) => {
+    if (loading) return; // Prevent multiple submissions
+    
     try {
       setLoading(true);
       
-      // Ensure we have a valid course and get the lesson
+      // Validate inputs
       if (!course || !course._id) {
         throw new Error('Course data not available');
       }
+      if (typeof lessonIndex !== 'number' || lessonIndex < 0 || lessonIndex >= course.lessons.length) {
+        throw new Error('Invalid lesson index');
+      }
       const lesson = course.lessons[lessonIndex];
-      if (!lesson) {
+      if (!lesson || !lesson._id) {
         throw new Error('Lesson not found');
       }
 
       console.log('Marking lesson as complete:', {
-        courseId,
+        courseId: course._id,
         lessonIndex,
         lessonId: lesson._id,
         lessonTitle: lesson.title,
-        endpoint: `/courses/${courseId}/lessons/${lessonIndex}/complete`
+        endpoint: `/api/courses/${course._id}/lessons/${lessonIndex}/complete`
       });
 
-      // Log the full request details
-      console.log('Request details:', {
+      // Make API request with proper headers
+      const response = await fetchWithAuth(`/api/courses/${course._id}/lessons/${lessonIndex}/complete`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': localStorage.getItem('token') ? 'Bearer [token]' : 'No token'
-        },
-        body: null
-      });
-
-      const response = await fetchWithAuth(`/api/courses/${courseId}/lessons/${lessonIndex}/complete`, {
-        method: 'PUT'
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
 
       if (!response) {
         throw new Error('No response from server');
       }
 
-      setCourse(prevCourse => ({
-        ...prevCourse,
-        ...response
-      }));
-      setError(null);
+      // Update state and localStorage
+      setCourse(response);
+      if (localStorage.getItem('token')) {
+        const storedUser = JSON.parse(localStorage.getItem('user'));
+        if (storedUser) {
+          localStorage.setItem('user', JSON.stringify({
+            ...storedUser,
+            progress: response.progress
+          }));
+        }
+      }
 
+      setError(null);
+      
       // Show success message
       setTimeout(() => {
         setError(null);
@@ -108,43 +114,61 @@ const CoursePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const handleUnmark = async (lessonIndex) => {
+    if (loading) return; // Prevent multiple submissions
+    
     try {
       setLoading(true);
       
-      // Ensure we have a valid course and get the lesson
+      // Validate inputs
       if (!course || !course._id) {
         throw new Error('Course data not available');
       }
+      if (typeof lessonIndex !== 'number' || lessonIndex < 0 || lessonIndex >= course.lessons.length) {
+        throw new Error('Invalid lesson index');
+      }
       const lesson = course.lessons[lessonIndex];
-      if (!lesson) {
+      if (!lesson || !lesson._id) {
         throw new Error('Lesson not found');
       }
 
       console.log('Unmarking lesson:', {
-        courseId,
+        courseId: course._id,
         lessonIndex,
         lessonId: lesson._id,
         lessonTitle: lesson.title,
-        endpoint: `/api/courses/${courseId}/lessons/${lessonIndex}/complete`
+        endpoint: `/api/courses/${course._id}/lessons/${lessonIndex}/complete`
       });
 
-      const response = await fetchWithAuth(`/api/courses/${courseId}/lessons/${lessonIndex}/complete`, {
-        method: 'DELETE'
+      // Make API request with proper headers
+      const response = await fetchWithAuth(`/api/courses/${course._id}/lessons/${lessonIndex}/complete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
 
       if (!response) {
         throw new Error('No response from server');
       }
 
-      setCourse(prevCourse => ({
-        ...prevCourse,
-        ...response
-      }));
-      setError(null);
+      // Update state and localStorage
+      setCourse(response);
+      if (localStorage.getItem('token')) {
+        const storedUser = JSON.parse(localStorage.getItem('user'));
+        if (storedUser) {
+          localStorage.setItem('user', JSON.stringify({
+            ...storedUser,
+            progress: response.progress
+          }));
+        }
+      }
 
+      setError(null);
+      
       // Show success message
       setTimeout(() => {
         setError(null);
@@ -152,6 +176,9 @@ const CoursePage = () => {
     } catch (err) {
       console.error('Error unmarking lesson:', err);
       setError('Failed to unmark lesson. Please try again.');
+      setTimeout(() => {
+        setError(null);
+      }, 3000);
     } finally {
       setLoading(false);
     }

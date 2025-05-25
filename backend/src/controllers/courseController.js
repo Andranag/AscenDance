@@ -53,70 +53,109 @@ const getCourseById = async (req, res) => {
 
 const unmarkLesson = async (req, res) => {
   try {
-    console.log('Unmark lesson request received:', {
-      courseId: req.params.id,
-      lessonIndex: req.params.lessonIndex,
-      userId: req.user._id
-    });
-
-    const { id, lessonIndex } = req.params;
-    const userId = req.user._id.toString();
-    console.log('User ID for progress:', userId);
-    const course = await Course.findById(id);
-
-    if (!course) {
-      console.error('Course not found:', { courseId: id });
-      return res.status(404).json({ error: 'Course not found' });
+    // Extract and validate parameters
+    const { id: courseId, lessonIndex: lessonIndexStr } = req.params;
+    if (!courseId || !lessonIndexStr) {
+      return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    console.log('Found course:', {
-      title: course.title,
-      lessonCount: course.lessons.length
+    // Validate user authentication
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Convert lesson index
+    const lessonIndex = parseInt(lessonIndexStr);
+    if (isNaN(lessonIndex) || lessonIndex < 0) {
+      return res.status(400).json({ error: 'Invalid lesson index' });
+    }
+
+    // Get user ID as string
+    const userId = req.user._id.toString();
+
+    // Log request
+    console.log('Unmark lesson request received:', {
+      courseId,
+      lessonIndex,
+      userId
     });
 
-    const lesson = course.lessons[parseInt(lessonIndex)];
+    // Fetch and validate course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      console.error('Course not found:', { courseId });
+      return res.status(404).json({ 
+        error: 'Course not found',
+        message: 'The specified course does not exist'
+      });
+    }
+
+    // Validate lesson index against course
+    if (lessonIndex >= course.lessons.length) {
+      return res.status(400).json({ 
+        error: 'Lesson not found',
+        message: 'The specified lesson index is out of range'
+      });
+    }
+
+    // Get and validate lesson
+    const lesson = course.lessons[lessonIndex];
     if (!lesson) {
       console.error('Lesson not found:', {
-        courseId: id,
+        courseId,
         lessonIndex,
         lessonCount: course.lessons.length
       });
-      return res.status(404).json({ error: 'Lesson not found' });
-    }
-
-    console.log('Found lesson:', {
-      title: lesson.title,
-      index: course.lessons.indexOf(lesson)
-    });
-
-    const progress = course.progress.find(p => p.userId.toString() === userId);
-    if (!progress) {
-      console.error('User progress not found:', {
-        userId,
-        courseId: id
+      return res.status(404).json({ 
+        error: 'Lesson not found',
+        message: 'The specified lesson does not exist'
       });
-      return res.status(404).json({ error: 'User progress not found' });
     }
 
-    const lessonIndexToRemove = progress.completedLessons.findIndex(cl => cl.lessonId.toString() === lesson._id.toString());
-    console.log('Lesson ID comparison:', { lessonId: lesson._id.toString(), completedLessonId: progress.completedLessons[lessonIndexToRemove]?.lessonId.toString() });
-    if (lessonIndexToRemove === -1) {
-      console.error('Lesson not marked as complete:', {
+
+    // Find or create user progress
+    const userProgress = course.progress.find(p => p.userId.toString() === userId);
+    if (!userProgress) {
+      // Create new progress entry if it doesn't exist
+      course.progress.push({
         userId,
-        courseId: id,
-        lessonId: lesson._id
+        completedLessons: []
       });
-      return res.status(404).json({ error: 'Lesson not marked as complete' });
+      await course.save();
+      return res.status(400).json({ 
+        error: 'No progress to unmark',
+        message: 'You have not marked any lessons in this course'
+      });
     }
 
-    progress.completedLessons.splice(lessonIndexToRemove, 1);
+    // Convert lesson ID to string
+    const lessonId = lesson._id.toString();
+    
+    // Check if lesson is marked as complete
+    const completedLesson = userProgress.completedLessons.find(cl => cl.lessonId.toString() === lessonId);
+    if (!completedLesson) {
+      return res.status(400).json({ 
+        error: 'Lesson not marked',
+        message: 'This lesson is not marked as complete'
+      });
+    }
+
+    // Remove the lesson from completedLessons
+    userProgress.completedLessons = userProgress.completedLessons.filter(cl => cl.lessonId.toString() !== lessonId);
+    
     await course.save();
     console.log('Successfully unmarked lesson:', {
-      courseId: id,
-      lessonId: lesson._id,
-      userId
+      courseId,
+      lessonId,
+      userId,
+      remainingLessons: userProgress.completedLessons.length
     });
-    res.json(course);
+    
+    res.json({
+      success: true,
+      data: course,
+      message: 'Successfully unmarked lesson'
+    });
   } catch (error) {
     console.error('Error unmarking lesson:', {
       error,
@@ -130,63 +169,112 @@ const unmarkLesson = async (req, res) => {
 
 const markLessonComplete = async (req, res) => {
   try {
-    console.log('Mark lesson complete request received:', {
-      courseId: req.params.id,
-      lessonIndex: req.params.lessonIndex,
-      userId: req.user._id
-    });
-
-    const { id, lessonIndex } = req.params;
-    const userId = req.user._id;
-    const course = await Course.findById(id);
-
-    if (!course) {
-      console.error('Course not found:', { courseId: id });
-      return res.status(404).json({ error: 'Course not found' });
+    // Extract and validate parameters
+    const { id: courseId, lessonIndex: lessonIndexStr } = req.params;
+    if (!courseId || !lessonIndexStr) {
+      return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    console.log('Found course:', {
-      title: course.title,
-      lessonCount: course.lessons.length
+    // Validate user authentication
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Convert lesson index
+    const lessonIndex = parseInt(lessonIndexStr);
+    if (isNaN(lessonIndex) || lessonIndex < 0) {
+      return res.status(400).json({ error: 'Invalid lesson index' });
+    }
+
+    // Get user ID as string
+    const userId = req.user._id.toString();
+
+    // Log request
+    console.log('Mark lesson complete request received:', {
+      courseId,
+      lessonIndex,
+      userId
     });
 
-    // Find the lesson by its numeric index
-    const lesson = course.lessons[parseInt(lessonIndex)];
+    // Fetch and validate course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      console.error('Course not found:', { courseId });
+      return res.status(404).json({ 
+        error: 'Course not found',
+        message: 'The specified course does not exist'
+      });
+    }
+
+    // Validate lesson index against course
+    if (lessonIndex >= course.lessons.length) {
+      return res.status(400).json({ 
+        error: 'Lesson not found',
+        message: 'The specified lesson index is out of range'
+      });
+    }
+
+    // Get and validate lesson
+    const lesson = course.lessons[lessonIndex];
     if (!lesson) {
       console.error('Lesson not found:', {
-        courseId: id,
+        courseId,
         lessonIndex,
         lessonCount: course.lessons.length
       });
-      return res.status(404).json({ error: 'Lesson not found' });
+      return res.status(404).json({ 
+        error: 'Lesson not found',
+        message: 'The specified lesson does not exist'
+      });
     }
 
-    console.log('Found lesson:', {
-      title: lesson.title,
-      index: course.lessons.indexOf(lesson)
-    });
+    // Convert lesson ID to string
+    const lessonId = lesson._id.toString();
 
-    const progress = course.progress.find(p => p.userId.toString() === userId.toString());
-    if (progress) {
-      progress.completedLessons.push({ lessonId: lesson._id });
-    } else {
+    // Find user progress
+    const userProgress = course.progress.find(p => p.userId.toString() === userId);
+    if (!userProgress) {
+      // Create new progress entry
       course.progress.push({
         userId,
-        completedLessons: [{ lessonId: lesson._id }]
+        completedLessons: [{ lessonId }]
       });
+    } else {
+      // Check if lesson is already marked as complete
+      const existing = userProgress.completedLessons.find(cl => cl.lessonId.toString() === lessonId);
+      if (existing) {
+        return res.status(400).json({ 
+          error: 'Lesson already marked',
+          message: 'This lesson is already marked as complete'
+        });
+      }
+      userProgress.completedLessons.push({ lessonId });
     }
 
     await course.save();
     console.log('Successfully marked lesson as complete:', {
-      courseId: id,
-      lessonId: lesson._id,
+      courseId,
+      lessonId,
+      userId,
+      totalLessons: userProgress.completedLessons.length
+    });
+
+    res.json({
+      success: true,
+      data: course,
+      message: 'Successfully marked lesson as complete'
+    });
+  } catch (error) {
+    console.error('Error marking lesson complete:', {
+      error,
+      courseId,
+      lessonIndex,
       userId
     });
-    res.json(course);
-  } catch (error) {
-    console.log(`[markLessonComplete] courseId=${id}, lessonId=${lessonIndex}, user=${userId}`);
-    console.error('Error marking lesson complete:', error);
-    res.status(500).json({ error: 'Failed to mark lesson complete' });
+    res.status(500).json({ 
+      error: 'Failed to mark lesson complete',
+      message: 'An error occurred while marking the lesson as complete'
+    });
   }
 };
 
