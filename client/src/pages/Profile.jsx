@@ -75,12 +75,23 @@ const Profile = () => {
       }
       console.log('Token exists:', token);
 
-      const data = await fetchWithAuth('/api/auth/profile', {
+      const response = await fetchWithAuth('/api/auth/profile', {
         method: 'PUT',
         body: JSON.stringify(updates)
       });
-      setUser(data);
-      return data;
+      
+      // The backend returns a nested response structure
+      const updatedData = response.data;
+      
+      // Store the updated user data in localStorage
+      localStorage.setItem('user', JSON.stringify({
+        _id: updatedData.id,
+        name: updatedData.name,
+        email: updatedData.email
+      }));
+      
+      setUser(updatedData);
+      return updatedData;
     } catch (err) {
       console.error('Error updating profile:', err);
       
