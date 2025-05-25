@@ -1,38 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { 
-  createCourse, 
-  getAllCourses, 
-  getCourseById, 
-  updateCourse, 
-  deleteCourse, 
-  enrollInCourse, 
-  getUserCourses 
-} = require('../controllers/courseController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { getAllCourses, getCourseById, markLessonComplete } = require('../controllers/courseController');
+const { protect } = require('../middleware/authMiddleware');
 
 // Apply protection middleware to all routes
 router.use(protect);
 
-// Create a new course (admin only)
-router.post('/', authorize(['admin']), createCourse);
-
 // Get all courses
 router.get('/', getAllCourses);
 
-// Get user's enrolled courses
-router.get('/user-courses', getUserCourses);
-
-// Get a single course
+// Get course by ID
 router.get('/:id', getCourseById);
 
-// Update a course (admin only)
-router.put('/:id', authorize(['admin']), updateCourse);
-
-// Delete a course (admin only)
-router.delete('/:id', authorize(['admin']), deleteCourse);
-
-// Enroll in a course
-router.post('/:id/enroll', enrollInCourse);
+// Mark lesson as complete
+router.post('/:id/lessons/:lessonId/complete', markLessonComplete);
 
 module.exports = router;

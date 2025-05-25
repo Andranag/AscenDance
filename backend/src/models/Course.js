@@ -3,67 +3,35 @@ const mongoose = require('mongoose');
 const courseSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true
-  },
-  image: {
-    type: String
-  },
-  instructor: {
-    type: String,
-    required: true
-  },
-  level: {
-    type: String,
-    enum: ['Beginner', 'Intermediate', 'Advanced'],
     required: true,
-    default: 'Beginner'
+    trim: true
   },
   description: {
     type: String,
     required: true
   },
-  price: {
-    type: Number,
-    required: true
-  },
-  duration: {
-    type: String,
-    required: true
-  },
-  startDate: {
-    type: Date,
-    required: true
-  },
-  recurringTime: {
-    type: String,
-    required: true
-  },
-  maxSpots: {
-    type: Number,
-    required: true
-  },
-  sessions: [{
-    sessionDate: { type: Date, required: true },
-    bookedSpots: { type: Number, default: 0 },
-    status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' }
-  }],
-  enrolledStudents: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  content: [{
+  lessons: [{
     title: String,
-    type: String,
-    url: String
+    content: String,
+    type: {
+      type: String,
+      enum: ['video', 'article']
+    }
   }],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
+  progress: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    completedLessons: [{
+      lessonId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Lesson'
+      }
+    }]
+  }]
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('Course', courseSchema);
