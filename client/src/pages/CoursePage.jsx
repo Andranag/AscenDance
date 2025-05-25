@@ -71,7 +71,7 @@ const CoursePage = () => {
         lessonIndex,
         lessonId: lesson._id,
         lessonTitle: lesson.title,
-        endpoint: `/api/courses/${courseId}/lessons/${lessonIndex}/complete`
+        endpoint: `/courses/${courseId}/lessons/${lessonIndex}/complete`
       });
 
       // Log the full request details
@@ -79,7 +79,7 @@ const CoursePage = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: localStorage.getItem('token') ? 'Bearer [token]' : 'No token'
+          'Authorization': localStorage.getItem('token') ? 'Bearer [token]' : 'No token'
         },
         body: null
       });
@@ -88,15 +88,10 @@ const CoursePage = () => {
         method: 'PUT'
       });
 
-      console.log('API Response:', response);
-      console.log('Course data before update:', course);
-      console.log('Response data:', response);
-
       if (!response) {
         throw new Error('No response from server');
       }
 
-      // Update the course state with the new data
       setCourse(prevCourse => ({
         ...prevCourse,
         ...response
@@ -110,6 +105,53 @@ const CoursePage = () => {
     } catch (err) {
       console.error('Error marking lesson as complete:', err);
       setError('Failed to mark lesson as complete. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUnmark = async (lessonIndex) => {
+    try {
+      setLoading(true);
+      
+      // Ensure we have a valid course and get the lesson
+      if (!course || !course._id) {
+        throw new Error('Course data not available');
+      }
+      const lesson = course.lessons[lessonIndex];
+      if (!lesson) {
+        throw new Error('Lesson not found');
+      }
+
+      console.log('Unmarking lesson:', {
+        courseId,
+        lessonIndex,
+        lessonId: lesson._id,
+        lessonTitle: lesson.title,
+        endpoint: `/api/courses/${courseId}/lessons/${lessonIndex}/complete`
+      });
+
+      const response = await fetchWithAuth(`/api/courses/${courseId}/lessons/${lessonIndex}/complete`, {
+        method: 'DELETE'
+      });
+
+      if (!response) {
+        throw new Error('No response from server');
+      }
+
+      setCourse(prevCourse => ({
+        ...prevCourse,
+        ...response
+      }));
+      setError(null);
+
+      // Show success message
+      setTimeout(() => {
+        setError(null);
+      }, 3000);
+    } catch (err) {
+      console.error('Error unmarking lesson:', err);
+      setError('Failed to unmark lesson. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -152,13 +194,14 @@ const CoursePage = () => {
               <List.Description>{lesson.content}</List.Description>
               <button 
                 className={`ui ${isLessonCompleted(lesson._id) ? 'green' : 'primary'} button`} 
-                onClick={() => handleComplete(index)}
-                disabled={isLessonCompleted(lesson._id) || loading}
+                onClick={() => isLessonCompleted(lesson._id) ? handleUnmark(index) : handleComplete(index)}
+                disabled={loading}
                 style={{ width: '100%' }}
               >
                 {isLessonCompleted(lesson._id) ? (
                   <>
                     <Icon name='checkmark' /> Completed
+                    <Icon name='undo' style={{ marginLeft: '8px' }} />
                   </>
                 ) : loading ? (
                   <>

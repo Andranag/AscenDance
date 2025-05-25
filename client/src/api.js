@@ -67,7 +67,7 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
   };
 
   try {
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
     console.log('Making request to:', url);
     console.log('Request headers:', headers);
     
@@ -117,7 +117,7 @@ export const fetchPublic = async (endpoint, options = {}) => {
   };
 
   try {
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
     console.log(`Making public request to: ${url}`);
     
     // Add a timeout to prevent hanging requests

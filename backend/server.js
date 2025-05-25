@@ -69,7 +69,7 @@ app.use(express.json());
 // Public routes
 app.use('/api/auth', authRoutes);
 
-// Mount course routes at /api/courses
+// Protected routes
 app.use('/api/courses', courseRoutes);
 
 // Health check endpoint

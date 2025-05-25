@@ -51,6 +51,81 @@ const getCourseById = async (req, res) => {
   }
 };
 
+const unmarkLesson = async (req, res) => {
+  try {
+    console.log('Unmark lesson request received:', {
+      courseId: req.params.id,
+      lessonIndex: req.params.lessonIndex,
+      userId: req.user._id
+    });
+
+    const { id, lessonIndex } = req.params;
+    const userId = req.user._id;
+    const course = await Course.findById(id);
+
+    if (!course) {
+      console.error('Course not found:', { courseId: id });
+      return res.status(404).json({ error: 'Course not found' });
+    }
+
+    console.log('Found course:', {
+      title: course.title,
+      lessonCount: course.lessons.length
+    });
+
+    const lesson = course.lessons[parseInt(lessonIndex)];
+    if (!lesson) {
+      console.error('Lesson not found:', {
+        courseId: id,
+        lessonIndex,
+        lessonCount: course.lessons.length
+      });
+      return res.status(404).json({ error: 'Lesson not found' });
+    }
+
+    console.log('Found lesson:', {
+      title: lesson.title,
+      index: course.lessons.indexOf(lesson)
+    });
+
+    const progress = course.progress.find(p => p.userId.equals(userId));
+    if (!progress) {
+      console.error('User progress not found:', {
+        userId,
+        courseId: id
+      });
+      return res.status(404).json({ error: 'User progress not found' });
+    }
+
+    const lessonIndexToRemove = progress.completedLessons.findIndex(cl => cl.lessonId.equals(lesson._id));
+    if (lessonIndexToRemove === -1) {
+      console.error('Lesson not marked as complete:', {
+        userId,
+        courseId: id,
+        lessonId: lesson._id
+      });
+      return res.status(404).json({ error: 'Lesson not marked as complete' });
+    }
+
+    progress.completedLessons.splice(lessonIndexToRemove, 1);
+    await course.save();
+    console.log('Successfully unmarked lesson:', {
+      courseId: id,
+      lessonId: lesson._id,
+      userId
+    });
+    res.json(course);
+  } catch (error) {
+    console.error('Error unmarking lesson:', {
+      error,
+      courseId: req.params.id,
+      lessonIndex: req.params.lessonIndex,
+      userId: req.user._id
+    });
+    res.status(500).json({ error: 'Failed to unmark lesson' });
+  }
+};
+
 const markLessonComplete = async (req, res) => {
   try {
     console.log('Mark lesson complete request received:', {
@@ -116,5 +191,6 @@ const markLessonComplete = async (req, res) => {
 module.exports = {
   getAllCourses,
   getCourseById,
-  markLessonComplete
+  markLessonComplete,
+  unmarkLesson
 };
