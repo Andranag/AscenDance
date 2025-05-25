@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Header, Segment, List } from 'semantic-ui-react';
+import { Container, Header, Segment, List, Icon } from 'semantic-ui-react';
 import { fetchWithAuth } from '../api';
 
 const CoursePage = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+
+  // Check if a lesson is completed for the current user
+  const isLessonCompleted = (lessonId) => {
+    if (!course?.progress) return false;
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (!storedUser) return false;
+    const userProgress = course.progress.find(p => p.userId.toString() === storedUser._id);
+    if (!userProgress) return false;
+    return userProgress.completedLessons.some(cl => cl.lessonId.toString() === lessonId.toString());
+  };
 
   // Check if user is authenticated
   useEffect(() => {
@@ -92,6 +102,11 @@ const CoursePage = () => {
         ...response
       }));
       setError(null);
+
+      // Show success message
+      setTimeout(() => {
+        setError(null);
+      }, 3000);
     } catch (err) {
       console.error('Error marking lesson as complete:', err);
       setError('Failed to mark lesson as complete. Please try again.');
@@ -130,15 +145,30 @@ const CoursePage = () => {
         {course?.lessons?.map((lesson, index) => (
           <List.Item key={lesson._id}>
             <List.Content>
-              <List.Header>{lesson.title}</List.Header>
+              <List.Header>
+                {lesson.title}
+                {isLessonCompleted(lesson._id) && <Icon name='check circle' color='green' size='small' style={{ marginLeft: '8px' }} />}
+              </List.Header>
               <List.Description>{lesson.content}</List.Description>
               <button 
-                className="ui primary button" 
+                className={`ui ${isLessonCompleted(lesson._id) ? 'green' : 'primary'} button`} 
                 onClick={() => handleComplete(index)}
-                disabled={lesson.completed || loading}
+                disabled={isLessonCompleted(lesson._id) || loading}
                 style={{ width: '100%' }}
               >
-                {lesson.completed ? 'Completed' : loading ? 'Marking...' : 'Mark as Complete'}
+                {isLessonCompleted(lesson._id) ? (
+                  <>
+                    <Icon name='checkmark' /> Completed
+                  </>
+                ) : loading ? (
+                  <>
+                    <Icon name='spinner' loading /> Marking...
+                  </>
+                ) : (
+                  <>
+                    <Icon name='check circle outline' /> Mark as Complete
+                  </>
+                )}
               </button>
             </List.Content>
           </List.Item>
