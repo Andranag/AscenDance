@@ -20,8 +20,8 @@ const register = async (req, res) => {
       password
     });
 
-    // Create JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    // Create JWT token using the same method as authMiddleware
+    const token = generateToken(user._id);
 
     res.json({
       token,

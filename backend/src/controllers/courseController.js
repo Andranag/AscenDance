@@ -61,6 +61,7 @@ const unmarkLesson = async (req, res) => {
 
     const { id, lessonIndex } = req.params;
     const userId = req.user._id.toString();
+    console.log('User ID for progress:', userId);
     const course = await Course.findById(id);
 
     if (!course) {
@@ -98,6 +99,7 @@ const unmarkLesson = async (req, res) => {
     }
 
     const lessonIndexToRemove = progress.completedLessons.findIndex(cl => cl.lessonId.toString() === lesson._id.toString());
+    console.log('Lesson ID comparison:', { lessonId: lesson._id.toString(), completedLessonId: progress.completedLessons[lessonIndexToRemove]?.lessonId.toString() });
     if (lessonIndexToRemove === -1) {
       console.error('Lesson not marked as complete:', {
         userId,
