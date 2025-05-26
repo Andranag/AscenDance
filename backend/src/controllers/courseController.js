@@ -114,6 +114,8 @@ const unmarkLesson = async (req, res) => {
       lessonId: lesson._id,
       userId
     });
+    
+    // Return the course object directly
     res.json(course);
   } catch (error) {
     console.error('Error unmarking lesson:', {
@@ -182,11 +184,8 @@ const markLessonComplete = async (req, res) => {
       userId
     });
     
-    // Return the entire course object
-    res.json({
-      success: true,
-      data: course
-    });
+    // Return the course object directly
+    res.json(course);
   } catch (error) {
     console.error('Error marking lesson complete:', {
       error,

@@ -83,8 +83,11 @@ const CoursePage = () => {
       }
 
       // Update the local state with the new course data
-      if (response.data) {
+      if (response && response.data) {
         setCourse(response.data);
+      } else {
+        console.error('Invalid response format:', response);
+        throw new Error('Invalid response format from server');
       }
       setError(null);
 
@@ -130,8 +133,13 @@ const CoursePage = () => {
       }
 
       // Update the local state with the new course data
-      if (response.data) {
-        setCourse(response.data);
+      if (response) {
+        // Handle both direct course object and nested response
+        const newCourseData = response.data || response;
+        setCourse(newCourseData);
+      } else {
+        console.error('No response received');
+        throw new Error('No response from server');
       }
       setError(null);
 
