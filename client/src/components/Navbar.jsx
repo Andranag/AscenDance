@@ -61,8 +61,8 @@ const Navbar = () => {
           <Menu.Item
             as={Link}
             to="/login"
-            name="signin"
-            active={activeItem === 'signin'}
+            name="login"
+            active={activeItem === 'login'}
             onClick={handleItemClick}
           >
             Sign In
@@ -74,7 +74,7 @@ const Navbar = () => {
             active={activeItem === 'register'}
             onClick={handleItemClick}
           >
-            Register
+            Sign Up
           </Menu.Item>
         </>
       )}

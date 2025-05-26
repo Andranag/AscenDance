@@ -1,55 +1,49 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { fetchPublic } from '../api';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { Container, Form, Input, Button, Message, Segment, Icon } from 'semantic-ui-react';
 import { authContainerStyle, authFormContainerStyle, authFormStyle, authButtonStyle, authLinkStyle } from '../styles/authStyles';
 
-const Register = () => {
+const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const { login } = useAuth();
   const { toastSuccess, toastError } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
-    // Validate password match
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
     setLoading(true);
     try {
-      const response = await fetchPublic('/api/auth/register', {
+      // Make login request
+      const response = await fetchPublic('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          name,
-          email,
-          password
-        })
+        body: JSON.stringify({ email, password })
       });
 
-      // Store token and navigate
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/courses');
+      // Use AuthContext to handle login
+      await login(response.data.token, response.data.user);
 
       // Show success message
-      toastSuccess('Registration successful!');
+      toastSuccess('Login successful!');
+
+      // Navigate to appropriate page
+      navigate(response.data.user.role === 'admin' ? '/admin' : '/courses');
     } catch (error) {
-      console.error('Registration error:', error);
-      setError(error.message || 'Registration failed. Please try again.');
-      toastError(error.message || 'Registration failed. Please try again.');
+      console.error('Login error:', error);
+      setError(error.message || 'Login failed. Please try again.');
+      toastError(error.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -58,7 +52,7 @@ const Register = () => {
   return (
     <Container text style={authContainerStyle}>
       <Segment style={authFormContainerStyle}>
-        <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Sign Up</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Sign In</h2>
         {error && (
           <Message error content={error} />
         )}
@@ -67,45 +61,40 @@ const Register = () => {
             <Input
               icon='user'
               iconPosition='left'
-              type="text"
-              placeholder='Name'
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </Form.Field>
-          <Form.Field>
-            <Input
-              icon='mail'
-              iconPosition='left'
               type="email"
               placeholder='Email'
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete={rememberMe ? 'username' : 'off'}
             />
           </Form.Field>
           <Form.Field>
             <Input
               icon='lock'
               iconPosition='left'
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder='Password'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete={rememberMe ? 'on' : 'off'}
+              action={{
+                icon: showPassword ? 'eye slash' : 'eye',
+                onClick: () => setShowPassword(!showPassword)
+              }}
             />
           </Form.Field>
           <Form.Field>
-            <Input
-              icon='lock'
-              iconPosition='left'
-              type="password"
-              placeholder='Confirm Password'
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{ marginRight: '0.5rem' }}
+              />
+              <label style={{ fontSize: '0.9rem', color: '#666' }}>Remember Me</label>
+            </div>
           </Form.Field>
           <Button
             type="submit"
@@ -115,11 +104,11 @@ const Register = () => {
             disabled={loading}
             style={authButtonStyle}
           >
-            {loading ? 'Registering...' : 'Sign Up'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </Button>
           <div style={{ textAlign: 'center' }}>
-            <Link to="/login" style={authLinkStyle}>
-              Already have an account? Sign In
+            <Link to="/register" style={authLinkStyle}>
+              Don't have an account? Sign Up
             </Link>
           </div>
         </Form>
@@ -128,4 +117,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Login;
