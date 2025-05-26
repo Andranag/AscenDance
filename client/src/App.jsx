@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
+import SignIn from './pages/SignIn';
 import Register from './pages/Register';
 import Courses from './pages/Courses';
 import CoursePage from './pages/CoursePage';
@@ -20,7 +20,7 @@ function App() {
             <Navbar />
             <Routes>
               <Route path="/" element={<Courses />} />
-              <Route path="/login" element={<Login />} />
+              <Route path="/login" element={<SignIn />} />
               <Route path="/register" element={<Register />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/course/:courseId" element={<CoursePage />} />

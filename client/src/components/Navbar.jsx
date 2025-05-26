@@ -61,11 +61,11 @@ const Navbar = () => {
           <Menu.Item
             as={Link}
             to="/login"
-            name="login"
-            active={activeItem === 'login'}
+            name="signin"
+            active={activeItem === 'signin'}
             onClick={handleItemClick}
           >
-            Login
+            Sign In
           </Menu.Item>
           <Menu.Item
             as={Link}
