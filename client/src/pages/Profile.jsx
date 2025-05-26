@@ -38,16 +38,20 @@ const Profile = () => {
 
         // If not in localStorage, fetch from API
         const response = await fetchWithAuth('/api/auth/profile');
+        console.log('Profile response:', response);
+        
+        // Ensure we have user data
+        const userData = response.data || response.user || {};
         
         // Store the user data in localStorage
         localStorage.setItem('user', JSON.stringify({
-          _id: response.user.id,
-          name: response.user.name,
-          email: response.user.email,
-          role: response.user.role || 'user'  // Default to 'user' if no role
+          _id: userData._id || userData.user?.id || Date.now().toString(),
+          name: userData.name || userData.user?.name || userData.user?.username || userData.username || email.split('@')[0],
+          email: email,
+          role: userData.role || userData.user?.role || 'user'
         }));
         
-        setUser(response.user);
+        setUser(userData);
       } catch (err) {
         console.error('Error fetching profile:', err);
         

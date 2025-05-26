@@ -39,6 +39,31 @@ const protect = async (req, res, next) => {
   }
 };
 
+const generateToken = (user) => {
+  const secret = 'ascendance-secret-key-2025';
+  const token = jwt.sign({ id: user._id }, secret);
+  return token;
+};
+
+const isAdmin = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    if (!req.user.isAdmin()) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Admin check error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
-  protect
+  protect,
+  generateToken,
+  isAdmin
 };

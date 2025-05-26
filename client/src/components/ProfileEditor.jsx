@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../contexts/ToastContext';
 
 const ProfileEditor = ({ 
   user = { name: '', email: '' }, 
@@ -6,8 +7,7 @@ const ProfileEditor = ({
 }) => {
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const { toastSuccess, toastError } = useToast();
   const [formData, setFormData] = useState({
     name: user.name || '',
     email: user.email || ''
@@ -35,9 +35,6 @@ const ProfileEditor = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
-    
     try {
       // Only send name and email in the update
       const updateData = {
@@ -45,9 +42,10 @@ const ProfileEditor = ({
         email: formData.email
       };
       await onUpdate(updateData);
-      setSuccess('Profile updated successfully!');
+      toastSuccess('Profile updated successfully!', { duration: 3000 });
     } catch (err) {
-      setError(err.message || 'Failed to update profile. Please try again.');
+      const errorMessage = err.message || 'Failed to update profile. Please try again.';
+      toastError(errorMessage, { duration: 3000 });
     } finally {
       setLoading(false);
     }
@@ -56,39 +54,16 @@ const ProfileEditor = ({
   return (
     <div>
       {loading && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          padding: '1rem',
-          backgroundColor: '#f8f8f8',
-          borderRadius: '0.25rem',
-          marginBottom: '1rem'
-        }}>
-          <div className="ui active inline loader"></div>
-          <span>Updating profile...</span>
-        </div>
-      )}
-      {error && (
-        <div style={{
-          padding: '1rem',
-          backgroundColor: '#fef3f3',
-          borderRadius: '0.25rem',
-          color: '#c4302b',
-          marginBottom: '1rem'
-        }}>
-          {error}
-        </div>
-      )}
-      {success && (
-        <div style={{
-          padding: '1rem',
-          backgroundColor: '#f8fdf6',
-          borderRadius: '0.25rem',
-          color: '#21ba45',
-          marginBottom: '1rem'
-        }}>
-          {success}
+        <div className="ui form" style={{ maxWidth: '600px', margin: '2rem auto' }}>
+          <div style={{
+            padding: '1rem',
+            backgroundColor: '#f8f8f8',
+            borderRadius: '0.25rem',
+            marginBottom: '1rem'
+          }}>
+            <div className="ui active inline loader"></div>
+            <span>Updating profile...</span>
+          </div>
         </div>
       )}
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

@@ -1,12 +1,21 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const { generateToken } = require('../middleware/authMiddleware');
 
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    const existingUser = await User.findOne({ email });
     
+    // Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({ 
+        message: 'All fields are required',
+        error: 'missing_fields'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ 
         message: 'User already exists',
@@ -14,34 +23,52 @@ const register = async (req, res) => {
       });
     }
 
+    // Create user with default role 'user'
     const user = await User.create({
       name,
       email,
       password,
-      role: 'user'  // Set default role for new users
+      role: 'user'
     });
 
-    // Create JWT token using the same method as authMiddleware
-    const token = await generateToken(user._id.toString());
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
-      }
-    });
+    try {
+      // Create JWT token using the same method as authMiddleware
+      const token = await generateToken(user._id.toString());
+      
+      console.log('Successfully created token for user:', user._id);
+      
+      res.json({
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email
+        }
+      });
+    } catch (tokenError) {
+      console.error('Token generation failed for user:', user._id, tokenError);
+      // Delete the user since token generation failed
+      await User.findByIdAndDelete(user._id);
+      throw new Error('Failed to generate token');
+    }
   } catch (error) {
     console.error('Registration error:', error);
+    
+    // Try to get a more specific error message
+    const errorMessage = error.message || 'Internal server error';
+    const errorType = error.name || 'server_error';
+    
+    // If we have a user ID, log it for debugging
+    if (error.user) {
+      console.error('User ID:', error.user._id);
+    }
+    
     res.status(500).json({ 
-      message: 'Internal server error',
-      error: 'server_error'
+      message: errorMessage,
+      error: errorType
     });
   }
 };
-
-const { protect, generateToken } = require('../middleware/authMiddleware');
 
 const login = async (req, res) => {
   try {
@@ -77,14 +104,8 @@ const login = async (req, res) => {
       role: user.role
     };
 
-    // Generate token
-    const token = jwt.sign({
-      id: user._id.toString(),
-      role: user.role
-    }, 'ascendance-secret-key-2025', { 
-      expiresIn: '7d',
-      algorithm: 'HS256'
-    });
+    // Generate JWT token
+    const token = await generateToken(user._id.toString());
 
     // Send response
     res.status(200).json({
@@ -106,7 +127,7 @@ const login = async (req, res) => {
 
 const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password');
+    const user = await User.findById(req.user._id).select('-password');
     if (!user) {
       return res.status(404).json({
         message: 'User not found',

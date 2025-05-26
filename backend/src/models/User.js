@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+// Initialize bcrypt with fallback for Node.js environment
+if (typeof bcrypt === 'undefined') {
+  console.error('bcrypt is not available. Please install bcryptjs package.');
+  process.exit(1);
+}
+
 const userSchema = new mongoose.Schema({
   name: String,
   email: {
@@ -33,9 +39,23 @@ userSchema.statics.getAdmins = function() {
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
+  try {
+    if (!this.isModified('password')) return next();
+    
+    // Validate password
+    if (!this.password || typeof this.password !== 'string') {
+      throw new Error('Password is required and must be a string');
+    }
+    
+    // Hash password
+    const saltRounds = 10;
+    this.password = await bcrypt.hash(this.password, saltRounds);
+    
+    next();
+  } catch (error) {
+    console.error('Password hashing error:', error);
+    next(error);
+  }
 });
 
 // Method to compare password

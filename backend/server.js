@@ -5,7 +5,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./src/routes/authRoutes');
 const courseRoutes = require('./src/routes/courseRoutes');
-const User = require('./src/models/User');
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ascendance', {

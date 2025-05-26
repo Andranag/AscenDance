@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container as UIContainer, Grid as UIGrid } from 'semantic-ui-react';
 import CourseCard from '../components/CourseCard';
 import { Link } from 'react-router-dom';
-import { fetchWithAuth, fetchPublic } from '../api';
+import { fetchPublic } from '../api';
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);

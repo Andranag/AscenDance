@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { fetchPublic } from '../api';
+// Remove this line since we're using useToast hook
 import { useToast } from '../contexts/ToastContext';
 import { Container, Form, Input, Button, Message, Segment, Icon } from 'semantic-ui-react';
 import { authContainerStyle, authFormContainerStyle, authFormStyle, authButtonStyle, authLinkStyle } from '../styles/authStyles';
 
 const Register = () => {
   const navigate = useNavigate();
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -15,19 +14,53 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const { toastSuccess, toastError } = useToast();
 
+  // Validation functions
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const validatePassword = (password) => {
+    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
+    const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    return re.test(password);
+  };
+
+  const validateName = (name) => {
+    return name.trim().length >= 2;
+  };
+
+  const validateForm = () => {
+    if (!validateName(name)) {
+      toastError('Name must be at least 2 characters long');
+      return false;
+    }
+    if (!validateEmail(email)) {
+      toastError('Please enter a valid email address');
+      return false;
+    }
+    if (!validatePassword(password)) {
+      toastError('Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one number');
+      return false;
+    }
+    if (password !== confirmPassword) {
+      toastError('Passwords do not match');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     
-    // Validate password match
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+    // Client-side validation
+    if (!validateForm()) {
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetchPublic('/api/auth/register', {
+      const response = await fetch('http://localhost:3050/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -39,18 +72,29 @@ const Register = () => {
         })
       });
 
-      // Store token and navigate
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/courses');
+      const data = await response.json();
+      
+      // Handle API errors
+      if (!response.ok) {
+        toastError(data.message || 'Registration failed');
+        setLoading(false);
+        return;
+      }
 
+      // Store token and navigate
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
       // Show success message
-      toastSuccess('Registration successful!');
+      toastSuccess('Registration successful! Redirecting to login...');
+      
+      // Add a small delay before navigation to ensure the toast is visible
+      setTimeout(() => {
+        navigate('/login');
+      }, 1000);
     } catch (error) {
       console.error('Registration error:', error);
-      setError(error.message || 'Registration failed. Please try again.');
-      toastError(error.message || 'Registration failed. Please try again.');
-    } finally {
+      toastError('Registration failed. Please try again.');
       setLoading(false);
     }
   };
@@ -59,9 +103,7 @@ const Register = () => {
     <Container text style={authContainerStyle}>
       <Segment style={authFormContainerStyle}>
         <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Sign Up</h2>
-        {error && (
-          <Message error content={error} />
-        )}
+        {/* No error message needed since we're using toast */}
         <Form onSubmit={handleSubmit} style={authFormStyle}>
           <Form.Field>
             <Input

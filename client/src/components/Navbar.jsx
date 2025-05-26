@@ -5,13 +5,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
-  const [activeItem, setActiveItem] = useState('login');
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, logout } = useAuth();
 
   const handleItemClick = (e, { name }) => {
-    setActiveItem(name);
+    // No need to set active item since we're using location.pathname
   };
 
   return (
@@ -22,7 +21,7 @@ const Navbar = () => {
             as={Link}
             to="/courses"
             name="courses"
-            active={activeItem === 'courses'}
+            active={location.pathname === '/' || location.pathname === '/courses'}
             onClick={handleItemClick}
           >
             Courses
@@ -31,14 +30,14 @@ const Navbar = () => {
             as={Link}
             to="/profile"
             name="profile"
-            active={activeItem === 'profile'}
+            active={location.pathname === '/profile'}
             onClick={handleItemClick}
           >
             Profile
           </Menu.Item>
           <Menu.Item
             name="logout"
-            active={activeItem === 'logout'}
+            active={false}
             onClick={() => {
               logout();
               navigate('/');
@@ -53,7 +52,7 @@ const Navbar = () => {
             as={Link}
             to="/courses"
             name="courses"
-            active={activeItem === 'courses'}
+            active={location.pathname === '/' || location.pathname === '/courses'}
             onClick={handleItemClick}
           >
             Courses
@@ -62,7 +61,7 @@ const Navbar = () => {
             as={Link}
             to="/login"
             name="login"
-            active={activeItem === 'login'}
+            active={location.pathname === '/login'}
             onClick={handleItemClick}
           >
             Sign In
@@ -71,7 +70,7 @@ const Navbar = () => {
             as={Link}
             to="/register"
             name="register"
-            active={activeItem === 'register'}
+            active={location.pathname === '/register'}
             onClick={handleItemClick}
           >
             Sign Up
@@ -83,7 +82,7 @@ const Navbar = () => {
           as={Link}
           to="/admin"
           name="admin"
-          active={activeItem === 'admin'}
+          active={location.pathname === '/admin'}
           onClick={handleItemClick}
         >
           Admin

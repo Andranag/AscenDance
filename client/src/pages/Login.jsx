@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { fetchPublic } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Container, Form, Input, Button, Message, Segment, Icon } from 'semantic-ui-react';
+import { Container, Form, Input, Button, Segment } from 'semantic-ui-react';
 import { authContainerStyle, authFormContainerStyle, authFormStyle, authButtonStyle, authLinkStyle } from '../styles/authStyles';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,8 +21,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Make login request
-      const response = await fetchPublic('/api/auth/login', {
+      const response = await fetch('http://localhost:3050/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -32,18 +29,28 @@ const Login = () => {
         body: JSON.stringify({ email, password })
       });
 
-      // Use AuthContext to handle login
-      await login(response.data.token, response.data.user);
+      if (!response.ok) {
+        const data = await response.json();
+        toastError(data.message || 'Login failed. Please try again.');
+        throw new Error(data.message || 'Login failed');
+      }
 
-      // Show success message
-      toastSuccess('Login successful!');
-
-      // Navigate to appropriate page
-      navigate(response.data.user.role === 'admin' ? '/admin' : '/courses');
+      const responseJson = await response.json();
+      console.log('Backend response:', JSON.stringify(responseJson, null, 2));
+      
+      // Get the token and user data from the nested response
+      const { token, user } = responseJson.data;
+      
+      // Use the token and user data from the backend
+      await login(token, user);
+      
+      // Login was successful
+      toastSuccess('Login successful! Redirecting to profile...');
+      navigate('/profile');
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.message || 'Login failed. Please try again.');
       toastError(error.message || 'Login failed. Please try again.');
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -53,47 +60,43 @@ const Login = () => {
     <Container text style={authContainerStyle}>
       <Segment style={authFormContainerStyle}>
         <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Sign In</h2>
-        {error && (
-          <Message error content={error} />
-        )}
         <Form onSubmit={handleSubmit} style={authFormStyle}>
           <Form.Field>
+            <label>Email</label>
             <Input
-              icon='user'
-              iconPosition='left'
               type="email"
-              placeholder='Email'
+              placeholder="Enter email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              autoComplete={rememberMe ? 'username' : 'off'}
             />
           </Form.Field>
+
           <Form.Field>
-            <Input
-              icon='lock'
-              iconPosition='left'
-              type={showPassword ? 'text' : 'password'}
-              placeholder='Password'
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete={rememberMe ? 'on' : 'off'}
-              action={{
-                icon: showPassword ? 'eye slash' : 'eye',
-                onClick: () => setShowPassword(!showPassword)
-              }}
-            />
-          </Form.Field>
-          <Form.Field>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                style={{ marginRight: '0.5rem' }}
+            <label>Password</label>
+            <div style={{ position: 'relative' }}>
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
-              <label style={{ fontSize: '0.9rem', color: '#666' }}>Remember Me</label>
+              <Button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  padding: '8px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#666'
+                }}
+              >
+                <i className={`icon eye ${showPassword ? 'slash' : ''}`} />
+              </Button>
             </div>
           </Form.Field>
           <Button
