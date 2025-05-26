@@ -1,69 +1,60 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import ProfileEditor from '../components/ProfileEditor';
 import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { fetchWithAuth } from '../api';
-import AdminLayout from '../components/Admin/AdminLayout';
+import { useToast } from '../contexts/ToastContext';
 
 const Profile = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [user, setUser] = useState(null);
-  const isAdmin = localStorage.getItem('role') === 'admin';
+  const { user, token, logout } = useAuth();
+  const { toastError, toastSuccess } = useToast();
+  const isAdmin = user?.role === 'admin';
 
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Verify token exists
-        const token = localStorage.getItem('token');
-        if (!token) {
-          console.error('No token found in localStorage');
-          setError('Not authenticated. Please login again.');
+        // Check if we have user data already
+        if (user) {
+          setLoading(false);
           return;
         }
-        console.log('Token exists:', token);
 
-        // First try to get user data from localStorage
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
-          // Ensure role is set to 'user' if it's 'student'
-          if (userData.role === 'student') {
-            userData.role = 'user';
+        // Try to fetch profile
+        try {
+          const response = await fetchWithAuth('/api/auth/profile');
+          console.log('Profile response:', response);
+          
+          // Update user state with the response
+          setUser({
+            ...user,
+            ...response
+          });
+        } catch (fetchErr) {
+          console.error('Fetch error:', fetchErr);
+          
+          // If fetch fails but we have user data in state, use that
+          if (user) {
+            console.log('Using cached user data');
+            return;
           }
-          setUser(userData);
-          return;
+          
+          throw fetchErr;
         }
-
-        // If not in localStorage, fetch from API
-        const response = await fetchWithAuth('/api/auth/profile');
-        console.log('Profile response:', response);
-        
-        // Ensure we have user data
-        const userData = response.data || response.user || {};
-        
-        // Store the user data in localStorage
-        localStorage.setItem('user', JSON.stringify({
-          _id: userData._id || userData.user?.id || Date.now().toString(),
-          name: userData.name || userData.user?.name || userData.user?.username || userData.username || email.split('@')[0],
-          email: email,
-          role: userData.role || userData.user?.role || 'user'
-        }));
-        
-        setUser(userData);
       } catch (err) {
         console.error('Error fetching profile:', err);
         
-        // Check for specific error messages
-        if (err.message.includes('Unauthorized')) {
-          setError('Your session has expired. Please login again.');
+        // Handle different error types
+        if (err.message.includes('Unauthorized') || err.message.includes('token_expired')) {
+          toastError('Your session has expired. Please login again.');
+          logout();
         } else if (err.message.includes('user_not_found')) {
-          setError('User account not found. Please contact support.');
-        } else if (err.message.includes('token_expired')) {
-          setError('Your token has expired. Please login again.');
+          toastError('User account not found. Please contact support.');
+          logout();
         } else {
-          setError(`Failed to load profile: ${err.message}`);
+          toastError(`Failed to load profile: ${err.message}`);
         }
       } finally {
         setLoading(false);
@@ -71,74 +62,54 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, [navigate]);
+  }, [user, navigate, logout]);
 
   const handleUpdate = async (updates) => {
     try {
-      // Verify token exists before making request
-      const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
       }
-      console.log('Token exists:', token);
 
-      // Ensure we're not sending any role data in the update
       const updateData = {
         name: updates.name,
         email: updates.email
       };
       
-      try {
-        const response = await fetchWithAuth('/api/auth/profile', {
-          method: 'PUT',
-          body: JSON.stringify(updateData)
-        });
-        
-        // The backend returns a nested response structure
-        const updatedData = response.data;
-        
-        // Store the updated user data in localStorage
-        localStorage.setItem('user', JSON.stringify({
-          _id: updatedData.id,
-          name: updatedData.name,
-          email: updatedData.email,
-          role: localStorage.getItem('role') || 'user'  // Preserve role from localStorage
-        }));
-        
-        // Update the user state
-        setUser({
-          id: updatedData.id,
-          name: updatedData.name,
-          email: updatedData.email,
-          role: localStorage.getItem('role') || 'user'
-        });
-        
-        return updatedData;
-      } catch (error) {
-        console.error('Profile update error:', error);
-        setError('Failed to update profile. Please try again.');
-        return null;
-      }
+      const response = await fetchWithAuth('/api/auth/profile', {
+        method: 'PUT',
+        body: JSON.stringify(updateData)
+      });
+      
+      // Update the user state using AuthContext
+      setUser({
+        ...user,
+        ...response
+      });
+      
+      return response;
     } catch (err) {
       console.error('Error updating profile:', err);
       
-      // Check for specific error messages
       if (err.message.includes('Unauthorized')) {
-        setError('Your session has expired. Please login again.');
+        toastError('Your session has expired. Please login again.');
+        logout();
       } else if (err.message.includes('user_not_found')) {
-        setError('User account not found. Please contact support.');
+        toastError('User account not found. Please contact support.');
+        logout();
       } else if (err.message.includes('token_expired')) {
-        setError('Your token has expired. Please login again.');
+        toastError('Your token has expired. Please login again.');
+        logout();
       } else {
-        setError(`Failed to update profile: ${err.message}`);
+        toastError(`Failed to update profile: ${err.message}`);
       }
       return null;
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '1rem' }}>
+  return (
+    <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '1rem' }}>
+      <h1 style={{ marginBottom: '1rem' }}>Profile</h1>
+      {loading ? (
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -158,69 +129,12 @@ const Profile = () => {
           }}></div>
           <span>Loading profile...</span>
         </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '1rem' }}>
-        <h2>Profile</h2>
-        {error && (
-          <div style={{
-            padding: '1rem',
-            backgroundColor: '#fef3f3',
-            borderRadius: '0.25rem',
-            color: '#c4302b'
-          }}>
-            {error}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '1rem' }}>
-      <h2>Profile</h2>
-      {error && (
-        <div style={{
-          padding: '1rem',
-          backgroundColor: '#fef3f3',
-          borderRadius: '0.25rem',
-          color: '#c4302b'
-        }}>
-          {error}
-        </div>
-      )}
-      {loading ? (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '1rem',
-          padding: '1rem',
-          backgroundColor: '#f8f8f8',
-          borderRadius: '0.25rem'
-        }}>
-          <div className="ui active inline loader"></div>
-          <span>Loading profile...</span>
-        </div>
       ) : (
-        user && (
-          <div>
-            <p>Name: {user.name}</p>
-            <p>Email: {user.email}</p>
-            <ProfileEditor 
-              user={{
-                _id: user.id,
-                name: user.name,
-                email: user.email
-              }} 
-              onUpdate={handleUpdate} 
-            />
-          </div>
-        )
+        <ProfileEditor
+          user={user}
+          onUpdate={handleUpdate}
+          navigate={navigate}
+        />
       )}
     </div>
   );

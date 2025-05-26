@@ -1,28 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Form, Button, Segment } from 'semantic-ui-react';
 import { useToast } from '../contexts/ToastContext';
 
 const ProfileEditor = ({ 
   user = { name: '', email: '' }, 
-  onUpdate = () => {}
+  onUpdate,
+  onSave,
+  navigate
 }) => {
+  const { toastError, toastSuccess } = useToast();
 
   const [loading, setLoading] = useState(false);
-  const { toastSuccess, toastError } = useToast();
   const [formData, setFormData] = useState({
     name: user.name || '',
     email: user.email || ''
   });
-
-  useEffect(() => {
-    // Update form data when user prop changes
-    setFormData(prev => ({
-      ...prev,
-      name: user.name || '',
-      email: user.email || ''
-    }));
-  }, [user]);
-
-  // Remove role validation since regular users can't change it
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,16 +28,15 @@ const ProfileEditor = ({
     e.preventDefault();
     setLoading(true);
     try {
-      // Only send name and email in the update
-      const updateData = {
-        name: formData.name,
-        email: formData.email
-      };
-      await onUpdate(updateData);
-      toastSuccess('Profile updated successfully!', { duration: 3000 });
-    } catch (err) {
-      const errorMessage = err.message || 'Failed to update profile. Please try again.';
-      toastError(errorMessage, { duration: 3000 });
+      const result = await onUpdate(formData);
+      if (result) {
+        toastSuccess('Profile updated successfully!');
+      } else {
+        toastError('Failed to update profile. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toastError('Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }

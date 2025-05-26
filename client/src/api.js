@@ -40,13 +40,13 @@ export const fetchWithAuth = async (endpoint, config = {}) => {
       headers
     });
     
+    const responseData = await response.json();
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.message || 'An error occurred');
+      throw new Error(responseData.message || 'An error occurred');
     }
     
-    const responseData = await response.json();
-    return responseData.data || responseData; // Handle both nested and flat responses
+    // Handle both nested and flat responses
+    return responseData.data || responseData
   } catch (error) {
     throw error;
   }

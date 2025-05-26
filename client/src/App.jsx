@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Courses from './pages/Courses';
@@ -13,12 +13,18 @@ import { ToastProvider } from './contexts/ToastContext';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
-  const { token } = useAuth();
-  
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  const { token, user } = useAuth();
+  const navigate = useNavigate();
+
+  // Check if we have both token and user data
+  if (!token || !user) {
+    // Only navigate if we're not already on login page
+    if (window.location.pathname !== '/login') {
+      navigate('/login', { replace: true });
+    }
+    return null;
   }
-  
+
   return children;
 };
 
@@ -32,7 +38,11 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
               <Route path="/admin/*" element={
                 <AdminLayout>
                   <Routes>
@@ -42,21 +52,9 @@ function App() {
                   </Routes>
                 </AdminLayout>
               } />
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Courses />
-                </ProtectedRoute>
-              } />
-              <Route path="/courses" element={
-                <ProtectedRoute>
-                  <Courses />
-                </ProtectedRoute>
-              } />
-              <Route path="/course/:courseId" element={
-                <ProtectedRoute>
-                  <CoursePage />
-                </ProtectedRoute>
-              } />
+              <Route path="/" element={<Courses />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/course/:courseId" element={<CoursePage />} />
             </Routes>
           </div>
         </BrowserRouter>

@@ -14,7 +14,12 @@ export const AuthProvider = ({ children }) => {
       if (!token || !userData) {
         throw new Error('Invalid token or user data');
       }
-      
+
+      // Verify token format
+      if (!token.startsWith('eyJ')) {
+        throw new Error('Invalid token format');
+      }
+
       // Store token and user data
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
@@ -45,12 +50,37 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  // Initialize auth state from localStorage
+  // Initialize auth state from localStorage and verify token
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
+    
     if (storedToken && storedUser) {
       const userData = JSON.parse(storedUser);
+      
+      // Verify token format
+      if (!storedToken.startsWith('eyJ')) {
+        console.error('Invalid token format in localStorage');
+        logout();
+        return;
+      }
+
+      // Verify token expiration
+      try {
+        const decodedToken = JSON.parse(atob(storedToken.split('.')[1]));
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (decodedToken.exp && decodedToken.exp < currentTime) {
+          console.error('Token has expired');
+          logout();
+          return;
+        }
+      } catch (err) {
+        console.error('Error decoding token:', err);
+        logout();
+        return;
+      }
+
+      // If token is valid, update auth state
       setAuthState({
         user: userData,
         isAdmin: userData.role === 'admin',
