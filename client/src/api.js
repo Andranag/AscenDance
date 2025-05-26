@@ -81,9 +81,26 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
     
     // Read the response body once
     const text = await response.text();
-    const data = text ? JSON.parse(text) : {};
+    console.log('Raw response text:', text);
     
-    console.log('Response data:', data);
+    // Try to parse as JSON if possible
+    let data;
+    try {
+      data = text ? JSON.parse(text) : null;
+      console.log('Parsed response data:', data);
+    } catch (e) {
+      console.error('Failed to parse JSON:', e);
+      data = null;
+    }
+    
+    // Log the complete response object
+    console.log('Complete response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+      text,
+      data
+    });
     
     if (!response.ok) {
       console.error('Error response:', {
@@ -96,10 +113,20 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
         throw new Error('Unauthorized. Please login again.');
       }
       
-      throw new Error(data.message || `API error: ${response.statusText}`);
+      throw new Error(data?.message || `API error: ${response.statusText}`);
     }
     
-    return data;
+    // Handle nested response structure
+    if (data?.success && data?.data) {
+      data = data.data;
+    }
+    
+    // Return the parsed data
+    return {
+      data: data || {},
+      status: response.status,
+      statusText: response.statusText
+    };
   } catch (error) {
     console.error('API error:', {
       error,

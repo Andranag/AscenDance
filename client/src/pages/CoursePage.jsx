@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Header, Segment, List, Icon } from 'semantic-ui-react';
+import { Container, Header, Segment, List, Icon, Button } from 'semantic-ui-react';
 import { fetchWithAuth } from '../api';
 
 const CoursePage = () => {
@@ -22,19 +22,13 @@ const CoursePage = () => {
         return false;
       }
 
-      const storedUser = JSON.parse(localStorage.getItem('user'));
-      if (!storedUser?.id) {
-        console.log('No user data found');
-        return false;
-      }
-
       // Find the user's progress in the array
       const userProgress = course.progress.find(p => {
         if (!p?.userId) return false;
-        return p.userId.toString() === storedUser.id.toString();
+        return p.userId.toString() === localStorage.getItem('user_id');
       });
       if (!userProgress) {
-        console.log('No progress found for user:', storedUser.id);
+        console.log('No progress found for user');
         return false;
       }
 
@@ -66,19 +60,8 @@ const CoursePage = () => {
   console.log('Route params:', useParams());
   const [course, setCourse] = useState(null);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  // Initialize loading state
   const [loading, setLoading] = useState({});
-
-  // Initialize loading state for all lessons when course loads
-  useEffect(() => {
-    if (course?.lessons) {
-      const initialLoading = {};
-      course.lessons.forEach((_, index) => {
-        initialLoading[index] = false;
-      });
-      setLoading(initialLoading);
-    }
-  }, [course]);
 
   // Update loading state for a specific lesson
   const updateLoadingState = (index, isLoading) => {
@@ -87,6 +70,39 @@ const CoursePage = () => {
       [index]: isLoading
     }));
   };
+
+  const [user, setUser] = useState(null);
+
+  // Fetch user data
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (!storedUser) {
+          console.log('No user data in localStorage');
+          return;
+        }
+        
+        const userData = JSON.parse(storedUser);
+        if (!userData?.id) {
+          console.log('Invalid user data:', userData);
+          return;
+        }
+        
+        // Ensure we have the full user object
+        const fullUser = await fetchWithAuth('/api/users/me');
+        if (fullUser) {
+          setUser(fullUser);
+        } else {
+          console.error('Failed to fetch full user data');
+        }
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   // Fetch course details
   useEffect(() => {
@@ -98,102 +114,76 @@ const CoursePage = () => {
         console.log('Processed course data:', data);
         
         // Initialize progress if not present
-        if (!data.progress) {
+        if (!data?.progress) {
           data.progress = [];
         }
         
         setCourse(data);
         setError(null);
+        
+        // Fetch user progress if user is logged in
+        if (user?.id) {
+          try {
+            const progressResponse = await fetchWithAuth(`/api/courses/${courseId}/progress/${user.id}`);
+            console.log('Progress response:', progressResponse);
+            if (progressResponse?.data?.progress) {
+              setCourse(prev => ({
+                ...prev,
+                progress: progressResponse.data.progress
+              }));
+            }
+          } catch (progressErr) {
+            console.error('Error fetching progress:', progressErr);
+          }
+        }
       } catch (err) {
         console.error('Error fetching course:', err);
-        setError('Failed to load course. Please try again.');
+        setError(err.message || 'Failed to fetch course data');
       }
     };
 
     if (courseId) {
       fetchCourse();
     }
-  }, [courseId]);
+  }, [courseId, user?.id]);
 
   const handleComplete = async (lessonIndex) => {
     try {
+      console.log('Starting completion for lesson:', lessonIndex);
+      
+      // Update loading state
       updateLoadingState(lessonIndex, true);
       
-      // Ensure we have a valid course and get the lesson
-      if (!course || !course._id) {
-        throw new Error('Course data not available');
-      }
-      const lesson = course.lessons[lessonIndex];
-      if (!lesson) {
-        throw new Error('Lesson not found');
-      }
-
-      console.log('Marking lesson as complete:', {
-        courseId,
-        lessonIndex,
-        lessonId: lesson._id,
-        lessonTitle: lesson.title,
-        endpoint: `/api/courses/${courseId}/lessons/${lessonIndex}/complete`
-      });
-
       const response = await fetchWithAuth(`/api/courses/${courseId}/lessons/${lessonIndex}/complete`, {
         method: 'PUT'
       });
-
-      if (response) {
-        console.log('Received response:', response);
-        // The backend returns the entire course object directly
-        setCourse(response);
-        setError(null);
-      } else {
-        throw new Error('No response received from server');
+      
+      console.log('Response:', response);
+      console.log('Response data:', response?.data);
+      
+      if (response && response.data && response.data.progress) {
+        console.log('Progress data:', response.data.progress);
+        setCourse(prev => ({
+          ...prev,
+          progress: response.data.progress
+        }));
       }
     } catch (error) {
-      console.error('Error marking lesson as complete:', error);
-      setError(error.message || 'Failed to mark lesson as complete. Please try again.');
+      console.error('Error in handleComplete:', error);
     } finally {
       updateLoadingState(lessonIndex, false);
     }
   };
 
   const handleUnmark = async (lessonIndex) => {
-    try {
-      updateLoadingState(lessonIndex, true);
-      
-      // Ensure we have a valid course and get the lesson
-      if (!course || !course._id) {
-        throw new Error('Course data not available');
-      }
-      const lesson = course.lessons[lessonIndex];
-      if (!lesson) {
-        throw new Error('Lesson not found');
-      }
-
-      console.log('Unmarking lesson:', {
-        courseId,
-        lessonIndex,
-        lessonId: lesson._id,
-        lessonTitle: lesson.title,
-        endpoint: `/api/courses/${courseId}/lessons/${lessonIndex}/complete`
-      });
-
-      const response = await fetchWithAuth(`/api/courses/${courseId}/lessons/${lessonIndex}/complete`, {
-        method: 'DELETE'
-      });
-
-      if (response) {
-        console.log('Received response:', response);
-        // The backend returns the entire course object directly
-        setCourse(response);
-        setError(null);
-      } else {
-        throw new Error('No response received from server');
-      }
-    } catch (error) {
-      console.error('Error unmarking lesson:', error);
-      setError(error.message || 'Failed to unmark lesson. Please try again.');
-    } finally {
-      updateLoadingState(lessonIndex, false);
+    const response = await fetchWithAuth(`/api/courses/${courseId}/lessons/${lessonIndex}/complete`, {
+      method: 'DELETE'
+    });
+    if (response && response.data) {
+      setCourse(prev => ({
+        ...prev,
+        progress: response.data.progress
+      }));
     }
   };
 
@@ -219,24 +209,15 @@ const CoursePage = () => {
                     {isLessonCompleted(lesson._id) && <Icon name='check circle' color='green' size='small' style={{ marginLeft: '8px' }} />}
                   </List.Header>
                   <List.Description>{lesson.content}</List.Description>
-                  <button 
-                    className={`ui ${isLessonCompleted(lesson._id) ? 'green' : 'primary'} button`} 
+                  <Button 
+                    className={isLessonCompleted(lesson._id) ? 'green' : 'primary'} 
                     onClick={() => {
-                      // Prevent double-clicks by checking loading state
-                      if (loading[index]) return;
-                      
-                      // Update loading state before calling handler
-                      updateLoadingState(index, true);
-                      
-                      // Call appropriate handler
-                      if (isLessonCompleted(lesson._id)) {
-                        handleUnmark(index);
-                      } else {
-                        handleComplete(index);
-                      }
+                      handleComplete(index);
                     }}
                     disabled={loading[index]}
-                    style={{ width: '100%' }}
+                    fluid
+                    size='large'
+                    style={{ marginTop: '1rem' }}
                   >
                     {loading[index] ? (
                       <>
@@ -251,7 +232,7 @@ const CoursePage = () => {
                         <Icon name='check circle outline' /> Mark as Complete
                       </>
                     )}
-                  </button>
+                  </Button>
                 </List.Content>
               </List.Item>
             ))}
