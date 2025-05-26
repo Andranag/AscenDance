@@ -49,9 +49,10 @@ const SignIn = () => {
     <div style={{
       display: 'flex',
       justifyContent: 'center',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       minHeight: '100vh',
-      backgroundColor: '#f8f9fa'
+      backgroundColor: '#f8f9fa',
+      padding: '2rem 0'
     }}>
       <div style={{
         backgroundColor: 'white',
@@ -59,7 +60,8 @@ const SignIn = () => {
         borderRadius: '0.5rem',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         maxWidth: '400px',
-        width: '100%'
+        width: '100%',
+        marginTop: '4rem'
       }}>
         <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Sign In</h2>
         {error && (
