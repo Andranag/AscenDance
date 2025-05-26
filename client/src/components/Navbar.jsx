@@ -8,7 +8,7 @@ const Navbar = () => {
   const [activeItem, setActiveItem] = useState('login');
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
 
   const handleItemClick = (e, { name }) => {
     setActiveItem(name);
@@ -40,9 +40,7 @@ const Navbar = () => {
             name="logout"
             active={activeItem === 'logout'}
             onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              localStorage.removeItem('role');
+              logout();
               navigate('/');
             }}
           >

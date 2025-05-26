@@ -1,11 +1,26 @@
 import { Card } from 'semantic-ui-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useEffect } from 'react';
 
 const CourseCard = ({ course }) => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
-  const isAuthenticated = !!user;
+  const isAuthenticated = !!user && !!token;
+
+  // Add useEffect to re-render when auth state changes
+  useEffect(() => {
+    console.log('Auth state changed:', isAuthenticated);
+  }, [user, token]);
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const handleAuthStateChanged = () => {
+      console.log('Auth state changed event received');
+    };
+    window.addEventListener('authStateChanged', handleAuthStateChanged);
+    return () => window.removeEventListener('authStateChanged', handleAuthStateChanged);
+  }, []);
 
   const handleNavigate = () => {
     if (isAuthenticated) {
@@ -58,13 +73,13 @@ const CourseCard = ({ course }) => {
       >
         <button
           onClick={handleNavigate}
-          className={`ui ${isAuthenticated ? 'primary' : 'basic'} button`}
+          className='ui primary button'
           style={{
             minWidth: '120px',
             padding: '0.75rem 1rem'
           }}
         >
-          {isAuthenticated ? 'Start Course' : 'Sign In to Start'}
+          {isAuthenticated ? 'Start Course' : 'Sign In'}
         </button>
       </Card.Content>
     </Card>

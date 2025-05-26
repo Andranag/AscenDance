@@ -3,18 +3,24 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children, render }) => {
-  const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [token, setToken] = useState(null);
+  const [authState, setAuthState] = useState({
+    user: null,
+    isAdmin: false,
+    token: null
+  });
+
+  const { user, isAdmin, token } = authState;
 
   // Function to handle login
   const login = (newToken, userData) => {
     try {
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      setIsAdmin(userData.role === 'admin');
-      setToken(newToken);
+      setAuthState({
+        user: userData,
+        isAdmin: userData.role === 'admin',
+        token: newToken
+      });
     } catch (error) {
       console.error('Error during login:', error);
       // Clear invalid data
@@ -29,11 +35,26 @@ export const AuthProvider = ({ children, render }) => {
 
   // Function to handle logout
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    setIsAdmin(false);
-    setToken(null);
+    try {
+      // Clear localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Update auth state
+      setAuthState({
+        user: null,
+        isAdmin: false,
+        token: null
+      });
+
+      // Force re-render by updating state again
+      setAuthState(prev => ({
+        ...prev,
+        token: null
+      }));
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   // Function to refresh token
@@ -49,7 +70,10 @@ export const AuthProvider = ({ children, render }) => {
       
       if (response.token) {
         localStorage.setItem('token', response.token);
-        setToken(response.token);
+        setAuthState(prev => ({
+          ...prev,
+          token: response.token
+        }));
         return response.token;
       }
       throw new Error('Failed to refresh token');
@@ -68,29 +92,38 @@ export const AuthProvider = ({ children, render }) => {
     if (storedToken && userData) {
       try {
         const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsAdmin(parsedUser.role === 'admin');
-        setToken(storedToken);
+        setAuthState({
+          user: parsedUser,
+          isAdmin: parsedUser.role === 'admin',
+          token: storedToken
+        });
+        return () => {
+          // Cleanup function - clear localStorage when component unmounts
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        };
       } catch (error) {
         console.error('Error initializing auth state:', error);
         // Clear invalid data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        setUser(null);
-        setIsAdmin(false);
-        setToken(null);
+        setAuthState({
+          user: null,
+          isAdmin: false,
+          token: null
+        });
       }
     } else {
-      setUser(null);
-      setIsAdmin(false);
-      setToken(null);
+      setAuthState({
+        user: null,
+        isAdmin: false,
+        token: null
+      });
     }
   }, []);
 
   const authContextValue = {
-    user,
-    isAdmin,
-    token,
+    ...authState,
     login,
     logout,
     refreshToken
