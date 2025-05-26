@@ -74,16 +74,6 @@ const CoursePage = () => {
         endpoint: `/courses/${courseId}/lessons/${lessonIndex}/complete`
       });
 
-      // Log the full request details
-      console.log('Request details:', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': localStorage.getItem('token') ? 'Bearer [token]' : 'No token'
-        },
-        body: null
-      });
-
       const response = await fetchWithAuth(`/api/courses/${courseId}/lessons/${lessonIndex}/complete`, {
         method: 'PUT'
       });
@@ -92,10 +82,8 @@ const CoursePage = () => {
         throw new Error('No response from server');
       }
 
-      setCourse(prevCourse => ({
-        ...prevCourse,
-        ...response
-      }));
+      // Update the local state with the new course data
+      setCourse(response.data);
       setError(null);
 
       // Show success message
@@ -139,10 +127,8 @@ const CoursePage = () => {
         throw new Error('No response from server');
       }
 
-      setCourse(prevCourse => ({
-        ...prevCourse,
-        ...response
-      }));
+      // Update the local state with the new course data
+      setCourse(response.data);
       setError(null);
 
       // Show success message
@@ -156,24 +142,6 @@ const CoursePage = () => {
       setLoading(false);
     }
   };
-
-  if (error) {
-    return (
-      <Container>
-        <Header as='h1'>Error</Header>
-        <p>{error}</p>
-        <button className="ui primary button" onClick={() => navigate('/courses')}>Back to Courses</button>
-      </Container>
-    );
-  }
-
-  if (!course) {
-    return (
-      <Container>
-        <Header as='h1'>Loading Course...</Header>
-      </Container>
-    );
-  }
 
   return (
     <Container>

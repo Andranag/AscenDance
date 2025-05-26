@@ -149,19 +149,20 @@ const markLessonComplete = async (req, res) => {
     });
 
     // Find the lesson by its numeric index
-    const lesson = course.lessons[parseInt(lessonIndex)];
-    if (!lesson) {
-      console.error('Lesson not found:', {
+    const lessonIndexNum = parseInt(lessonIndex);
+    if (isNaN(lessonIndexNum) || lessonIndexNum < 0 || lessonIndexNum >= course.lessons.length) {
+      console.error('Invalid lesson index:', {
         courseId: id,
         lessonIndex,
         lessonCount: course.lessons.length
       });
-      return res.status(404).json({ error: 'Lesson not found' });
+      return res.status(400).json({ error: 'Invalid lesson index' });
     }
 
+    const lesson = course.lessons[lessonIndexNum];
     console.log('Found lesson:', {
       title: lesson.title,
-      index: course.lessons.indexOf(lesson)
+      index: lessonIndexNum
     });
 
     const progress = course.progress.find(p => p.userId.equals(userId));
@@ -180,10 +181,25 @@ const markLessonComplete = async (req, res) => {
       lessonId: lesson._id,
       userId
     });
-    res.json(course);
+    
+    // Return only the necessary data for the frontend
+    const response = {
+      success: true,
+      data: {
+        courseId: id,
+        lessonId: lesson._id,
+        lessonIndex: lessonIndexNum,
+        completed: true
+      }
+    };
+    res.json(response);
   } catch (error) {
-    console.log(`[markLessonComplete] courseId=${id}, lessonId=${lessonIndex}, user=${userId}`);
-    console.error('Error marking lesson complete:', error);
+    console.error('Error marking lesson complete:', {
+      error,
+      courseId: req.params.id,
+      lessonIndex: req.params.lessonIndex,
+      userId: req.user._id
+    });
     res.status(500).json({ error: 'Failed to mark lesson complete' });
   }
 };
