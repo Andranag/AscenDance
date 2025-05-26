@@ -27,7 +27,12 @@ const Profile = () => {
         // First try to get user data from localStorage
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
-          setUser(JSON.parse(storedUser));
+          const userData = JSON.parse(storedUser);
+          // Ensure role is set to 'user' if it's 'student'
+          if (userData.role === 'student') {
+            userData.role = 'user';
+          }
+          setUser(userData);
           return;
         }
 
@@ -38,7 +43,8 @@ const Profile = () => {
         localStorage.setItem('user', JSON.stringify({
           _id: response.user.id,
           name: response.user.name,
-          email: response.user.email
+          email: response.user.email,
+          role: response.user.role || 'user'  // Default to 'user' if no role
         }));
         
         setUser(response.user);
@@ -72,9 +78,15 @@ const Profile = () => {
       }
       console.log('Token exists:', token);
 
+      // Ensure we're not sending any role data in the update
+      const updateData = {
+        name: updates.name,
+        email: updates.email
+      };
+      
       const response = await fetchWithAuth('/api/auth/profile', {
         method: 'PUT',
-        body: JSON.stringify(updates)
+        body: JSON.stringify(updateData)
       });
       
       // The backend returns a nested response structure
@@ -84,7 +96,8 @@ const Profile = () => {
       localStorage.setItem('user', JSON.stringify({
         _id: updatedData.id,
         name: updatedData.name,
-        email: updatedData.email
+        email: updatedData.email,
+        role: localStorage.getItem('role') || 'user'  // Preserve role from localStorage
       }));
       
       setUser(updatedData);

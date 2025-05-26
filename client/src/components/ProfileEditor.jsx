@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const ProfileEditor = ({ 
   user = { name: '', email: '' }, 
-  onUpdate = () => {} 
+  onUpdate = () => {}
 }) => {
 
   const [loading, setLoading] = useState(false);
@@ -15,11 +15,22 @@ const ProfileEditor = ({
 
   useEffect(() => {
     // Update form data when user prop changes
-    setFormData({
+    setFormData(prev => ({
+      ...prev,
       name: user.name || '',
       email: user.email || ''
-    });
+    }));
   }, [user]);
+
+  // Remove role validation since regular users can't change it
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,21 +39,18 @@ const ProfileEditor = ({
     setSuccess('');
     
     try {
-      await onUpdate(formData);
+      // Only send name and email in the update
+      const updateData = {
+        name: formData.name,
+        email: formData.email
+      };
+      await onUpdate(updateData);
       setSuccess('Profile updated successfully!');
     } catch (err) {
-      setError('Failed to update profile. Please try again.');
+      setError(err.message || 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   return (
@@ -120,18 +128,18 @@ const ProfileEditor = ({
             }}
           />
         </div>
+
         <button
           type="submit"
+          disabled={loading}
           style={{
-            backgroundColor: '#2185d0',
-            color: 'white',
             padding: '0.75rem',
+            backgroundColor: '#21ba45',
+            color: 'white',
             border: 'none',
             borderRadius: '0.25rem',
             cursor: 'pointer',
-            fontSize: '1rem',
-            opacity: loading ? '0.7' : '1',
-            pointerEvents: loading ? 'none' : 'auto'
+            fontSize: '1rem'
           }}
         >
           {loading ? 'Updating...' : 'Update Profile'}

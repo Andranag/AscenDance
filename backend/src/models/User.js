@@ -13,7 +13,11 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ['user', 'admin'],
-    default: 'user'
+    default: 'user',
+    set: function(value) {
+      // If role is 'student', convert to 'user'
+      return value === 'student' ? 'user' : value;
+    }
   }
 });
 

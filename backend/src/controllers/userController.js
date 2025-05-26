@@ -132,7 +132,7 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email } = req.body; // Don't accept role from request
     const userId = req.user._id;
     console.log('Updating profile for user:', userId);
     
@@ -146,6 +146,29 @@ const updateProfile = async (req, res) => {
       });
     }
 
+    // For existing users without role or with 'student' role, set default to 'user'
+    if (!user.role || user.role === 'student') {
+      user.role = 'user';
+    }
+
+    // Only admins can change roles
+    const isAdmin = req.user.role === 'admin';
+    if (isAdmin) {
+      // Admins can change roles of other users
+      const { role } = req.body;
+      if (role) {
+        const validRoles = ['user', 'admin'];
+        if (!validRoles.includes(role)) {
+          return res.status(400).json({
+            message: 'Invalid role',
+            error: 'invalid_role'
+          });
+        }
+        user.role = role;
+      }
+    }
+
+    // Regular users can only update name and email
     if (name) user.name = name;
     if (email) user.email = email;
     
@@ -156,7 +179,8 @@ const updateProfile = async (req, res) => {
       data: {
         id: updatedUser._id,
         name: updatedUser.name,
-        email: updatedUser.email
+        email: updatedUser.email,
+        role: updatedUser.role
       }
     });
   } catch (error) {
