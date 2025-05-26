@@ -182,17 +182,11 @@ const markLessonComplete = async (req, res) => {
       userId
     });
     
-    // Return only the necessary data for the frontend
-    const response = {
+    // Return the entire course object
+    res.json({
       success: true,
-      data: {
-        courseId: id,
-        lessonId: lesson._id,
-        lessonIndex: lessonIndexNum,
-        completed: true
-      }
-    };
-    res.json(response);
+      data: course
+    });
   } catch (error) {
     console.error('Error marking lesson complete:', {
       error,

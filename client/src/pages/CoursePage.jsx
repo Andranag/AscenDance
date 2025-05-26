@@ -83,7 +83,9 @@ const CoursePage = () => {
       }
 
       // Update the local state with the new course data
-      setCourse(response.data);
+      if (response.data) {
+        setCourse(response.data);
+      }
       setError(null);
 
       // Show success message
@@ -128,7 +130,9 @@ const CoursePage = () => {
       }
 
       // Update the local state with the new course data
-      setCourse(response.data);
+      if (response.data) {
+        setCourse(response.data);
+      }
       setError(null);
 
       // Show success message
