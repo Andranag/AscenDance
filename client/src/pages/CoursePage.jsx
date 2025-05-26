@@ -28,7 +28,7 @@ const CoursePage = () => {
   console.log('Route params:', useParams());
   const [course, setCourse] = useState(null);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState({});
 
   useEffect(() => {
     console.log('Fetching course with ID:', courseId);
@@ -175,17 +175,17 @@ const CoursePage = () => {
               <button 
                 className={`ui ${isLessonCompleted(lesson._id) ? 'green' : 'primary'} button`} 
                 onClick={() => isLessonCompleted(lesson._id) ? handleUnmark(index) : handleComplete(index)}
-                disabled={loading}
+                disabled={loading[index]}
                 style={{ width: '100%' }}
               >
-                {isLessonCompleted(lesson._id) ? (
+                {loading[index] ? (
+                    <>
+                      <Icon name='spinner' loading /> Loading...
+                    </>
+                ) : isLessonCompleted(lesson._id) ? (
                   <>
                     <Icon name='checkmark' /> Completed
                     <Icon name='undo' style={{ marginLeft: '8px' }} />
-                  </>
-                ) : loading ? (
-                  <>
-                    <Icon name='spinner' loading /> Marking...
                   </>
                 ) : (
                   <>
