@@ -90,6 +90,15 @@ const Navbar = () => {
         <>
           <Menu.Item
             as={Link}
+            to="/courses"
+            name="courses"
+            active={activeItem === 'courses'}
+            onClick={handleItemClick}
+          >
+            Courses
+          </Menu.Item>
+          <Menu.Item
+            as={Link}
             to="/login"
             name="login"
             active={activeItem === 'login'}
