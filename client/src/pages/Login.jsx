@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { fetchPublic } from '../api';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -10,15 +12,14 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-
+  const { login } = useAuth();
+  const { toastSuccess, toastError } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
     try {
-      // Make login request and handle response
+      // Make login request
       const response = await fetchPublic('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -27,49 +28,18 @@ const Login = () => {
         body: JSON.stringify({ email, password })
       });
 
-      // Extract token and user data from response
-      const { token, user } = response.data.data;
+      // Use AuthContext to handle login
+      await login(response.data.token, response.data.user);
 
-      // Check if we got the required data
-      if (!token || !user) {
-        throw new Error('Invalid response from server');
-      }
+      // Show success message
+      toastSuccess('Login successful!');
 
-      // Store token and user data
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('role', user.role);
-      
-      // Debug logging
-      console.log('Token stored:', token);
-      console.log('Token type:', typeof token);
-      console.log('Token length:', token?.length);
-      console.log('User stored:', user);
-      console.log('Role stored:', user.role);
-      
-      // Verify storage
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
-      console.log('Token from localStorage:', storedToken);
-      console.log('User from localStorage:', storedUser ? JSON.parse(storedUser) : null);
-
-      // Redirect based on role
-      if (user.role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/courses');
-      }
-      
-      // Log stored data
-      console.log('Stored user data:', user);
-      console.log('Stored token:', token);
-      
-      setError('');
-      
+      // Navigate to appropriate page
+      navigate(response.data.user.role === 'admin' ? '/admin' : '/courses');
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.message || 'Login failed. Please check your credentials.');
-      setLoading(false);
+      setError(error.message || 'Login failed. Please try again.');
+      toastError(error.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -2,36 +2,21 @@ import { Menu } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
   const [activeItem, setActiveItem] = useState('login');
-  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(window.atob(base64));
-      const role = payload.role || user.role;
-      setIsAdmin(role === 'admin');
-    } else {
-      setIsAdmin(false);
-    }
-  }, [location]);
+  const { user, isAdmin } = useAuth();
 
   const handleItemClick = (e, { name }) => {
     setActiveItem(name);
   };
 
-  const token = localStorage.getItem('token');
-
   return (
     <Menu>
-      {token ? (
+      {user ? (
         <>
           <Menu.Item
             as={Link}
@@ -94,6 +79,17 @@ const Navbar = () => {
             Register
           </Menu.Item>
         </>
+      )}
+      {isAdmin && (
+        <Menu.Item
+          as={Link}
+          to="/admin"
+          name="admin"
+          active={activeItem === 'admin'}
+          onClick={handleItemClick}
+        >
+          Admin
+        </Menu.Item>
       )}
     </Menu>
   );

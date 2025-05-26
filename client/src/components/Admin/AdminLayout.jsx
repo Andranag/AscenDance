@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Menu } from 'semantic-ui-react';
-import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import CourseManagement from './CourseManagement';
 
 function AdminLayout({ children }) {
   const navigate = useNavigate();
@@ -11,16 +10,20 @@ function AdminLayout({ children }) {
   const token = localStorage.getItem('token');
   const user = token ? JSON.parse(localStorage.getItem('user')) : null;
   const isAdmin = user?.role === 'admin';
-  
-  // If not admin, redirect to home
+  const currentAdminPage = path[2] || '';
+
+  // Redirect if not admin
+  React.useEffect(() => {
+    if (!isAdmin) {
+      navigate('/');
+    }
+  }, [isAdmin, navigate]);
+
+  // Return null if not admin
   if (!isAdmin) {
-    navigate('/');
     return null;
   }
-  
-  // Get the current admin page from the URL
-  const currentAdminPage = path[2] || '';
-  
+
   // Handle navigation
   const handleNavigation = (page) => {
     navigate(`/admin/${page}`);
@@ -54,14 +57,14 @@ function AdminLayout({ children }) {
           active={currentAdminPage === 'courses'}
           onClick={() => handleNavigation('courses')}
           icon={{ name: 'book' }}
-          content='Courses'
+          content='Course Management'
         />
         <Menu.Item
           name='users'
           active={currentAdminPage === 'users'}
           onClick={() => handleNavigation('users')}
           icon={{ name: 'users' }}
-          content='Users'
+          content='User Management'
         />
         <Menu.Item
           name='analytics'
@@ -71,6 +74,7 @@ function AdminLayout({ children }) {
           content='Analytics'
         />
       </Menu>
+
       <div style={{ flex: 1, padding: '2rem' }}>
         {children}
       </div>

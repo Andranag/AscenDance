@@ -84,24 +84,37 @@ const Profile = () => {
         email: updates.email
       };
       
-      const response = await fetchWithAuth('/api/auth/profile', {
-        method: 'PUT',
-        body: JSON.stringify(updateData)
-      });
-      
-      // The backend returns a nested response structure
-      const updatedData = response.data;
-      
-      // Store the updated user data in localStorage
-      localStorage.setItem('user', JSON.stringify({
-        _id: updatedData.id,
-        name: updatedData.name,
-        email: updatedData.email,
-        role: localStorage.getItem('role') || 'user'  // Preserve role from localStorage
-      }));
-      
-      setUser(updatedData);
-      return updatedData;
+      try {
+        const response = await fetchWithAuth('/api/auth/profile', {
+          method: 'PUT',
+          body: JSON.stringify(updateData)
+        });
+        
+        // The backend returns a nested response structure
+        const updatedData = response.data;
+        
+        // Store the updated user data in localStorage
+        localStorage.setItem('user', JSON.stringify({
+          _id: updatedData.id,
+          name: updatedData.name,
+          email: updatedData.email,
+          role: localStorage.getItem('role') || 'user'  // Preserve role from localStorage
+        }));
+        
+        // Update the user state
+        setUser({
+          id: updatedData.id,
+          name: updatedData.name,
+          email: updatedData.email,
+          role: localStorage.getItem('role') || 'user'
+        });
+        
+        return updatedData;
+      } catch (error) {
+        console.error('Profile update error:', error);
+        setError('Failed to update profile. Please try again.');
+        return null;
+      }
     } catch (err) {
       console.error('Error updating profile:', err);
       

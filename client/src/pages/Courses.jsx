@@ -92,10 +92,28 @@ const Courses = () => {
   }
 
   return (
-    <UIContainer>
-      <UIGrid columns={3}>
+    <UIContainer style={{ textAlign: 'center', marginTop: '2rem' }}>
+      <h1 style={{ marginBottom: '2rem' }}>Available Courses</h1>
+      <UIGrid 
+        columns={3}
+        doubling
+        stackable
+        style={{ 
+          justifyContent: 'center',
+          alignItems: 'stretch',
+          marginBottom: '2rem'
+        }}
+      >
         {courses.map(course => (
-          <UIGrid.Column key={course._id}>
+          <UIGrid.Column 
+            key={course._id}
+            style={{ 
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'stretch',
+              padding: '1rem'
+            }}
+          >
             <CourseCard course={course} />
           </UIGrid.Column>
         ))}

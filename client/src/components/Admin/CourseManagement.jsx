@@ -142,9 +142,9 @@ const CourseManagement = () => {
                   className='ui fluid search dropdown'
                 >
                   <option value=''>Select category</option>
-                  <option value='programming'>Programming</option>
-                  <option value='design'>Design</option>
-                  <option value='business'>Business</option>
+                  <option value='lindy-hop'>Lindy Hop</option>
+                  <option value='solo-jazz'>Solo Jazz</option>
+                  <option value='rhythm-and-blues'>Rhythm and Blues</option>
                 </select>
               </Form.Field>
               <Form.Field>
