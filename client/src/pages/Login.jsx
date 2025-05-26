@@ -18,7 +18,8 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      const data = await fetchPublic('/api/auth/login', {
+      // Make login request and handle response
+      const response = await fetchPublic('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -26,18 +27,36 @@ const Login = () => {
         body: JSON.stringify({ email, password })
       });
 
+      // Check for success and extract data
+      if (!response.success || !response.data) {
+        throw new Error('Invalid response from server');
+      }
+
+      // Extract token and user data from nested response
+      const { token, user } = response.data;
+
       // Store token and user data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify({
-        _id: data.user.id,
-        name: data.user.name,
-        email: data.user.email
-      }));
-      navigate('/profile', { replace: true });
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Invalid email or password');
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('role', user.role);
+
+      // Redirect based on role
+      if (user.role === 'admin') {
+        navigate('/admin/courses');
+      } else {
+        navigate('/courses');
+      }
+      
+      // Log stored data
+      console.log('Stored user data:', user);
+      console.log('Stored token:', token);
+      
+      setError('');
+      
+    } catch (error) {
+      console.error('Login error:', error);
       setError(error.message || 'Login failed. Please check your credentials.');
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -84,10 +103,11 @@ const Login = () => {
         </div>
         <button
           type="submit"
+          disabled={loading}
           style={{
-            backgroundColor: '#2185d0',
-            color: 'white',
             padding: '0.75rem',
+            background: '#007bff',
+            color: 'white',
             border: 'none',
             borderRadius: '0.25rem',
             cursor: 'pointer',

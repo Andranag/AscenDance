@@ -2,12 +2,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import ProfileEditor from '../components/ProfileEditor';
 import { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../api';
+import AdminLayout from '../components/Admin/AdminLayout';
 
 const Profile = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const isAdmin = localStorage.getItem('role') === 'admin';
 
 
   useEffect(() => {
@@ -60,11 +62,6 @@ const Profile = () => {
 
     fetchProfile();
   }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login', { replace: true });
-  };
 
   const handleUpdate = async (updates) => {
     try {
@@ -184,20 +181,6 @@ const Profile = () => {
           <div>
             <p>Name: {user.name}</p>
             <p>Email: {user.email}</p>
-            <button
-              onClick={handleLogout}
-              style={{
-                backgroundColor: '#2185d0',
-                color: 'white',
-                padding: '0.5rem 1rem',
-                border: 'none',
-                borderRadius: '0.25rem',
-                cursor: 'pointer',
-                fontSize: '1rem'
-              }}
-            >
-              Logout
-            </button>
             <ProfileEditor 
               user={{
                 _id: user.id,

@@ -9,8 +9,23 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
-  password: String
+  password: String,
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  }
 });
+
+// Methods to check admin status
+userSchema.methods.isAdmin = function() {
+  return this.role === 'admin';
+};
+
+// Static method to get admin users
+userSchema.statics.getAdmins = function() {
+  return this.find({ role: 'admin' });
+};
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {

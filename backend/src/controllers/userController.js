@@ -17,11 +17,12 @@ const register = async (req, res) => {
     const user = await User.create({
       name,
       email,
-      password
+      password,
+      role: 'user'  // Set default role for new users
     });
 
-    // Create JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    // Create JWT token using the same method as authMiddleware
+    const token = await generateToken(user._id.toString());
 
     res.json({
       token,
@@ -47,9 +48,8 @@ const login = async (req, res) => {
     console.log('Login attempt:', req.body.email);
     const { email, password } = req.body;
     
-    const user = await User.findOne({ email });
-    console.log('Found user:', user ? 'yes' : 'no');
-    
+    // Find user
+    const user = await User.findOne({ email }).select('id name email role password');
     if (!user) {
       console.log('User not found');
       return res.status(401).json({ 
@@ -57,30 +57,44 @@ const login = async (req, res) => {
         error: 'user_not_found'
       });
     }
+    console.log('Found user:', user);
+    console.log('User role:', user.role);
 
-    const isPasswordValid = await user.comparePassword(password);
-    console.log('Password valid:', isPasswordValid);
-    
-    if (!isPasswordValid) {
-      console.log('Invalid password');
+    // Verify password
+    const isValidPassword = await user.comparePassword(password);
+    if (!isValidPassword) {
       return res.status(401).json({ 
         message: 'Invalid credentials',
         error: 'invalid_password'
       });
     }
 
-    // Create JWT token using the same method as authMiddleware
-    const token = generateToken(user._id);
-    console.log('Generated token:', token);
+    // Create response objects
+    const userResponse = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role
+    };
 
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
+    // Generate token
+    const token = jwt.sign({
+      id: user._id.toString(),
+      role: user.role
+    }, 'ascendance-secret-key-2025', { 
+      expiresIn: '7d',
+      algorithm: 'HS256'
+    });
+
+    // Send response
+    res.status(200).json({
+      success: true,
+      data: {
+        token,
+        user: userResponse
       }
     });
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ 

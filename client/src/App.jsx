@@ -6,18 +6,58 @@ import Courses from './pages/Courses';
 import CoursePage from './pages/CoursePage';
 import Profile from './pages/Profile';
 import Navbar from './components/Navbar';
+import AdminLayout from './components/Admin/AdminLayout';
+import CourseManagement from './components/Admin/CourseManagement';
 
 function App() {
   return (
     <BrowserRouter>
-      <Navbar />
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/courses" element={<Courses />} />
-        <Route path="/course/:courseId" element={<CoursePage />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/" element={
+          <>
+            <Navbar />
+            <Courses />
+          </>
+        } />
+        <Route path="/login" element={
+          <>
+            <Navbar />
+            <Login />
+          </>
+        } />
+        <Route path="/register" element={
+          <>
+            <Navbar />
+            <Register />
+          </>
+        } />
+        <Route path="/courses" element={
+          <>
+            <Navbar />
+            <Courses />
+          </>
+        } />
+        <Route path="/course/:courseId" element={
+          <>
+            <Navbar />
+            <CoursePage />
+          </>
+        } />
+        <Route path="/profile" element={
+          <>
+            <Navbar />
+            <Profile />
+          </>
+        } />
+        <Route path="/admin" element={
+          <AdminLayout>
+            <Routes>
+              <Route index element={<CourseManagement />} />
+              <Route path="courses" element={<CourseManagement />} />
+              <Route path="dashboard" element={<CourseManagement />} />
+            </Routes>
+          </AdminLayout>
+        } />
       </Routes>
     </BrowserRouter>
   );

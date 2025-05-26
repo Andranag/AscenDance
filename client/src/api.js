@@ -111,45 +111,27 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
 };
 
 export const fetchPublic = async (endpoint, options = {}) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers
-  };
-
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+  
   try {
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
-    console.log(`Making public request to: ${url}`);
-    
-    // Add a timeout to prevent hanging requests
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-    
     const response = await fetch(url, {
       ...options,
-      headers,
-      signal: controller.signal
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      },
+      credentials: 'include'
     });
-    clearTimeout(timeoutId);
     
-    // Handle both JSON and empty responses
-    const contentType = response.headers.get('content-type');
-    let data = null;
-    
-    if (contentType && contentType.includes('application/json')) {
-      try {
-        data = await response.json();
-      } catch (err) {
-        console.error('Error parsing JSON response:', err);
-      }
-    }
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
     
     if (!response.ok) {
-      throw new Error(data?.message || response.statusText);
+      throw new Error(data.message || `API error: ${response.statusText}`);
     }
     
-    return data || {}; // Return empty object if no data
+    return data;
   } catch (error) {
-    console.error('API error:', error);
     throw error;
   }
 };
