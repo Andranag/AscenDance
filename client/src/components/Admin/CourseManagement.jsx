@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Container, Grid, Header, Form, Table, Icon } from 'semantic-ui-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Container, Grid, Header, Form, Icon, Table } from 'semantic-ui-react';
 import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../../api';
 
@@ -9,6 +9,10 @@ const CourseManagement = () => {
   const [newCourse, setNewCourse] = useState({
     title: '',
     description: '',
+    image: '',
+    level: 'beginner',
+    category: '',
+    duration: '',
     lessons: []
   });
   const [loading, setLoading] = useState(true);
@@ -21,8 +25,10 @@ const CourseManagement = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const data = await fetchWithAuth('/api/admin/courses');
-      setCourses(data);
+      const response = await fetchWithAuth('/api/courses');
+      // Handle nested response structure
+      const courses = Array.isArray(response) ? response : response.data || [];
+      setCourses(courses);
       setError(null);
     } catch (err) {
       setError(err.message || 'Failed to fetch courses');
@@ -34,12 +40,14 @@ const CourseManagement = () => {
   const handleCreateCourse = async () => {
     try {
       setLoading(true);
-      const data = await fetchWithAuth('/api/admin/courses', {
+      const response = await fetchWithAuth('/api/courses', {
         method: 'POST',
         body: JSON.stringify(newCourse)
       });
-      setCourses([...courses, data]);
-      setNewCourse({ title: '', description: '', lessons: [] });
+      // Handle nested response structure
+      const createdCourse = response.data;
+      setCourses([...courses, createdCourse]);
+      setNewCourse({ title: '', description: '', image: '', level: 'beginner', category: '', duration: '', lessons: [] });
       setError(null);
     } catch (err) {
       setError(err.message || 'Failed to create course');
@@ -51,12 +59,14 @@ const CourseManagement = () => {
   const handleUpdateCourse = async (courseId, updates) => {
     try {
       setLoading(true);
-      const data = await fetchWithAuth(`/api/admin/courses/${courseId}`, {
+      const response = await fetchWithAuth(`/api/courses/${courseId}`, {
         method: 'PUT',
         body: JSON.stringify(updates)
       });
+      // Handle nested response structure
+      const updatedCourse = response.data;
       setCourses(courses.map(course => 
-        course._id === courseId ? data : course
+        course._id === courseId ? updatedCourse : course
       ));
       setError(null);
     } catch (err) {
@@ -71,7 +81,7 @@ const CourseManagement = () => {
 
     try {
       setLoading(true);
-      await fetchWithAuth(`/api/admin/courses/${courseId}`, {
+      await fetchWithAuth(`/api/courses/${courseId}`, {
         method: 'DELETE'
       });
       setCourses(courses.filter(course => course._id !== courseId));
@@ -103,6 +113,7 @@ const CourseManagement = () => {
                 placeholder='Course title'
                 value={newCourse.title}
                 onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
+                required
               />
             </Form.Field>
             <Form.Field>
@@ -111,11 +122,56 @@ const CourseManagement = () => {
                 placeholder='Course description'
                 value={newCourse.description}
                 onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+                required
               />
             </Form.Field>
-            <Button primary onClick={handleCreateCourse} loading={loading}>
+            <Form.Field>
+              <label>Course Image URL</label>
+              <input
+                placeholder='Image URL'
+                value={newCourse.image}
+                onChange={(e) => setNewCourse({ ...newCourse, image: e.target.value })}
+              />
+            </Form.Field>
+            <Form.Group widths='equal'>
+              <Form.Field>
+                <label>Category</label>
+                <select
+                  value={newCourse.category}
+                  onChange={(e) => setNewCourse({ ...newCourse, category: e.target.value })}
+                  className='ui fluid search dropdown'
+                >
+                  <option value=''>Select category</option>
+                  <option value='programming'>Programming</option>
+                  <option value='design'>Design</option>
+                  <option value='business'>Business</option>
+                </select>
+              </Form.Field>
+              <Form.Field>
+                <label>Level</label>
+                <select
+                  value={newCourse.level}
+                  onChange={(e) => setNewCourse({ ...newCourse, level: e.target.value })}
+                  className='ui fluid search dropdown'
+                >
+                  <option value=''>Select level</option>
+                  <option value='beginner'>Beginner</option>
+                  <option value='intermediate'>Intermediate</option>
+                  <option value='advanced'>Advanced</option>
+                </select>
+              </Form.Field>
+            </Form.Group>
+            <Form.Field>
+              <label>Duration</label>
+              <input
+                placeholder='Duration (e.g., 2 hours)'
+                value={newCourse.duration}
+                onChange={(e) => setNewCourse({ ...newCourse, duration: e.target.value })}
+              />
+            </Form.Field>
+            <button className='ui primary button' onClick={handleCreateCourse}>
               Create Course
-            </Button>
+            </button>
           </Form>
         </Grid.Column>
 
@@ -125,37 +181,50 @@ const CourseManagement = () => {
             <Table.Header>
               <Table.Row>
                 <Table.HeaderCell>Title</Table.HeaderCell>
-                <Table.HeaderCell>Description</Table.HeaderCell>
+                <Table.HeaderCell>Category</Table.HeaderCell>
+                <Table.HeaderCell>Level</Table.HeaderCell>
+                <Table.HeaderCell>Duration</Table.HeaderCell>
                 <Table.HeaderCell>Lessons</Table.HeaderCell>
                 <Table.HeaderCell>Actions</Table.HeaderCell>
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {courses.map((course) => (
-                <Table.Row key={course._id}>
-                  <Table.Cell>{course.title}</Table.Cell>
-                  <Table.Cell>{course.description}</Table.Cell>
-                  <Table.Cell>{course.lessons?.length || 0}</Table.Cell>
+                {courses.map((course) => (
+                  <Table.Row key={course._id}>
                   <Table.Cell>
-                    <Button
-                      icon
-                      color='blue'
-                      onClick={() => handleUpdateCourse(course._id, { title: 'Updated Title' })}
+                    <Header as='h4'>{course.title}</Header>
+                    <p style={{ color: '#666' }}>{course.description}</p>
+                  </Table.Cell>
+                  <Table.Cell>{course.category}</Table.Cell>
+                  <Table.Cell>{course.level}</Table.Cell>
+                  <Table.Cell>{course.duration}</Table.Cell>
+                  <Table.Cell>
+                    <button
+                      className='ui icon button blue'
+                      onClick={() => navigate(`/admin/courses/${course._id}/lessons`)}
                     >
-                      <Icon name='edit' />
-                    </Button>
-                    <Button
-                      icon
-                      color='red'
+                      <i className='list layout icon' />
+                      Manage Lessons
+                    </button>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <button
+                      className='ui icon button yellow'
+                      onClick={() => handleUpdateCourse(course._id, course)}
+                    >
+                      <i className='edit icon' />
+                    </button>
+                    <button
+                      className='ui icon button red'
                       onClick={() => handleDeleteCourse(course._id)}
                     >
-                      <Icon name='delete' />
-                    </Button>
+                      <i className='delete icon' />
+                    </button>
                   </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
         </Grid.Column>
       </Grid>
     </Container>

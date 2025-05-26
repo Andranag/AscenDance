@@ -51,28 +51,6 @@ const Navbar = () => {
           >
             Profile
           </Menu.Item>
-          {isAdmin && (
-            <>
-              <Menu.Item
-                as={Link}
-                to="/admin/courses"
-                name="admin"
-                active={activeItem === 'admin'}
-                onClick={handleItemClick}
-              >
-                Admin
-              </Menu.Item>
-              <Menu.Item
-                as={Link}
-                to="/admin/dashboard"
-                name="dashboard"
-                active={activeItem === 'dashboard'}
-                onClick={handleItemClick}
-              >
-                Dashboard
-              </Menu.Item>
-            </>
-          )}
           <Menu.Item
             name="logout"
             active={activeItem === 'logout'}

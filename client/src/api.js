@@ -54,28 +54,38 @@ const handleResponse = async (response) => {
 };
 
 export const fetchWithAuth = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('No token found in localStorage');
-    throw new Error('No authentication token found');
-  }
-  
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-    ...options.headers
-  };
-
   try {
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
-    console.log('Making request to:', url);
-    console.log('Request headers:', headers);
+    const token = localStorage.getItem('token');
     
-    const response = await fetch(url, {
-      ...options,
-      headers,
-      credentials: 'include'
+    // Debug logging
+    console.log('Token from fetchWithAuth:', token);
+    console.log('Token type:', typeof token);
+    console.log('Token length:', token?.length);
+    
+    if (!token) {
+      throw new Error('No token found. Please login again.');
+    }
+    
+    // Verify token format
+    if (typeof token !== 'string' || token.length < 10) {
+      console.error('Invalid token format:', token);
+      throw new Error('Invalid token format. Please login again.');
+    }
+    
+    const config = {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      ...options
+    };
+    
+    console.log('Request config:', {
+      endpoint: `${API_BASE_URL}${endpoint}`,
+      headers: config.headers
     });
+    
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
     
     console.log('Response status:', response.status);
     
@@ -109,11 +119,27 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
         data
       });
       
+      // Handle 401 Unauthorized
       if (response.status === 401) {
         throw new Error('Unauthorized. Please login again.');
       }
       
-      throw new Error(data?.message || `API error: ${response.statusText}`);
+      // Handle token expired case
+      if (data?.error === 'token_expired') {
+        throw new Error('Token expired. Please login again.');
+      }
+      
+      // Handle user not found case
+      if (data?.error === 'user_not_found') {
+        throw new Error('User no longer exists. Please login again.');
+      }
+      
+      // Handle other error cases
+      if (data?.error) {
+        throw new Error(data.message || `API error: ${data.error}`);
+      }
+      
+      throw new Error(`API error: ${response.statusText}`);
     }
     
     // Handle nested response structure
@@ -151,14 +177,32 @@ export const fetchPublic = async (endpoint, options = {}) => {
     });
     
     const text = await response.text();
-    const data = text ? JSON.parse(text) : {};
+    console.log('Public API response text:', text);
     
-    if (!response.ok) {
-      throw new Error(data.message || `API error: ${response.statusText}`);
+    let data;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch (e) {
+      console.error('Failed to parse JSON:', e);
+      data = null;
     }
     
-    return data;
+    if (!response.ok) {
+      throw new Error(data?.message || `API error: ${response.statusText}`);
+    }
+    
+    // Always return the full response object
+    return {
+      success: response.ok,
+      data: data || {},
+      status: response.status
+    };
   } catch (error) {
+    console.error('Public API error:', {
+      error,
+      message: error.message,
+      name: error.name
+    });
     throw error;
   }
 };

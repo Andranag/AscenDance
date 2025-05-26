@@ -27,22 +27,35 @@ const Login = () => {
         body: JSON.stringify({ email, password })
       });
 
-      // Check for success and extract data
-      if (!response.success || !response.data) {
+      // Extract token and user data from response
+      const { token, user } = response.data.data;
+
+      // Check if we got the required data
+      if (!token || !user) {
         throw new Error('Invalid response from server');
       }
-
-      // Extract token and user data from nested response
-      const { token, user } = response.data;
 
       // Store token and user data
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('role', user.role);
+      
+      // Debug logging
+      console.log('Token stored:', token);
+      console.log('Token type:', typeof token);
+      console.log('Token length:', token?.length);
+      console.log('User stored:', user);
+      console.log('Role stored:', user.role);
+      
+      // Verify storage
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      console.log('Token from localStorage:', storedToken);
+      console.log('User from localStorage:', storedUser ? JSON.parse(storedUser) : null);
 
       // Redirect based on role
       if (user.role === 'admin') {
-        navigate('/admin/courses');
+        navigate('/admin');
       } else {
         navigate('/courses');
       }

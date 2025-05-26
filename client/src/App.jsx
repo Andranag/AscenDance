@@ -10,55 +10,43 @@ import AdminLayout from './components/Admin/AdminLayout';
 import CourseManagement from './components/Admin/CourseManagement';
 
 function App() {
+  const token = localStorage.getItem('token');
+  const user = token ? JSON.parse(localStorage.getItem('user')) : null;
+  const isAdmin = user?.role === 'admin';
+
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={
-          <>
-            <Navbar />
-            <Courses />
-          </>
-        } />
-        <Route path="/login" element={
-          <>
-            <Navbar />
-            <Login />
-          </>
-        } />
-        <Route path="/register" element={
-          <>
-            <Navbar />
-            <Register />
-          </>
-        } />
-        <Route path="/courses" element={
-          <>
-            <Navbar />
-            <Courses />
-          </>
-        } />
-        <Route path="/course/:courseId" element={
-          <>
-            <Navbar />
-            <CoursePage />
-          </>
-        } />
-        <Route path="/profile" element={
-          <>
-            <Navbar />
-            <Profile />
-          </>
-        } />
-        <Route path="/admin" element={
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Navbar />
+        {isAdmin ? (
           <AdminLayout>
             <Routes>
-              <Route index element={<CourseManagement />} />
-              <Route path="courses" element={<CourseManagement />} />
-              <Route path="dashboard" element={<CourseManagement />} />
+              <Route path="/" element={<Courses />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/course/:courseId" element={<CoursePage />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/admin/*" element={
+                <Routes>
+                  <Route index element={<CourseManagement />} />
+                  <Route path="courses" element={<CourseManagement />} />
+                  <Route path="dashboard" element={<CourseManagement />} />
+                </Routes>
+              } />
             </Routes>
           </AdminLayout>
-        } />
-      </Routes>
+        ) : (
+          <Routes>
+            <Route path="/" element={<Courses />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/course/:courseId" element={<CoursePage />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+        )}
+      </div>
     </BrowserRouter>
   );
 }

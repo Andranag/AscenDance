@@ -1,64 +1,81 @@
-import React from 'react';
-import { Menu, Segment } from 'semantic-ui-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Menu } from 'semantic-ui-react';
+import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import CourseManagement from './CourseManagement';
 
-const AdminLayout = ({ children }) => {
+function AdminLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const activeItem = location.pathname.split('/').pop() || 'dashboard';
-
-  const handleItemClick = (e, { name }) => {
-    setActiveItem(name);
-    navigate(`/admin/${name}`);
-  };
+  const path = location.pathname.split('/');
+  const token = localStorage.getItem('token');
+  const user = token ? JSON.parse(localStorage.getItem('user')) : null;
+  const isAdmin = user?.role === 'admin';
+  
+  // If not admin, redirect to home
+  if (!isAdmin) {
+    navigate('/');
+    return null;
+  }
+  
+  // Get the current admin page from the URL
+  const currentAdminPage = path[2] || '';
+  
+  // Handle navigation
+  const handleNavigation = (page) => {
+    navigate(`/admin/${page}`);
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Menu vertical style={{ width: '250px', borderRight: '1px solid #ddd' }}>
+      <Menu secondary vertical={true} style={{
+        width: '250px',
+        borderRight: '1px solid #ddd',
+        backgroundColor: '#f5f5f5',
+        padding: '1rem 0'
+      }}>
         <Menu.Item
-          as={Link}
-          to="/"
-          icon='home'
+          as='a'
+          onClick={() => navigate('/')}
+          icon={{ name: 'home' }}
           content='Back to Main Site'
-          position='left'
           style={{ marginBottom: '1rem' }}
         />
+        
         <Menu.Item
           name='dashboard'
-          active={activeItem === 'dashboard'}
-          onClick={handleItemClick}
-        >
-          Dashboard
-        </Menu.Item>
+          active={currentAdminPage === ''}
+          onClick={() => handleNavigation('')}
+          icon={{ name: 'dashboard' }}
+          content='Dashboard'
+        />
         <Menu.Item
           name='courses'
-          active={activeItem === 'courses'}
-          onClick={handleItemClick}
-        >
-          Courses
-        </Menu.Item>
+          active={currentAdminPage === 'courses'}
+          onClick={() => handleNavigation('courses')}
+          icon={{ name: 'book' }}
+          content='Courses'
+        />
         <Menu.Item
           name='users'
-          active={activeItem === 'users'}
-          onClick={handleItemClick}
-        >
-          Users
-        </Menu.Item>
+          active={currentAdminPage === 'users'}
+          onClick={() => handleNavigation('users')}
+          icon={{ name: 'users' }}
+          content='Users'
+        />
         <Menu.Item
           name='analytics'
-          active={activeItem === 'analytics'}
-          onClick={handleItemClick}
-        >
-          Analytics
-        </Menu.Item>
+          active={currentAdminPage === 'analytics'}
+          onClick={() => handleNavigation('analytics')}
+          icon={{ name: 'chart line' }}
+          content='Analytics'
+        />
       </Menu>
-
-      <Segment style={{ flex: 1, padding: '2rem' }}>
+      <div style={{ flex: 1, padding: '2rem' }}>
         {children}
-      </Segment>
+      </div>
     </div>
   );
-};
+}
 
 export default AdminLayout;

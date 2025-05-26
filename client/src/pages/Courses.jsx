@@ -17,8 +17,13 @@ const Courses = () => {
         const response = await fetchPublic('/api/courses');
         console.log('Raw response:', response);
         
-        // Handle both array and object responses
-        const courses = Array.isArray(response) ? response : response.data || [];
+        // Handle both array and nested object responses
+        let courses = Array.isArray(response) ? response : response.data || [];
+        
+        // If we got a single object instead of array, wrap it in an array
+        if (!Array.isArray(courses)) {
+          courses = [courses];
+        }
         console.log('Processed courses:', courses);
         
         if (!Array.isArray(courses)) {
