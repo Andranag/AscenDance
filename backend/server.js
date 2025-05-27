@@ -3,6 +3,15 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+
+// CORS configuration
+const corsOptions = {
+  origin: 'http://localhost:5173',  // Vite dev server
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204
+};
 const authRoutes = require('./src/routes/authRoutes');
 const courseRoutes = require('./src/routes/courseRoutes');
 
@@ -25,6 +34,9 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ascendanc
 });
 
 const app = express();
+
+// Middleware
+app.use(cors(corsOptions));
 
 // Debug endpoint to check available courses
 app.get('/api/debug/courses', async (req, res) => {

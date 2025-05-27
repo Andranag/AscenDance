@@ -65,6 +65,8 @@ export const AuthProvider = ({ children }) => {
         throw new Error('No token available');
       }
 
+      console.log('fetchWithAuth:', endpoint, 'with token:', authState.token.substring(0, 10) + '...');
+
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${authState.token}`,
@@ -77,6 +79,8 @@ export const AuthProvider = ({ children }) => {
         headers,
         credentials: 'include',
         method: config.method || 'GET',
+        mode: 'cors',
+        cache: 'default'
       };
 
       // Add timeout to prevent hanging requests
@@ -84,6 +88,7 @@ export const AuthProvider = ({ children }) => {
       const id = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       try {
+        console.log('Making request to:', `${API_BASE_URL}${endpoint}`);
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
           ...fetchConfig,
           signal: controller.signal
@@ -102,10 +107,12 @@ export const AuthProvider = ({ children }) => {
             throw new Error('Session expired. Please log in again.');
           }
           
+          console.error('Response error:', errorData);
           throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log('Response data:', data);
         
         // Handle both direct and nested response formats
         if (data && typeof data === 'object') {
@@ -126,7 +133,7 @@ export const AuthProvider = ({ children }) => {
           throw new Error('Request timed out');
         }
         console.error('Fetch error:', error);
-        throw new Error('Network error. Please check your connection.');
+        throw error;
       }
     } catch (error) {
       console.error('fetchWithAuth error:', error);

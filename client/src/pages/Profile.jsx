@@ -25,21 +25,30 @@ const Profile = () => {
       try {
         const response = await fetchWithAuth('/api/auth/profile');
         if (response) {
-          updateUser(response);
+          // Handle nested response structure
+          const userData = response.data?.user || response.user || response;
+          if (userData) {
+            updateUser(userData);
+          }
         }
       } catch (error) {
         console.error('Profile fetch error:', error);
         
-        // If no user data and fetch fails, show error
-        if (!user) {
-          toastError('Failed to load profile. Please check your network connection.');
+        // Only navigate to login if token is invalid
+        if (error.message.includes('Session expired') || 
+            error.message.includes('Unauthorized') || 
+            error.message.includes('Token invalid')) {
+          logout();
           navigate('/login');
         }
       }
     };
 
-    fetchProfile();
-  }, [fetchWithAuth, navigate, updateUser, user]);
+    // Only fetch if we have a token AND user is not already loaded
+    if (token && (!user || !user.email)) {
+      fetchProfile();
+    }
+  }, [fetchWithAuth, navigate, updateUser, token, logout, user]);
 
   const handleUpdate = async (updates) => {
     try {
@@ -55,13 +64,18 @@ const Profile = () => {
 
       // Handle nested response structure
       if (response) {
-        // Store in localStorage immediately
-        localStorage.setItem('authState', JSON.stringify({
-          user: response,
-          token: token
-        }));
-        updateUser(response);
-        toastSuccess('Profile updated successfully!');
+        const userData = response.data?.user || response.user || response;
+        if (userData) {
+          // Store in localStorage immediately
+          localStorage.setItem('authState', JSON.stringify({
+            user: userData,
+            token: token
+          }));
+          updateUser(userData);
+          toastSuccess('Profile updated successfully!');
+        } else {
+          throw new Error('Invalid response data');
+        }
       } else {
         throw new Error('Invalid response from server');
       }
