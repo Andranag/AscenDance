@@ -26,20 +26,25 @@ const verifyTokenAndGetUser = async (token) => {
 
 // Middleware to protect routes
 const protect = async (req, res, next) => {
+  console.log('Auth middleware:', req.method, req.path);
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('No auth header or invalid format');
     return res.status(401).json({ error: 'No token provided' });
   }
 
   const token = authHeader.split(' ')[1];
+  console.log('Verifying token:', token.substring(0, 10) + '...');
   const user = await verifyTokenAndGetUser(token);
 
   if (!user) {
+    console.log('Token verification failed');
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
   req.userId = user._id;
   req.user = user;
+  console.log('Authenticated user:', user._id, user.email);
   next();
 };
 

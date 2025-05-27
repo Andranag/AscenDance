@@ -61,6 +61,7 @@ const CourseManagement = () => {
       if (createdCourse) {
         setCourses([...courses, createdCourse]);
         setNewCourse({ title: '', description: '', image: '', level: 'beginner', category: '', duration: '', lessons: [] });
+        toastSuccess('Course created successfully');
       } else {
         throw new Error('Failed to create course');
       }

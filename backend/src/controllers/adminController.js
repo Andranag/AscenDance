@@ -1,4 +1,5 @@
 const Course = require('../models/Course');
+const User = require('../models/User');
 const { isAdmin } = require('../middleware/authMiddleware');
 
 console.log('Loaded adminController.js ✅');
@@ -83,9 +84,103 @@ const deleteCourse = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({});
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+};
+
+const updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent admin from downgrading themselves
+    if (user._id.toString() === req.user.id && role !== 'admin') {
+      return res.status(400).json({ error: 'Cannot change your own role' });
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    res.status(500).json({ error: 'Failed to update user role' });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    console.log('=== DELETE USER REQUEST ===');
+    console.log('Request params:', req.params);
+    console.log('Request user:', req.user);
+    console.log('Request headers:', req.headers);
+    
+    // Get user ID from params
+    const userId = req.params.id;
+    
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log('User not found');
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent admin from deleting themselves
+    if (user._id.toString() === req.user._id.toString()) {
+      console.log('Attempt to delete admin user');
+      return res.status(400).json({ error: 'Cannot delete yourself' });
+    }
+
+    console.log('Deleting user:', user.email);
+    console.log('Attempting to delete user with ID:', userId);
+    
+    // Use deleteOne directly with conditions
+    const result = await User.deleteOne({ _id: userId });
+    console.log('Deletion result:', result);
+    
+    if (result.deletedCount === 0) {
+      console.log('No user found with ID:', userId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log('User deleted successfully');
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('=== DELETE USER ERROR ===');
+    console.error('Error details:', {
+      error: error,
+      message: error.message,
+      stack: error.stack,
+      req: {
+        params: req.params,
+        user: req.user,
+        headers: req.headers
+      }
+    });
+    console.error('Error deleting user:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete user',
+      details: error.message 
+    });
+  }
+};
+
 module.exports = {
   getAllCoursesAdmin,
   createCourse,
   updateCourse,
-  deleteCourse
+  deleteCourse,
+  getAllUsers,
+  updateUserRole,
+  deleteUser
 };

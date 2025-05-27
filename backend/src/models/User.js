@@ -63,6 +63,47 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
+// Pre-delete hook to clean up related data
+userSchema.pre('deleteOne', async function(next) {
+  try {
+    console.log('Pre-deleteOne hook triggered for user:', this._conditions);
+    // Add any cleanup logic here if needed
+    next();
+  } catch (error) {
+    console.error('Error in user pre-deleteOne hook:', error);
+    next(error);
+  }
+});
+
+// Pre-findByIdAndDelete hook
+userSchema.pre('findByIdAndDelete', async function(next) {
+  try {
+    console.log('Pre-findByIdAndDelete hook triggered for user:', this._conditions);
+    // Add any cleanup logic here if needed
+    next();
+  } catch (error) {
+    console.error('Error in user pre-findByIdAndDelete hook:', error);
+    next(error);
+  }
+});
+
+// Add post-delete hooks for better error handling
+userSchema.post('deleteOne', function(error, doc, next) {
+  console.log('Post-deleteOne hook triggered');
+  if (error) {
+    console.error('Error in deleteOne operation:', error);
+  }
+  next(error);
+});
+
+userSchema.post('findByIdAndDelete', function(error, doc, next) {
+  console.log('Post-findByIdAndDelete hook triggered');
+  if (error) {
+    console.error('Error in findByIdAndDelete operation:', error);
+  }
+  next(error);
+});
+
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;

@@ -77,18 +77,37 @@ export const AuthProvider = ({ children }) => {
         ...config.headers,
       };
 
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      // Ensure endpoint starts with '/api/'
+      const fullEndpoint = endpoint.startsWith('/api/') ? endpoint : `/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+      
+      const response = await fetch(`${API_BASE_URL}${fullEndpoint}`, {
         ...config,
         headers,
         credentials: 'include'
       });
 
-      // For DELETE requests, we don't need to check response.ok
-      if (config.method !== 'DELETE') {
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        // Handle DELETE responses differently
+        if (config.method === 'DELETE') {
+          // For DELETE requests, we don't need to parse the response
+          // Just throw the error with status
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        // Handle 404 errors differently for admin routes
+        if (response.status === 404 && endpoint.startsWith('/api/admin/')) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Resource not found');
+        }
+        // Handle other 404 errors silently
+        if (response.status === 404) {
+          return null;
+        }
+        // Handle other errors
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      } else if (config.method === 'DELETE') {
+        // For successful DELETE requests, just return
+        return null;
       }
 
       // Try to get the response data
@@ -104,6 +123,14 @@ export const AuthProvider = ({ children }) => {
         }
       } else if (data.user) {
         data = data.user;
+      } else {
+        // For simple responses, return the entire data object
+        return data;
+      }
+
+      // For admin routes, return the full response
+      if (endpoint.startsWith('/admin/')) {
+        return data;
       }
 
       return data;
