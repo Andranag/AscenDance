@@ -64,7 +64,8 @@ const Profile = () => {
 
       // Handle nested response structure
       if (response) {
-        const userData = response.data?.user || response.user || response;
+        // The fetchWithAuth already handles nested structures
+        const userData = response;
         if (userData) {
           // Store in localStorage immediately
           localStorage.setItem('authState', JSON.stringify({

@@ -28,12 +28,13 @@ const CourseManagement = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const courses = await fetchWithAuth('/api/courses');
+      const response = await fetchWithAuth('/api/courses');
+      const courses = response.data || [];
       setCourses(courses);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Failed to fetch courses');
-      toast.error(err.message || 'Failed to fetch courses');
+      setError('Failed to fetch courses');
+      toast.error('Failed to fetch courses');
     } finally {
       setLoading(false);
     }
@@ -49,13 +50,16 @@ const CourseManagement = () => {
           lessons: newCourse.lessons || []
         })
       });
-      setCourses([...courses, createdCourse]);
-      setNewCourse({ title: '', description: '', image: '', level: 'beginner', category: '', duration: '', lessons: [] });
-      setError(null);
-
-    } catch (err) {
-      setError(err.toString() || 'Failed to create course');
-      toast.error(err.toString() || 'Failed to create course');
+      if (createdCourse) {
+        setCourses([...courses, createdCourse]);
+        setNewCourse({ title: '', description: '', image: '', level: 'beginner', category: '', duration: '', lessons: [] });
+        setError(null);
+      } else {
+        throw new Error('Failed to create course');
+      }
+    } catch (error) {
+      setError(error?.message || 'Failed to create course');
+      toast.error(error?.message || 'Failed to create course');
     } finally {
       setLoading(false);
     }
@@ -79,29 +83,25 @@ const CourseManagement = () => {
       setLoading(false);
     }
   };
-
+  
   const handleDeleteCourse = async (courseId) => {
     if (!window.confirm('Are you sure you want to delete this course?')) return;
 
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      const response = await fetchWithAuth(`/api/admin/courses/${encodeURIComponent(courseId)}`, {
+      const response = await fetchWithAuth(`/api/admin/courses/${courseId}`, {
         method: 'DELETE'
       });
       
-      // Check if response has a message property
-      if (response && response.message) {
-        toast.success(response.message);
-      } else {
-        toast.success('Course deleted successfully');
-      }
-      
-      setCourses(courses.filter(course => course._id !== courseId));
+      // If we got here without throwing, the request was successful
+      toast.success('Course deleted successfully');
+      setCourses(prev => prev.filter(c => c._id !== courseId));
       setError(null);
-    } catch (err) {
-      const errorMessage = err?.response?.data?.error?.message || 'Failed to delete course';
-      setError(errorMessage);
-      toast.error(errorMessage);
+    } catch (error) {
+      // Log the error but don't try to access its properties
+      console.error('Delete failed:', error);
+      toast.error('Failed to delete course');
     } finally {
       setLoading(false);
     }

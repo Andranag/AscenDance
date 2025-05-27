@@ -1,39 +1,23 @@
 const mongoose = require('mongoose');
 
-const courseSchema = new mongoose.Schema({
-  title: {
+const lessonSchema = new mongoose.Schema({
+  title: String,
+  content: String,
+  type: {
     type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    required: true
-  },
-  lessons: [{
-    title: String,
-    content: String,
-    type: {
-      type: String,
-      enum: ['video', 'article']
-    }
-  }],
-  progress: [{
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    completedLessons: [{
-      lessonId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Lesson'
-      }
-    }]
-  }]
-}, {
-  timestamps: true
+    enum: ['video', 'article'],
+    default: 'video'
+  }
 });
 
-const Course = mongoose.model('Course', courseSchema);
-console.log('Course model created:', Course);
-module.exports = Course;
+const courseSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  image: String,
+  category: String,
+  level: String,
+  duration: String,
+  lessons: [lessonSchema]
+});
+
+module.exports = mongoose.model('Course', courseSchema);

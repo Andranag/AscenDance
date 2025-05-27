@@ -65,70 +65,48 @@ export const AuthProvider = ({ children }) => {
         throw new Error('No token available');
       }
 
-      console.log('fetchWithAuth:', endpoint, 'with token:', authState.token.substring(0, 10) + '...');
-
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${authState.token}`,
         ...config.headers,
       };
 
-      // Add network settings
-      const fetchConfig = {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...config,
         headers,
-        credentials: 'include',
-        method: config.method || 'GET',
-        mode: 'cors',
-        cache: 'default'
-      };
+        credentials: 'include'
+      });
 
-      // Add timeout to prevent hanging requests
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-      try {
-        console.log('Making request to:', `${API_BASE_URL}${endpoint}`);
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          ...fetchConfig,
-          signal: controller.signal
-        });
-
-        clearTimeout(id);
-
+      // For DELETE requests, we don't need to check response.ok
+      if (config.method !== 'DELETE') {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          
-          // Handle specific error cases
-          if (errorData.error?.includes('token expired') || 
-              errorData.error?.includes('Token expired') || 
-              errorData.error?.includes('Invalid token')) {
-            logout();
-            throw new Error('Session expired. Please log in again.');
-          }
-          
-          console.error('Response error:', errorData);
           throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
         }
-
-        const data = await response.json();
-        console.log('Response data:', data);
-        
-        // Handle our simple response format
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        
-        return data;
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          throw new Error('Request timed out');
-        }
-        console.error('Fetch error:', error);
-        throw error;
       }
+
+      // Try to get the response data, handle nested structures
+      let data;
+      try {
+        data = await response.json();
+        // Handle nested response structure
+        if (data.data) {
+          // If response has data.user, use that
+          if (data.data.user) {
+            data = data.data.user;
+          } else {
+            data = data.data;
+          }
+        } else if (data.user) {
+          data = data.user;
+        }
+      } catch (e) {
+        data = {};
+      }
+
+      return data;
     } catch (error) {
-      console.error('fetchWithAuth error:', error);
+      console.error('Fetch error:', error);
       throw error;
     }
   };
@@ -175,7 +153,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Update auth state when token changes
+  // Update auth state and validate token
   useEffect(() => {
     if (!authState.token) {
       localStorage.removeItem('authState');
@@ -199,15 +177,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Error validating token:', error);
       logout();
-    }
-  }, [authState.token]);
-
-  // Update auth state when token changes
-  useEffect(() => {
-    if (authState.token) {
-      localStorage.setItem('authState', JSON.stringify(authState));
-    } else {
-      localStorage.removeItem('authState');
     }
   }, [authState.token]);
 

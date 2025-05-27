@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const Course = require('./src/models/Course');
+const Course = require('../models/Course');
 console.log('Seed file loaded:', Course);
 
 const MONGODB_URI = 'mongodb+srv://andersanagnostou:Nxq8pA9owsyOlj8n@cluster0.0roelyb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';

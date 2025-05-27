@@ -46,6 +46,7 @@ const Navbar = () => {
           >
             Logout
           </Menu.Item>
+
         </>
       ) : (
         <>
@@ -77,17 +78,6 @@ const Navbar = () => {
             Sign Up
           </Menu.Item>
         </>
-      )}
-      {isAdmin && (
-        <Menu.Item
-          as={Link}
-          to="/admin"
-          name="admin"
-          active={location.pathname === '/admin'}
-          onClick={handleItemClick}
-        >
-          Admin
-        </Menu.Item>
       )}
     </Menu>
   );

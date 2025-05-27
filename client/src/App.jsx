@@ -8,6 +8,8 @@ import Profile from './pages/Profile';
 import Navbar from './components/Navbar';
 import AdminLayout from './components/Admin/AdminLayout';
 import CourseManagement from './components/Admin/CourseManagement';
+import UsersManagement from './components/Admin/UsersManagement';
+import Analytics from './components/Admin/Analytics';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 
@@ -48,14 +50,20 @@ function App() {
               <Route
                 path="/courses"
                 element={
-                  <Courses />
+                  <ProtectedRoute>
+                    <AdminLayout>
+                      <Courses />
+                    </AdminLayout>
+                  </ProtectedRoute>
                 }
               />
               <Route
                 path="/courses/:courseId"
                 element={
                   <ProtectedRoute>
-                    <CoursePage />
+                    <AdminLayout>
+                      <CoursePage />
+                    </AdminLayout>
                   </ProtectedRoute>
                 }
               />
@@ -63,15 +71,9 @@ function App() {
                 path="/profile"
                 element={
                   <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <AdminLayout />
+                    <AdminLayout>
+                      <Profile />
+                    </AdminLayout>
                   </ProtectedRoute>
                 }
               />
@@ -79,7 +81,29 @@ function App() {
                 path="/admin/courses"
                 element={
                   <ProtectedRoute>
-                    <CourseManagement />
+                    <AdminLayout>
+                      <CourseManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute>
+                    <AdminLayout>
+                      <UsersManagement />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/analytics"
+                element={
+                  <ProtectedRoute>
+                    <AdminLayout>
+                      <Analytics />
+                    </AdminLayout>
                   </ProtectedRoute>
                 }
               />
