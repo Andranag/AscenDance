@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('authState', JSON.stringify(newAuth));
       setAuthState(newAuth);
       
-      return { success: true, user: userData, token };
+      return { user: userData, token };
     } catch (error) {
       throw error;
     }
@@ -114,17 +114,9 @@ export const AuthProvider = ({ children }) => {
         const data = await response.json();
         console.log('Response data:', data);
         
-        // Handle both direct and nested response formats
-        if (data && typeof data === 'object') {
-          if (data.success && data.data) {
-            return data.data;
-          }
-          if (data.data) {
-            return data.data;
-          }
-          if (data.user) {
-            return data.user;
-          }
+        // Handle our simple response format
+        if (data.error) {
+          throw new Error(data.error);
         }
         
         return data;

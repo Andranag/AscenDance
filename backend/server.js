@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const User = require('./src/models/User');
 
 // CORS configuration
 const corsOptions = {
@@ -14,6 +15,7 @@ const corsOptions = {
 };
 const authRoutes = require('./src/routes/authRoutes');
 const courseRoutes = require('./src/routes/courseRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ascendance', {
@@ -37,6 +39,12 @@ const app = express();
 
 // Middleware
 app.use(cors(corsOptions));
+app.use(express.json());
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Debug endpoint to check available courses
 app.get('/api/debug/courses', async (req, res) => {
@@ -84,6 +92,7 @@ app.use('/api/auth', authRoutes);
 
 // Protected routes
 app.use('/api/courses', courseRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

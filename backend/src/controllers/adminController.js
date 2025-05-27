@@ -1,13 +1,10 @@
 const Course = require('../models/Course');
-const { isAdmin } = require('../middleware/adminMiddleware');
+const { isAdmin } = require('../middleware/authMiddleware');
 
 // Get all courses with detailed information
 const getAllCoursesAdmin = async (req, res) => {
   try {
-    const courses = await Course.find({})
-      .populate('progress.userId', 'name email')
-      .populate('progress.completedLessons.lessonId', 'title');
-    
+    const courses = await Course.find({});
     res.json(courses);
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -56,20 +53,20 @@ const updateCourse = async (req, res) => {
   }
 };
 
-// Delete a course
+// Delete a course and its related data
 const deleteCourse = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    const courseId = req.params.id;
+    console.log(`Attempting to delete course with ID: ${courseId}`);
+
+    // Delete the course and its lessons
+    await Course.findByIdAndDelete(courseId);
+    await Lesson.deleteMany({ courseId });
     
-    if (!course) {
-      return res.status(404).json({ error: 'Course not found' });
-    }
-    
-    await course.deleteOne();
     res.json({ message: 'Course deleted successfully' });
   } catch (error) {
     console.error('Error deleting course:', error);
-    res.status(500).json({ error: 'Failed to delete course' });
+    res.status(500).json({ error: { message: error.message || 'Failed to delete course', courseId: courseId } });
   }
 };
 
