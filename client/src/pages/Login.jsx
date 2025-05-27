@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Container, Form, Input, Button, Segment } from 'semantic-ui-react';
+import { Container, Form, Input, Button, Segment, Icon } from 'semantic-ui-react';
 import {
   authContainerStyle,
   authFormContainerStyle,
@@ -46,6 +46,8 @@ const Login = () => {
           <Form.Field>
             <label>Email</label>
             <Input
+              icon={{ name: 'envelope', link: true }}
+              iconPosition='left'
               type="email"
               placeholder="Enter email"
               value={email}
@@ -58,6 +60,8 @@ const Login = () => {
             <label>Password</label>
             <div style={{ position: 'relative' }}>
               <Input
+                icon={{ name: 'lock', link: true }}
+                iconPosition='left'
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter password"
                 value={password}

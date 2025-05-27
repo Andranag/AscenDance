@@ -12,6 +12,8 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toastSuccess, toastError } = useToast();
 
   // Validation functions
@@ -128,26 +130,56 @@ const Register = () => {
             />
           </Form.Field>
           <Form.Field>
-            <Input
-              icon='lock'
-              iconPosition='left'
-              type="password"
-              placeholder='Password'
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <label>Password</label>
+            <div style={{ position: 'relative' }}>
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <Button
+                type="button"
+                icon={`eye${showPassword ? ' slash' : ''}`}
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#666',
+                  padding: '8px',
+                }}
+              />
+            </div>
           </Form.Field>
           <Form.Field>
-            <Input
-              icon='lock'
-              iconPosition='left'
-              type="password"
-              placeholder='Confirm Password'
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
+            <label>Confirm Password</label>
+            <div style={{ position: 'relative' }}>
+              <Input
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="Confirm password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+              <Button
+                type="button"
+                icon={`eye${showConfirmPassword ? ' slash' : ''}`}
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#666',
+                  padding: '8px',
+                }}
+              />
+            </div>
           </Form.Field>
           <Button
             type="submit"
