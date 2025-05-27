@@ -15,9 +15,12 @@ const Navbar = () => {
 
   return (
     <div style={{
-      width: '100%'
+      marginLeft: '250px',
+      width: 'calc(100% - 250px)'
     }}>
-      <Menu pointing secondary>
+      <Menu pointing secondary style={{
+        width: '100%'
+      }}>
         <Menu.Item
           as={Link}
           to="/courses"
