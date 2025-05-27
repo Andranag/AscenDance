@@ -17,18 +17,13 @@ const ProfileEditor = ({
   const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
-    if (!initialLoad) {
+    // Initialize form data on first render
+    if (initialLoad) {
+      setInitialLoad(false);
       setFormData({
         name: user?.name || '',
         email: user?.email || ''
       });
-    }
-  }, [user, initialLoad]);
-
-  useEffect(() => {
-    // Skip first render
-    if (initialLoad) {
-      setInitialLoad(false);
       return;
     }
     
@@ -117,22 +112,19 @@ const ProfileEditor = ({
             }}
           />
         </div>
-
-        <button
+        <Button
           type="submit"
+          primary
+          fluid
           disabled={loading}
           style={{
-            padding: '0.75rem',
-            backgroundColor: '#21ba45',
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.25rem',
+            marginTop: '1rem',
             cursor: 'pointer',
             fontSize: '1rem'
           }}
         >
           {loading ? 'Updating...' : 'Update Profile'}
-        </button>
+        </Button>
       </form>
     </div>
   );

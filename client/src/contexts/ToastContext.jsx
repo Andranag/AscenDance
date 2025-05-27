@@ -44,8 +44,8 @@ const ToastContainer = ({ toasts, removeToast }) => {
       position: 'fixed',
       top: 20,
       right: 20,
-      zIndex: 1000,
-      pointerEvents: 'none'
+      zIndex: 9999,
+      pointerEvents: 'auto'
     }}>
       {toasts.map((toast) => (
         <div
@@ -57,6 +57,8 @@ const ToastContainer = ({ toasts, removeToast }) => {
               warning: '#ffa500',
               info: '#2196f3'
             }[toast.type],
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            transition: 'transform 0.3s ease-in-out',
             color: 'white',
             padding: '12px 24px',
             borderRadius: 4,

@@ -42,13 +42,19 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Invalid response from server');
       }
 
-      const newAuth = { user: userData, token };
+      // Ensure we have a role property
+      const normalizedUser = {
+        ...userData,
+        role: userData.role || 'user' // Default to 'user' if no role
+      };
+
+      const newAuth = { user: normalizedUser, token };
       
       // Store in localStorage immediately
       localStorage.setItem('authState', JSON.stringify(newAuth));
       setAuthState(newAuth);
       
-      return { user: userData, token };
+      return { user: normalizedUser, token };
     } catch (error) {
       throw error;
     }
@@ -85,23 +91,19 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      // Try to get the response data, handle nested structures
-      let data;
-      try {
-        data = await response.json();
-        // Handle nested response structure
-        if (data.data) {
-          // If response has data.user, use that
-          if (data.data.user) {
-            data = data.data.user;
-          } else {
-            data = data.data;
-          }
-        } else if (data.user) {
-          data = data.user;
+      // Try to get the response data
+      let data = await response.json();
+      
+      // Handle nested response structure
+      if (data.data) {
+        // If response has data.user, use that
+        if (data.data.user) {
+          data = data.data.user;
+        } else {
+          data = data.data;
         }
-      } catch (e) {
-        data = {};
+      } else if (data.user) {
+        data = data.user;
       }
 
       return data;
@@ -112,7 +114,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (userData) => {
-    if (!userData) return;
+    if (!userData) return null;
     
     // Always update the user data
     const newAuth = { ...authState, user: userData };
@@ -128,32 +130,47 @@ export const AuthProvider = ({ children }) => {
       try {
         const parsed = JSON.parse(stored);
         if (parsed.token && parsed.user) {
-          // Verify token before setting state
-          try {
-            const token = parsed.token;
-            const [_, payloadB64] = token.split('.');
-            const payloadStr = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
-            const payload = JSON.parse(payloadStr);
-            
-            const currentTime = Math.floor(Date.now() / 1000);
-            if (payload.exp && payload.exp < currentTime) {
-              throw new Error('Token expired');
-            }
-            
-            setAuthState(parsed);
-          } catch (err) {
-            console.error('Invalid token:', err);
-            logout();
+          // Normalize the user data to ensure we have a role property
+          const normalizedUser = {
+            ...parsed.user,
+            role: parsed.user.role || 'user' // Default to 'user' if no role
+          };
+          
+          // Only update if we don't already have the data
+          if (!authState.user || JSON.stringify(authState.user) !== JSON.stringify(normalizedUser)) {
+            setAuthState({ ...parsed, user: normalizedUser });
           }
-        } else {
-          logout();
         }
-      } catch (error) {
-        console.error('Error loading auth state:', error);
+      } catch (err) {
+        console.error('Invalid auth state:', err);
         logout();
       }
     }
-  }, []);
+  }, [authState.token, logout]);
+
+  // Update auth state and validate token
+  useEffect(() => {
+    if (!authState.token) {
+      localStorage.removeItem('authState');
+      return;
+    }
+
+    try {
+      // Verify token
+      const token = authState.token;
+      const [_, payloadB64] = token.split('.');
+      const payloadStr = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
+      const payload = JSON.parse(payloadStr);
+      
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < currentTime) {
+        throw new Error('Token expired');
+      }
+    } catch (error) {
+      console.error('Token validation error:', error);
+      logout();
+    }
+  }, [authState.token, logout]);
 
   // Update auth state and validate token
   useEffect(() => {

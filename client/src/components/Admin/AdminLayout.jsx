@@ -1,73 +1,80 @@
-import React, { useEffect } from 'react';
-import { Menu } from 'semantic-ui-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { Menu, Icon } from 'semantic-ui-react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const AdminLayout = ({ children }) => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const path = location.pathname.split('/');
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const currentAdminPage = path[2] || '';
-
-  useEffect(() => {
-    if (!isAdmin) {
-      navigate('/');
-    }
-  }, [isAdmin, navigate]);
 
   if (!isAdmin) {
     return null;
   }
 
-  const handleNavigation = (page) => {
-    navigate(`/admin/${page}`);
-  };
-
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Menu secondary vertical style={{
+    <div style={{
+      display: 'flex',
+      minHeight: '100vh'
+    }}>
+      <div style={{
         width: '250px',
         borderRight: '1px solid #ddd',
         backgroundColor: '#f5f5f5',
-        padding: '1rem 0'
+        padding: '1rem 0',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        zIndex: 1000
       }}>
-        <Menu.Item
-          as='a'
-          onClick={() => navigate('/')}
-          icon='home'
-          content='Back to Main Site'
-          style={{ marginBottom: '1rem' }}
-        />
-        
-        <Menu.Item
-          name='courses'
-          active={currentAdminPage === 'courses'}
-          onClick={() => handleNavigation('courses')}
-          icon='book'
-          content='Course Management'
-        />
-        
-        <Menu.Item
-          name='users'
-          active={currentAdminPage === 'users'}
-          onClick={() => handleNavigation('users')}
-          icon='users'
-          content='User Management'
-        />
-        
-        <Menu.Item
-          name='analytics'
-          active={currentAdminPage === 'analytics'}
-          onClick={() => handleNavigation('analytics')}
-          icon='chart line'
-          content='Analytics'
-        />
-      </Menu>
-      
-      <div style={{ flex: 1, padding: '2rem' }}>
-        {children}
+        <Menu vertical>
+          <Menu.Item
+            as={Link}
+            to="/admin/courses"
+            name="admin-courses"
+            active={location.pathname === '/admin/courses'}
+            icon='book'
+            content='Course Management'
+          />
+          <Menu.Item
+            as={Link}
+            to="/admin/users"
+            name="admin-users"
+            active={location.pathname === '/admin/users'}
+            icon='users'
+            content='User Management'
+          />
+          <Menu.Item
+            as={Link}
+            to="/admin/analytics"
+            name="admin-analytics"
+            active={location.pathname === '/admin/analytics'}
+            icon='chart line'
+            content='Analytics'
+          />
+        </Menu>
+      </div>
+      <div style={{
+        marginLeft: '250px',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <div style={{
+          padding: '1rem',
+          borderBottom: '1px solid #ddd',
+          backgroundColor: '#f5f5f5'
+        }}>
+        </div>
+        <div style={{
+          padding: '2rem',
+          backgroundColor: 'white',
+          flex: 1,
+          overflow: 'auto'
+        }}>
+          {children}
+        </div>
       </div>
     </div>
   );
