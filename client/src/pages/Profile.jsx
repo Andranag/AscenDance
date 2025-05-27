@@ -42,7 +42,7 @@ const Profile = () => {
       return;
     }
 
-    // Fetch profile data immediately
+    // Only fetch profile data once on mount
     const fetchProfile = async () => {
       try {
         await refreshUserData();
@@ -61,7 +61,7 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, [token, navigate, logout, toastError, refreshUserData]);
+  }, [navigate, logout, toastError, refreshUserData, token]); 
 
   // Show loading state while fetching
   if (isLoading) {

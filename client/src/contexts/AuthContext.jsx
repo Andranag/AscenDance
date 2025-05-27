@@ -121,44 +121,6 @@ export const AuthProvider = ({ children }) => {
     return true; // Always return true to indicate update
   };
 
-  // Add a method to force user data refresh
-  const refreshUserData = async () => {
-    try {
-      if (!authState.token) return;
-      
-      const response = await fetchWithAuth('/api/auth/profile');
-      if (response) {
-        // Handle nested response structure
-        // First try the full nested structure
-        const userData = response?.data?.data?.user || 
-                        response?.data?.user || 
-                        response?.data || 
-                        response?.user || 
-                        response;
-        if (userData) {
-          // Ensure we have the correct structure
-          const normalizedData = {
-            id: userData.id || userData._id,
-            name: userData.name,
-            email: userData.email,
-            role: userData.role
-          };
-          updateUser(normalizedData);
-        }
-      }
-    } catch (error) {
-      console.error('Error refreshing user data:', error);
-      throw error;
-    }
-  };
-
-  // Automatically refresh user data when token is available
-  useEffect(() => {
-    if (authState.token) {
-      refreshUserData();
-    }
-  }, [authState.token, refreshUserData]);
-
   // Load auth state from localStorage
   useEffect(() => {
     const stored = localStorage.getItem('authState');
