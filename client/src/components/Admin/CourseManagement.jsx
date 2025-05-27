@@ -113,15 +113,18 @@ const CourseManagement = () => {
     <Container>
       <Header as='h1'>Course Management</Header>
       
-      {toastError && <Message negative>{toastError}</Message>}
+
       {loading ? (
-        <Segment>
-          <div className='ui active inverted dimmer'>
-            <div className='ui text loader'>Loading courses...</div>
-          </div>
-        </Segment>
+        <div className='ui active inverted dimmer'>
+          <div className='ui text loader'>Loading courses...</div>
+        </div>
       ) : (
-        <Segment>
+        <div style={{
+          padding: '2rem',
+          backgroundColor: 'white',
+          borderRadius: '4px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
           <Grid columns={2} stackable>
             <Grid.Column>
               <Header as='h2'>Create New Course</Header>
@@ -193,7 +196,6 @@ const CourseManagement = () => {
                 </button>
               </Form>
             </Grid.Column>
-
             <Grid.Column>
               <Header as='h2'>Existing Courses</Header>
               {courses.length > 0 ? (
@@ -263,7 +265,7 @@ const CourseManagement = () => {
               )}
             </Grid.Column>
           </Grid>
-        </Segment>
+        </div>
       )}
     </Container>
   );

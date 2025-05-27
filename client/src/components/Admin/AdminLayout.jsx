@@ -15,7 +15,8 @@ const AdminLayout = ({ children }) => {
   return (
     <div style={{
       display: 'flex',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      position: 'relative'
     }}>
       <div style={{
         width: '250px',
@@ -26,52 +27,55 @@ const AdminLayout = ({ children }) => {
         top: 0,
         left: 0,
         bottom: 0,
-        zIndex: 1000
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column'
       }}>
-        <Menu vertical>
-          <Menu.Item
-            as={Link}
-            to="/admin/courses"
-            name="admin-courses"
-            active={location.pathname === '/admin/courses'}
-            icon='book'
-            content='Course Management'
-          />
-          <Menu.Item
-            as={Link}
-            to="/admin/users"
-            name="admin-users"
-            active={location.pathname === '/admin/users'}
-            icon='users'
-            content='User Management'
-          />
-          <Menu.Item
-            as={Link}
-            to="/admin/analytics"
-            name="admin-analytics"
-            active={location.pathname === '/admin/analytics'}
-            icon='chart line'
-            content='Analytics'
-          />
-        </Menu>
+        <div style={{
+          flex: 1,
+          overflow: 'auto',
+          paddingTop: '1rem'
+        }}>
+          <Menu vertical>
+            <Menu.Item
+              as={Link}
+              to="/admin/courses"
+              name="admin-courses"
+              active={location.pathname === '/admin/courses'}
+              icon='book'
+              content='Course Management'
+            />
+            <Menu.Item
+              as={Link}
+              to="/admin/users"
+              name="admin-users"
+              active={location.pathname === '/admin/users'}
+              icon='users'
+              content='User Management'
+            />
+            <Menu.Item
+              as={Link}
+              to="/admin/analytics"
+              name="admin-analytics"
+              active={location.pathname === '/admin/analytics'}
+              icon='chart line'
+              content='Analytics'
+            />
+          </Menu>
+        </div>
       </div>
       <div style={{
         marginLeft: '250px',
         flex: 1,
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        position: 'relative',
+        paddingTop: '64px'
       }}>
         <div style={{
-          padding: '1rem',
-          borderBottom: '1px solid #ddd',
-          backgroundColor: '#f5f5f5'
-        }}>
-        </div>
-        <div style={{
-          padding: '2rem',
-          backgroundColor: 'white',
           flex: 1,
-          overflow: 'auto'
+          overflow: 'auto',
+          backgroundColor: 'white'
         }}>
           {children}
         </div>
