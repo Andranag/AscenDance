@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Grid, Header, Form, Icon, Table, Button, Segment, Message } from 'semantic-ui-react';
+import { Container, Grid, Header, Form, Icon, Table, Button, Segment, Message, Modal } from 'semantic-ui-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -18,6 +18,7 @@ const CourseManagement = () => {
     duration: '',
     lessons: []
   });
+  const [editCourse, setEditCourse] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,11 +81,17 @@ const CourseManagement = () => {
       setCourses(courses.map(course => 
         course._id === courseId ? updatedCourse : course
       ));
+      setEditCourse(null);
+      toastSuccess('Course updated successfully');
     } catch (error) {
       toastError('Failed to update course');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditCourse = (course) => {
+    setEditCourse(course);
   };
   
   const handleDeleteCourse = async (courseId) => {
@@ -129,6 +136,115 @@ const CourseManagement = () => {
             <Grid.Column>
               <Header as='h2'>Create New Course</Header>
               <Form>
+                {editCourse && (
+                  <Modal
+                    open={true}
+                    onClose={() => setEditCourse(null)}
+                    closeIcon
+                    size='small'
+                  >
+                    <Modal.Header>Edit Course</Modal.Header>
+                    <Modal.Content>
+                      <Form>
+                        <Form.Field>
+                          <label>Title</label>
+                          <input
+                            placeholder='Course title'
+                            value={editCourse.title}
+                            onChange={(e) => {
+                              setEditCourse({ ...editCourse, title: e.target.value });
+                            }}
+                            required
+                          />
+                        </Form.Field>
+                        <Form.Field>
+                          <label>Description</label>
+                          <textarea
+                            placeholder='Course description'
+                            value={editCourse.description}
+                            onChange={(e) => {
+                              setEditCourse({ ...editCourse, description: e.target.value });
+                            }}
+                            required
+                          />
+                        </Form.Field>
+                        <Form.Field>
+                          <label>Course Image URL</label>
+                          <input
+                            placeholder='Image URL'
+                            value={editCourse.image}
+                            onChange={(e) => {
+                              setEditCourse({ ...editCourse, image: e.target.value });
+                            }}
+                          />
+                        </Form.Field>
+                        <Form.Group widths='equal'>
+                          <Form.Field>
+                            <label>Category</label>
+                            <select
+                              value={editCourse.category}
+                              onChange={(e) => {
+                                setEditCourse({ ...editCourse, category: e.target.value });
+                              }}
+                              className='ui fluid search dropdown'
+                            >
+                              <option value=''>Select category</option>
+                              <option value='lindy-hop'>Lindy Hop</option>
+                              <option value='solo-jazz'>Solo Jazz</option>
+                              <option value='rhythm-and-blues'>Rhythm and Blues</option>
+                            </select>
+                          </Form.Field>
+                          <Form.Field>
+                            <label>Level</label>
+                            <select
+                              value={editCourse.level}
+                              onChange={(e) => {
+                                setEditCourse({ ...editCourse, level: e.target.value });
+                              }}
+                              className='ui fluid search dropdown'
+                            >
+                              <option value=''>Select level</option>
+                              <option value='beginner'>Beginner</option>
+                              <option value='intermediate'>Intermediate</option>
+                              <option value='advanced'>Advanced</option>
+                            </select>
+                          </Form.Field>
+                        </Form.Group>
+                        <Form.Field>
+                          <label>Duration</label>
+                          <input
+                            placeholder='Duration (e.g., 2 hours)'
+                            value={editCourse.duration}
+                            onChange={(e) => {
+                              setEditCourse({ ...editCourse, duration: e.target.value });
+                            }}
+                          />
+                        </Form.Field>
+                      </Form>
+                    </Modal.Content>
+                    <Modal.Actions>
+                      <Button negative onClick={() => setEditCourse(null)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        positive
+                        icon='checkmark'
+                        labelPosition='right'
+                        content='Save Changes'
+                        onClick={() => {
+                          handleUpdateCourse(editCourse._id, {
+                            title: editCourse.title,
+                            description: editCourse.description,
+                            category: editCourse.category,
+                            level: editCourse.level,
+                            duration: editCourse.duration,
+                            image: editCourse.image
+                          });
+                        }}
+                      />
+                    </Modal.Actions>
+                  </Modal>
+                )}
                 <Form.Field>
                   <label>Title</label>
                   <input
@@ -222,16 +338,7 @@ const CourseManagement = () => {
                         <Table.Cell>
                           <button
                             className='ui icon button yellow'
-                            onClick={() => {
-                              const updates = {
-                                title: course.title,
-                                description: course.description,
-                                category: course.category,
-                                level: course.level,
-                                duration: course.duration
-                              };
-                              handleUpdateCourse(course._id, updates);
-                            }}
+                            onClick={() => handleEditCourse(course)}
                           >
                             <i className='edit icon' />
                           </button>
