@@ -13,48 +13,32 @@ const Courses = () => {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        console.log('Fetching courses from:', '/api/courses');
         const response = await fetchPublic('/api/courses');
-        console.log('Raw response:', response);
         
+        if (!response || typeof response !== 'object') {
+          throw new Error('Invalid response format');
+        }
+
         // Handle both array and nested object responses
         let courses = Array.isArray(response) ? response : response.data || [];
         
-        // If we got a single object instead of array, wrap it in an array
         if (!Array.isArray(courses)) {
-          courses = [courses];
+          throw new Error('Invalid courses data format');
         }
-        console.log('Processed courses:', courses);
-        
-        if (!Array.isArray(courses)) {
-          console.error('Invalid response format:', {
-            type: typeof courses,
-            value: courses
-          });
-          setError('Failed to load courses. Please try again.');
-          setLoading(false);
-          return;
-        }
-        
+
         // Filter out courses with missing required fields
         const validCourses = courses.filter(course => 
           course && course.title && course.description
         );
-        console.log('Valid courses:', validCourses);
-        
+
         if (validCourses.length === 0) {
-          console.error('No valid courses found:', courses);
-          setError('No valid courses found');
-          setLoading(false);
-          return;
+          throw new Error('No courses found');
         }
-        
+
         setCourses(validCourses);
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching courses:', error);
-        setError('Failed to load courses. Please try again.');
-        setLoading(false);
+        setError(error.message || 'Failed to load courses. Please try again.');
       } finally {
         setLoading(false);
       }

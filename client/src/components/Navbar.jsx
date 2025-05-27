@@ -7,7 +7,8 @@ import { useAuth } from '../contexts/AuthContext';
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, logout } = useAuth();
+  const { user, logout } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const handleItemClick = (e, { name }) => {
     // No need to set active item since we're using location.pathname

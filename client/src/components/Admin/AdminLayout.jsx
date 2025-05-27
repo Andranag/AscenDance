@@ -2,13 +2,13 @@ import React from 'react';
 import { Menu } from 'semantic-ui-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 function AdminLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const path = location.pathname.split('/');
-  const token = localStorage.getItem('token');
-  const user = token ? JSON.parse(localStorage.getItem('user')) : null;
+  const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
   const currentAdminPage = path[2] || '';
 

@@ -49,18 +49,20 @@ if (!process.env.JWT_SECRET) {
 // CORS middleware
 app.use(cors({
   origin: 'http://localhost:5173',
-  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Authorization']
+  credentials: true,
+  exposedHeaders: ['Authorization'],
+  preflightContinue: true
 }));
 
-// Custom preflight handler for profile endpoint
-app.options('/api/auth/profile', (req, res) => {
+// Custom preflight handler for all endpoints
+app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.status(200).end();
+  res.header('Access-Control-Max-Age', '1728000'); // 20 days
+  res.status(204).end();
 });
 
 app.use(express.json());

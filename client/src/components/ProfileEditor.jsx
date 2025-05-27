@@ -1,20 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Button, Segment } from 'semantic-ui-react';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const ProfileEditor = ({ 
   user = { name: '', email: '' }, 
-  onUpdate,
-  onSave,
-  navigate
+  onUpdate
 }) => {
-  const { toastError, toastSuccess } = useToast();
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || ''
+  });
 
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: user.name || '',
-    email: user.email || ''
-  });
+
+  useEffect(() => {
+    setFormData({
+      name: user?.name || '',
+      email: user?.email || ''
+    });
+  }, [user]);
+
+  const { toastError, toastSuccess } = useToast();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,12 +38,10 @@ const ProfileEditor = ({
       const result = await onUpdate(formData);
       if (result) {
         toastSuccess('Profile updated successfully!');
-      } else {
-        toastError('Failed to update profile. Please try again.');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      toastError('Failed to update profile. Please try again.');
+      // Don't show toast here - it's already shown in Profile component
     } finally {
       setLoading(false);
     }

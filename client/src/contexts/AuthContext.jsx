@@ -1,99 +1,225 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../api';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [authState, setAuthState] = useState({
-    user: null,
-    isAdmin: false,
-    token: ''
+  const [authState, setAuthState] = useState(() => {
+    const savedAuth = localStorage.getItem('authState');
+    if (savedAuth) {
+      try {
+        return JSON.parse(savedAuth);
+      } catch (e) {
+        console.error('Error parsing auth state:', e);
+        return { user: null, token: '' };
+      }
+    }
+    return { user: null, token: '' };
   });
 
-  const login = async (token, userData) => {
+  const login = async (email, password) => {
     try {
-      if (!token || !userData) {
-        throw new Error('Invalid token or user data');
-      }
-
-      // Verify token format
-      if (!token.startsWith('eyJ')) {
-        throw new Error('Invalid token format');
-      }
-
-      // Store token and user data
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      // Update auth state
-      setAuthState({
-        user: userData,
-        isAdmin: userData.role === 'admin',
-        token
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Login failed');
+      }
+
+      const data = await response.json();
       
-      // Return success
-      return true;
+      // Handle both direct and nested response formats
+      const userData = data.data?.data || data.data || data.user;
+      const token = data.data?.token || data.token;
+
+      if (!token || !userData) {
+        throw new Error('Invalid response from server');
+      }
+
+      const newAuth = { user: userData, token };
+      
+      // Store in localStorage immediately
+      localStorage.setItem('authState', JSON.stringify(newAuth));
+      setAuthState(newAuth);
+      
+      return { success: true, user: userData, token };
     } catch (error) {
-      console.error('Error during login:', error);
       throw error;
     }
   };
 
   const logout = () => {
-    // Clear all auth data
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setAuthState({
-      user: null,
-      isAdmin: false,
-      token: ''
-    });
+    setAuthState({ user: null, token: '' });
+    localStorage.removeItem('authState');
   };
 
-  // Initialize auth state from localStorage and verify token
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    
-    if (storedToken && storedUser) {
-      const userData = JSON.parse(storedUser);
-      
-      // Verify token format
-      if (!storedToken.startsWith('eyJ')) {
-        console.error('Invalid token format in localStorage');
-        logout();
-        return;
+  const fetchWithAuth = async (endpoint, config = {}) => {
+    try {
+      if (!authState.token) {
+        throw new Error('No token available');
       }
 
-      // Verify token expiration
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authState.token}`,
+        ...config.headers,
+      };
+
+      // Add network settings
+      const fetchConfig = {
+        ...config,
+        headers,
+        credentials: 'include',
+        method: config.method || 'GET',
+      };
+
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       try {
-        const decodedToken = JSON.parse(atob(storedToken.split('.')[1]));
-        const currentTime = Math.floor(Date.now() / 1000);
-        if (decodedToken.exp && decodedToken.exp < currentTime) {
-          console.error('Token has expired');
-          logout();
-          return;
-        }
-      } catch (err) {
-        console.error('Error decoding token:', err);
-        logout();
-        return;
-      }
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+          ...fetchConfig,
+          signal: controller.signal
+        });
 
-      // If token is valid, update auth state
-      setAuthState({
-        user: userData,
-        isAdmin: userData.role === 'admin',
-        token: storedToken
-      });
+        clearTimeout(id);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          
+          // Handle specific error cases
+          if (errorData.error?.includes('token expired') || 
+              errorData.error?.includes('Token expired') || 
+              errorData.error?.includes('Invalid token')) {
+            logout();
+            throw new Error('Session expired. Please log in again.');
+          }
+          
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Handle both direct and nested response formats
+        if (data && typeof data === 'object') {
+          if (data.success && data.data) {
+            return data.data;
+          }
+          if (data.data) {
+            return data.data;
+          }
+          if (data.user) {
+            return data.user;
+          }
+        }
+        
+        return data;
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Request timed out');
+        }
+        console.error('Fetch error:', error);
+        throw new Error('Network error. Please check your connection.');
+      }
+    } catch (error) {
+      console.error('fetchWithAuth error:', error);
+      throw error;
+    }
+  };
+
+  const updateUser = (userData) => {
+    if (!userData) return;
+    
+    const newAuth = { ...authState, user: { ...authState.user, ...userData } };
+    setAuthState(newAuth);
+    localStorage.setItem('authState', JSON.stringify(newAuth));
+  };
+
+  // Load auth state from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('authState');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.token && parsed.user) {
+          // Verify token before setting state
+          try {
+            const token = parsed.token;
+            const [_, payloadB64] = token.split('.');
+            const payloadStr = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
+            const payload = JSON.parse(payloadStr);
+            
+            const currentTime = Math.floor(Date.now() / 1000);
+            if (payload.exp && payload.exp < currentTime) {
+              throw new Error('Token expired');
+            }
+            
+            setAuthState(parsed);
+          } catch (err) {
+            console.error('Invalid token:', err);
+            logout();
+          }
+        } else {
+          logout();
+        }
+      } catch (error) {
+        console.error('Error loading auth state:', error);
+        logout();
+      }
     }
   }, []);
+
+  // Update auth state when token changes
+  useEffect(() => {
+    if (!authState.token) {
+      localStorage.removeItem('authState');
+      return;
+    }
+
+    try {
+      // Verify token is still valid
+      const [_, payloadB64] = authState.token.split('.');
+      const payloadStr = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
+      const payload = JSON.parse(payloadStr);
+      
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < currentTime) {
+        logout();
+        return;
+      }
+
+      // Store valid auth state
+      localStorage.setItem('authState', JSON.stringify(authState));
+    } catch (error) {
+      console.error('Error validating token:', error);
+      logout();
+    }
+  }, [authState.token]);
+
+  // Update auth state when token changes
+  useEffect(() => {
+    if (authState.token) {
+      localStorage.setItem('authState', JSON.stringify(authState));
+    } else {
+      localStorage.removeItem('authState');
+    }
+  }, [authState.token]);
 
   return (
     <AuthContext.Provider value={{
       ...authState,
       login,
-      logout
+      logout,
+      updateUser,
+      fetchWithAuth,
+      isAdmin: () => authState.user?.role === 'admin'
     }}>
       {children}
     </AuthContext.Provider>
@@ -102,10 +228,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === null) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
-
-export default AuthContext;

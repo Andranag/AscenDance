@@ -1,109 +1,50 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Header, Segment, List, Icon, Button } from 'semantic-ui-react';
-import { fetchWithAuth } from '../api';
+import { useAuth } from '../contexts/AuthContext';
 
 const CoursePage = () => {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const { user, fetchWithAuth } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
+  if (!user) {
+    navigate('/login');
+    return null;
+  }
 
   // Check if a lesson is completed for the current user
   const isLessonCompleted = (lessonId) => {
     try {
-      // Debug logging
-      console.log('Checking if lesson is completed:', {
-        lessonId,
-        courseProgress: course?.progress,
-        currentCourse: course
-      });
-
       if (!course?.progress) {
-        console.log('No course progress found');
         return false;
       }
 
-      // Find the user's progress in the array
-      const userProgress = course.progress.find(p => {
-        if (!p?.userId) return false;
-        return p.userId.toString() === localStorage.getItem('user_id');
-      });
+      const userProgress = course.progress.find(p => p.userId === user.id);
       if (!userProgress) {
-        console.log('No progress found for user');
         return false;
       }
 
-      // Debug logging
-      console.log('User progress:', userProgress);
-      console.log('Completed lessons:', userProgress.completedLessons);
-
-      // Check if the lesson is completed
-      const isCompleted = userProgress.completedLessons.some(cl => {
-        if (!cl?.lessonId) return false;
-        return cl.lessonId.toString() === lessonId.toString();
-      });
-      console.log('Lesson completion status:', isCompleted);
-      return isCompleted;
+      return userProgress.completedLessons.some(cl => cl.lessonId === lessonId);
     } catch (error) {
       console.error('Error checking lesson completion:', error);
       return false;
     }
   };
 
-  // Check if user is authenticated
-  useEffect(() => {
-    if (!token) {
-      navigate('/login', { replace: true });
-    }
-  }, [token, navigate]);
-
   const { courseId } = useParams();
-  console.log('Route params:', useParams());
   const [course, setCourse] = useState(null);
   const [error, setError] = useState(null);
-  // Initialize loading state
   const [loading, setLoading] = useState({});
 
-  // Update loading state for a specific lesson
-  const updateLoadingState = (index, isLoading) => {
+  const updateLoadingState = useCallback((index, isLoading) => {
     setLoading(prev => ({
       ...prev,
       [index]: isLoading
     }));
-  };
-
-  const [user, setUser] = useState(null);
-
-  // Fetch user data
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const storedUser = localStorage.getItem('user');
-        if (!storedUser) {
-          console.log('No user data in localStorage');
-          return;
-        }
-        
-        const userData = JSON.parse(storedUser);
-        if (!userData?.id) {
-          console.log('Invalid user data:', userData);
-          return;
-        }
-        
-        // Ensure we have the full user object
-        const fullUser = await fetchWithAuth('/api/users/me');
-        if (fullUser) {
-          setUser(fullUser);
-        } else {
-          console.error('Failed to fetch full user data');
-        }
-      } catch (err) {
-        console.error('Error fetching user data:', err);
-      }
-    };
-
-    fetchUser();
   }, []);
 
+  // Fetch course data
   // Fetch course details
   useEffect(() => {
     const fetchCourse = async () => {

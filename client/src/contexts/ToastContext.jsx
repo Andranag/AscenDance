@@ -92,7 +92,8 @@ export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   const addToast = (message, type = 'error', options = {}) => {
-    const id = Date.now();
+    // Generate a unique ID using timestamp and random number
+    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const toast = {
       id,
       message,

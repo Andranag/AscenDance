@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Grid, Header, Form, Icon, Table } from 'semantic-ui-react';
 import { useNavigate } from 'react-router-dom';
-import { fetchWithAuth } from '../../api';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CourseManagement = () => {
   const navigate = useNavigate();
+  const { fetchWithAuth } = useAuth();
   const [courses, setCourses] = useState([]);
   const [newCourse, setNewCourse] = useState({
     title: '',
