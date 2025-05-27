@@ -7,7 +7,10 @@ import { useToast } from '../../contexts/ToastContext';
 const CourseManagement = () => {
   const navigate = useNavigate();
   const { fetchWithAuth } = useAuth();
-  const { toast } = useToast();
+  const { toastSuccess, toastError } = useToast();
+  console.log("useToast():", useToast);
+  console.log("toastSuccess():", toastSuccess);
+  console.log("toastError():", toastError);
   const [courses, setCourses] = useState([]);
   const [newCourse, setNewCourse] = useState({
     title: '',
@@ -19,10 +22,11 @@ const CourseManagement = () => {
     lessons: []
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchCourses();
+    fetchCourses().catch((err) => {
+      toastError('Something went wrong');
+    });
   }, []);
 
   const fetchCourses = async () => {
@@ -38,11 +42,9 @@ const CourseManagement = () => {
       
       console.log('Parsed courses:', courses);
       setCourses(courses);
-      setError(null);
     } catch (err) {
       console.error('Error fetching courses:', err);
-      setError('Failed to fetch courses');
-      toast.error('Failed to fetch courses');
+      toastError('Failed to fetch courses');
     } finally {
       setLoading(false);
     }
@@ -61,13 +63,11 @@ const CourseManagement = () => {
       if (createdCourse) {
         setCourses([...courses, createdCourse]);
         setNewCourse({ title: '', description: '', image: '', level: 'beginner', category: '', duration: '', lessons: [] });
-        setError(null);
       } else {
         throw new Error('Failed to create course');
       }
     } catch (error) {
-      setError(error?.message || 'Failed to create course');
-      toast.error(error?.message || 'Failed to create course');
+      toastError(error?.message || 'Failed to create course');
     } finally {
       setLoading(false);
     }
@@ -83,10 +83,8 @@ const CourseManagement = () => {
       setCourses(courses.map(course => 
         course._id === courseId ? updatedCourse : course
       ));
-      setError(null);
-    } catch (err) {
-      setError(err.message || 'Failed to update course');
-      toast.error(err.message || 'Failed to update course');
+    } catch (error) {
+      toastError('Failed to update course');
     } finally {
       setLoading(false);
     }
@@ -98,28 +96,27 @@ const CourseManagement = () => {
     setLoading(true);
     
     try {
-      const response = await fetchWithAuth(`/api/admin/courses/${courseId}`, {
+      // Try to delete the course
+      await fetchWithAuth(`/api/admin/courses/${courseId}`, {
         method: 'DELETE'
       });
       
       // If we got here without throwing, the request was successful
-      toast.success('Course deleted successfully');
+      toastSuccess?.('Course deleted successfully');
       setCourses(prev => prev.filter(c => c._id !== courseId));
-      setError(null);
-    } catch (error) {
-      // Log the error but don't try to access its properties
-      console.error('Delete failed:', error);
-      toast.error('Failed to delete course');
+    } catch (err) {
+      console.error('Delete error occurred:', err);
+      toastError?.('Failed to delete course');
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
     <Container>
       <Header as='h1'>Course Management</Header>
       
-      {error && <Message negative>{error}</Message>}
+      {toastError && <Message negative>{toastError}</Message>}
       {loading ? (
         <Segment>
           <div className='ui active inverted dimmer'>
