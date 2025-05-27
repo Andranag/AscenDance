@@ -29,10 +29,18 @@ const CourseManagement = () => {
     try {
       setLoading(true);
       const response = await fetchWithAuth('/api/courses');
-      const courses = response.data || [];
+      console.log('Raw response:', response);
+      
+      // Handle direct array response
+      const courses = Array.isArray(response) 
+        ? response
+        : response.data?.courses || [];
+      
+      console.log('Parsed courses:', courses);
       setCourses(courses);
       setError(null);
     } catch (err) {
+      console.error('Error fetching courses:', err);
       setError('Failed to fetch courses');
       toast.error('Failed to fetch courses');
     } finally {
