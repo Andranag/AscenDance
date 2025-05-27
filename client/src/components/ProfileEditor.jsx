@@ -5,7 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 
 const ProfileEditor = ({ 
   user = { name: '', email: '' }, 
-  onUpdate
+  onUpdate,
+  isLoading
 }) => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -13,13 +14,30 @@ const ProfileEditor = ({
   });
 
   const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
+    if (!initialLoad) {
+      setFormData({
+        name: user?.name || '',
+        email: user?.email || ''
+      });
+    }
+  }, [user, initialLoad]);
+
+  useEffect(() => {
+    // Skip first render
+    if (initialLoad) {
+      setInitialLoad(false);
+      return;
+    }
+    
+    // Update form data when user changes
     setFormData({
       name: user?.name || '',
       email: user?.email || ''
     });
-  }, [user]);
+  }, [user, initialLoad]);
 
   const { toastError, toastSuccess } = useToast();
 
