@@ -24,12 +24,20 @@ const ProtectedRoute = ({ children }) => {
 
   // Handle navigation in useEffect
   useEffect(() => {
-    if (!isAuthenticated && location.pathname !== '/login') {
+    // Only redirect to login for protected routes
+    if (!isAuthenticated && location.pathname !== '/login' && 
+        location.pathname !== '/register' && 
+        location.pathname !== '/courses' && 
+        !location.pathname.startsWith('/courses/')) {
       navigate('/login', { replace: true });
     }
   }, [isAuthenticated, location.pathname, navigate]);
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && 
+      location.pathname !== '/login' && 
+      location.pathname !== '/register' && 
+      location.pathname !== '/courses' && 
+      !location.pathname.startsWith('/courses/')) {
     return null;
   }
 
@@ -47,33 +55,13 @@ function App() {
               <Route path="/" element={<Navigate to="/courses" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route
-                path="/courses"
-                element={
-                  <ProtectedRoute>
-                    <AdminLayout>
-                      <Courses />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/courses/:courseId"
-                element={
-                  <ProtectedRoute>
-                    <AdminLayout>
-                      <CoursePage />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/courses/:id" element={<CoursePage />} />
               <Route
                 path="/profile"
                 element={
                   <ProtectedRoute>
-                    <AdminLayout>
-                      <Profile />
-                    </AdminLayout>
+                    <Profile />
                   </ProtectedRoute>
                 }
               />

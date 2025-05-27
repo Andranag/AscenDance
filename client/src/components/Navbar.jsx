@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Icon } from 'semantic-ui-react';
 
 const Navbar = () => {
   const location = useLocation();
@@ -16,17 +17,17 @@ const Navbar = () => {
 
   return (
     <Menu>
+      <Menu.Item
+        as={Link}
+        to="/courses"
+        name="courses"
+        active={location.pathname === '/' || location.pathname === '/courses'}
+        onClick={handleItemClick}
+      >
+        Courses
+      </Menu.Item>
       {user ? (
         <>
-          <Menu.Item
-            as={Link}
-            to="/courses"
-            name="courses"
-            active={location.pathname === '/' || location.pathname === '/courses'}
-            onClick={handleItemClick}
-          >
-            Courses
-          </Menu.Item>
           <Menu.Item
             as={Link}
             to="/profile"
@@ -38,27 +39,19 @@ const Navbar = () => {
           </Menu.Item>
           <Menu.Item
             name="logout"
+            position="right"
             active={false}
             onClick={() => {
               logout();
               navigate('/');
             }}
           >
-            Logout
+            <Icon name='sign out' />
+            Sign Out
           </Menu.Item>
-
         </>
       ) : (
         <>
-          <Menu.Item
-            as={Link}
-            to="/courses"
-            name="courses"
-            active={location.pathname === '/' || location.pathname === '/courses'}
-            onClick={handleItemClick}
-          >
-            Courses
-          </Menu.Item>
           <Menu.Item
             as={Link}
             to="/login"
@@ -81,6 +74,6 @@ const Navbar = () => {
       )}
     </Menu>
   );
-};
+}
 
 export default Navbar;

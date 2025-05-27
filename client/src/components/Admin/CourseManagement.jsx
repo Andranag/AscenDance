@@ -8,9 +8,6 @@ const CourseManagement = () => {
   const navigate = useNavigate();
   const { fetchWithAuth } = useAuth();
   const { toastSuccess, toastError } = useToast();
-  console.log("useToast():", useToast);
-  console.log("toastSuccess():", toastSuccess);
-  console.log("toastError():", toastError);
   const [courses, setCourses] = useState([]);
   const [newCourse, setNewCourse] = useState({
     title: '',

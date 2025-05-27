@@ -27,8 +27,9 @@ const Login = () => {
 
     try {
       // Use AuthContext's login function directly
-      await login(email, password);
-      toastSuccess('Login successful! Redirecting...');
+      const result = await login(email, password);
+      const userName = result?.user?.name || 'User';
+      toastSuccess(`Login successful! Welcome back, ${userName}`);
       navigate('/profile');
     } catch (err) {
       console.error('Login error:', err);

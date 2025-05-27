@@ -133,8 +133,10 @@ const Register = () => {
             <label>Password</label>
             <div style={{ position: 'relative' }}>
               <Input
+                icon={{ name: 'lock' }}
+                iconPosition='left'
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Enter password"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -159,6 +161,8 @@ const Register = () => {
             <label>Confirm Password</label>
             <div style={{ position: 'relative' }}>
               <Input
+                icon={{ name: 'lock' }}
+                iconPosition='left'
                 type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirm password"
                 value={confirmPassword}

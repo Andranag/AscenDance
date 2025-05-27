@@ -114,9 +114,14 @@ export const AuthProvider = ({ children }) => {
   const updateUser = (userData) => {
     if (!userData) return;
     
-    const newAuth = { ...authState, user: { ...authState.user, ...userData } };
-    setAuthState(newAuth);
-    localStorage.setItem('authState', JSON.stringify(newAuth));
+    // Only update if we have new data
+    const isNewData = JSON.stringify(authState.user) !== JSON.stringify(userData);
+    if (isNewData) {
+      const newAuth = { ...authState, user: userData };
+      setAuthState(newAuth);
+      localStorage.setItem('authState', JSON.stringify(newAuth));
+    }
+    return isNewData; // Return whether we actually updated
   };
 
   // Load auth state from localStorage

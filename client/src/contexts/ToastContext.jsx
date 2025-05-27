@@ -2,41 +2,42 @@ import React, { createContext, useContext, useState } from 'react';
 
 const ToastContext = createContext(null);
 
+const getErrorMessage = (error) => {
+  if (!error) return 'An unexpected error occurred. Please try again.';
+
+  if (typeof error === 'string') return error;
+
+  if (error.response?.data?.message) {
+    return error.response.data.message;
+  }
+
+  if (error.response?.status) {
+    switch (error.response.status) {
+      case 401:
+        return 'Unauthorized. Please login again.';
+      case 403:
+        return 'Access denied. You don\'t have permission to perform this action.';
+      case 404:
+        return 'Resource not found.';
+      default:
+        return error.response.statusText || 'Server error occurred.';
+    }
+  }
+
+  if (error.message) {
+    if (error.message === 'Network Error') {
+      return 'Network error. Please check your internet connection.';
+    }
+    if (error.message === 'timeout') {
+      return 'Request timed out. Please try again later.';
+    }
+    return error.message;
+  }
+
+  return 'An unexpected error occurred. Please try again.';
+};
+
 const ToastContainer = ({ toasts, removeToast }) => {
-  const getErrorMessage = (error) => {
-    if (!error) return 'An unexpected error occurred. Please try again.';
-    
-    if (typeof error === 'string') return error;
-    
-    if (error.response?.data?.message) {
-      return error.response.data.message;
-    }
-    
-    if (error.response?.status) {
-      switch (error.response.status) {
-        case 401:
-          return 'Unauthorized. Please login again.';
-        case 403:
-          return 'Access denied. You don\'t have permission to perform this action.';
-        case 404:
-          return 'Resource not found.';
-        default:
-          return error.response.statusText || 'Server error occurred.';
-      }
-    }
-    
-    if (error.message) {
-      if (error.message === 'Network Error') {
-        return 'Network error. Please check your internet connection.';
-      }
-      if (error.message === 'timeout') {
-        return 'Request timed out. Please try again later.';
-      }
-      return error.message;
-    }
-    
-    return 'An unexpected error occurred. Please try again.';
-  };
 
   return (
     <div style={{
@@ -99,7 +100,7 @@ export const ToastProvider = ({ children }) => {
       message,
       type,
       duration: options.duration || 5000,
-      showCloseButton: options.showCloseButton !== false
+      showCloseButton: options.showCloseButton || false
     };
     setToasts(prev => [...prev, toast]);
 
@@ -112,25 +113,16 @@ export const ToastProvider = ({ children }) => {
   };
 
   const removeToast = (id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
+  const toastSuccess = (message, options = {}) => addToast(message, "success", options);
   const toastError = (error, options = {}) => {
-    const message = typeof error === 'string' ? error : getErrorMessage(error);
-    return addToast(message, 'error', options);
+    const message = typeof error === "string" ? error : getErrorMessage(error);
+    return addToast(message, "error", options);
   };
-
-  const toastSuccess = (message, options = {}) => {
-    return addToast(message, 'success', options);
-  };
-
-  const toastWarning = (message, options = {}) => {
-    return addToast(message, 'warning', options);
-  };
-
-  const toastInfo = (message, options = {}) => {
-    return addToast(message, 'info', options);
-  };
+  const toastWarning = (message, options = {}) => addToast(message, "warning", options);
+  const toastInfo = (message, options = {}) => addToast(message, "info", options);
 
   return (
     <ToastContext.Provider value={{
