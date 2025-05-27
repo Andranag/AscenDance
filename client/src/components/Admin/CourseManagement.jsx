@@ -202,12 +202,10 @@ const CourseManagement = () => {
                 <Table celled>
                   <Table.Header>
                     <Table.Row>
-                      <Table.HeaderCell>Title</Table.HeaderCell>
-                      <Table.HeaderCell>Description</Table.HeaderCell>
+                      <Table.HeaderCell>Title & Description</Table.HeaderCell>
                       <Table.HeaderCell>Category</Table.HeaderCell>
                       <Table.HeaderCell>Level</Table.HeaderCell>
                       <Table.HeaderCell>Duration</Table.HeaderCell>
-                      <Table.HeaderCell>Lessons</Table.HeaderCell>
                       <Table.HeaderCell>Actions</Table.HeaderCell>
                     </Table.Row>
                   </Table.Header>
@@ -221,15 +219,6 @@ const CourseManagement = () => {
                         <Table.Cell>{course.category}</Table.Cell>
                         <Table.Cell>{course.level}</Table.Cell>
                         <Table.Cell>{course.duration}</Table.Cell>
-                        <Table.Cell>
-                          <button
-                            className='ui icon button blue'
-                            onClick={() => navigate(`/admin/courses/${course._id}/lessons`)}
-                          >
-                            <i className='list layout icon' />
-                            Manage Lessons
-                          </button>
-                        </Table.Cell>
                         <Table.Cell>
                           <button
                             className='ui icon button yellow'
