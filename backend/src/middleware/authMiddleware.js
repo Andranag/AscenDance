@@ -2,12 +2,17 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ascendance-secret-key-2025'; // Fallback to hardcoded secret
+const JWT_SECRET = process.env.JWT_SECRET || 'ascendance-secret-key-2025';
 
-// Helper function to verify token and get user
+// Helper to verify token and get user
 const verifyTokenAndGetUser = async (token) => {
   try {
+    if (!token) {
+      return null;
+    }
+
     const decoded = jwt.verify(token, JWT_SECRET);
+    
     if (!decoded || !decoded.userId || !decoded.email || !decoded.role) {
       return null;
     }
@@ -18,10 +23,31 @@ const verifyTokenAndGetUser = async (token) => {
     }
 
     const user = await User.findById(userId).select('-password');
+    if (!user) {
+      return null;
+    }
+    
     return user;
   } catch (err) {
     return null;
   }
+};
+
+// Generate token with user data
+const generateToken = (user) => {
+  if (!user || !user._id || !user.email || !user.role) {
+    throw new Error('Invalid user object provided to generateToken');
+  }
+
+  const token = jwt.sign({
+    userId: user._id.toString(),
+    email: user.email,
+    role: user.role
+  }, JWT_SECRET, {
+    expiresIn: '24h'
+  });
+
+  return token;
 };
 
 // Middleware to protect routes
@@ -54,23 +80,6 @@ const isAdmin = async (req, res, next) => {
     return res.status(403).json({ error: 'Not authorized' });
   }
   next();
-};
-
-// Generate token with user data
-const generateToken = (user) => {
-  if (!user || !user._id || !user.email || !user.role) {
-    throw new Error('Invalid user object provided to generateToken');
-  }
-
-  return jwt.sign({
-    sub: user._id.toString(),
-    userId: user._id.toString(),
-    email: user.email,
-    role: user.role
-  }, JWT_SECRET, {
-    expiresIn: '30d', // Increased to 30 days
-    algorithm: 'HS256'
-  });
 };
 
 // Export all middleware functions

@@ -1,12 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// Initialize bcrypt with fallback for Node.js environment
-if (typeof bcrypt === 'undefined') {
-  console.error('bcrypt is not available. Please install bcryptjs package.');
-  process.exit(1);
-}
-
 const userSchema = new mongoose.Schema({
   name: String,
   email: {
@@ -15,95 +9,39 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
-  password: String,
+  password: {
+    type: String,
+    required: true,
+    minlength: 6
+  },
   role: {
     type: String,
     enum: ['user', 'admin'],
-    default: 'user',
-    set: function(value) {
-      // If role is 'student', convert to 'user'
-      return value === 'student' ? 'user' : value;
-    }
+    default: 'user'
   }
 });
 
-// Methods to check admin status
-userSchema.methods.isAdmin = function() {
-  return this.role === 'admin';
-};
-
-// Static method to get admin users
-userSchema.statics.getAdmins = function() {
-  return this.find({ role: 'admin' });
-};
-
 // Hash password before saving
 userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
   try {
-    if (!this.isModified('password')) return next();
-    
-    // Validate password
-    if (!this.password || typeof this.password !== 'string') {
-      throw new Error('Password is required and must be a string');
-    }
-    
-    // Hash password
     const saltRounds = 10;
     this.password = await bcrypt.hash(this.password, saltRounds);
-    
     next();
   } catch (error) {
-    console.error('Password hashing error:', error);
     next(error);
   }
 });
 
 // Method to compare password
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    console.error('Password comparison error:', error);
+    return false;
+  }
 };
 
-// Pre-delete hook to clean up related data
-userSchema.pre('deleteOne', async function(next) {
-  try {
-    console.log('Pre-deleteOne hook triggered for user:', this._conditions);
-    // Add any cleanup logic here if needed
-    next();
-  } catch (error) {
-    console.error('Error in user pre-deleteOne hook:', error);
-    next(error);
-  }
-});
-
-// Pre-findByIdAndDelete hook
-userSchema.pre('findByIdAndDelete', async function(next) {
-  try {
-    console.log('Pre-findByIdAndDelete hook triggered for user:', this._conditions);
-    // Add any cleanup logic here if needed
-    next();
-  } catch (error) {
-    console.error('Error in user pre-findByIdAndDelete hook:', error);
-    next(error);
-  }
-});
-
-// Add post-delete hooks for better error handling
-userSchema.post('deleteOne', function(error, doc, next) {
-  console.log('Post-deleteOne hook triggered');
-  if (error) {
-    console.error('Error in deleteOne operation:', error);
-  }
-  next(error);
-});
-
-userSchema.post('findByIdAndDelete', function(error, doc, next) {
-  console.log('Post-findByIdAndDelete hook triggered');
-  if (error) {
-    console.error('Error in findByIdAndDelete operation:', error);
-  }
-  next(error);
-});
-
-const User = mongoose.model('User', userSchema);
-
-module.exports = User;
+module.exports = mongoose.model('User', userSchema);

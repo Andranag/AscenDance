@@ -2,34 +2,49 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const routes = require('./src/routes/index');
+const { protect } = require('./src/middleware/authMiddleware');
+
+const authRoutes = require('./src/routes/authRoutes');
+const courseRoutes = require('./src/routes/courseRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 const User = require('./src/models/User');
 const Course = require('./src/models/Course');
 
 const app = express();
+const PORT = process.env.PORT || 3050;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ascendance';
 
-// CORS
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
-}));
+// Middleware
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 
-// Routes
-app.use('/api', routes);
+// Public routes
+app.use('/api/auth', authRoutes);
+app.use('/api/courses', (req, res, next) => {
+  courseRoutes(req, res, next);
+});
+
+// Protected routes
+app.use('/api/admin', protect, adminRoutes);
+app.use('/api/courses/:id/lessons/:lessonIndex/complete', protect, (req, res, next) => {
+  courseRoutes(req, res, next);
+});
+app.use('/api/courses/:id/lessons/:lessonIndex/unmark', protect, (req, res, next) => {
+  courseRoutes(req, res, next);
+});
 
 // Health check
 app.get('/api/health', async (req, res) => {
   try {
     const userCount = await User.countDocuments();
     const users = await User.find({}, 'name email _id').limit(10);
-    res.json({ status: 'ok', database: 'connected', userCount, users });
+    res.json({ status: 'ok', userCount, users });
   } catch {
     res.status(500).json({ status: 'error', message: 'Database connection failed' });
   }
 });
 
-// Debug endpoints
+// Debug
 app.get('/api/debug/courses', async (req, res) => {
   try {
     const courses = await Course.find({}, 'title _id');
@@ -42,36 +57,30 @@ app.get('/api/debug/courses', async (req, res) => {
 app.get('/api/debug/user/:userId', async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select('name email _id');
-    res.json({ found: !!user, user: user?.toObject() || null });
+    res.json({ found: !!user, user });
   } catch {
-    res.status(500).json({ error: 'Failed to check user' });
+    res.status(500).json({ error: 'Failed to fetch user' });
   }
 });
 
-// Error middleware
+// Error & 404
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });
 
-// 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-// DB + start server
-const PORT = process.env.PORT || 3050;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ascendance';
-
+// MongoDB & Start
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000
+  useUnifiedTopology: true
 }).then(() => {
-  console.log('Connected to MongoDB');
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  console.log('✅ MongoDB connected');
+  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 }).catch(err => {
-  console.error('MongoDB connection error:', err);
+  console.error('❌ MongoDB connection error:', err);
   process.exit(1);
 });

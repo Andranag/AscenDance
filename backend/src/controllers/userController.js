@@ -48,26 +48,70 @@ const register = async (req, res) => {
   } catch (error) {
     handleError(res, error);
   }
-};
+}
 
 // Login
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).select('+password');
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: 'Invalid credentials', error: 'unauthorized' });
+    
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
     }
 
-    const token = generateToken(user);
-    res.json({
-      success: true,
-      data: {
-        token,
-        user: formatUser(user)
+    try {
+      const user = await User.findOne({ email }).select('+password');
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid credentials'
+        });
       }
-    });
+
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid credentials'
+        });
+      }
+
+      // Generate token and return success response
+      try {
+        const token = generateToken(user);
+        return res.json({
+          token,
+          user: {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role || 'user'
+          }
+        });
+      } catch (tokenError) {
+        console.error('Token generation failed:', tokenError);
+        return res.status(500).json({
+          error: 'Failed to generate token'
+        });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return res.status(500).json({
+        error: 'Internal server error'
+      });
+    }
   } catch (error) {
+    console.error('Login error:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid email or password' 
+      });
+    }
     handleError(res, error);
   }
 };

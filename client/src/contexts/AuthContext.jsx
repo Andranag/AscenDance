@@ -8,10 +8,18 @@ export const AuthProvider = ({ children }) => {
     const savedAuth = localStorage.getItem('authState');
     if (savedAuth) {
       try {
-        return JSON.parse(savedAuth);
+        const parsed = JSON.parse(savedAuth);
+        if (parsed.token && parsed.user) {
+          return {
+            user: {
+              ...parsed.user,
+              role: parsed.user.role || 'user'
+            },
+            token: parsed.token
+          };
+        }
       } catch (e) {
         console.error('Error parsing auth state:', e);
-        return { user: null, token: '' };
       }
     }
     return { user: null, token: '' };
@@ -19,6 +27,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('Attempting login with email:', email);
       const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -27,20 +36,28 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password })
       });
 
+      console.log('Login response status:', response.status);
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('Login error response:', errorData);
         throw new Error(errorData.error || 'Login failed');
       }
 
       const data = await response.json();
+      console.log('Login response data:', JSON.stringify(data, null, 2));
       
       // Handle both direct and nested response formats
-      const userData = data.data?.data || data.data || data.user;
-      const token = data.data?.token || data.token;
+      const userData = data?.data?.user || data?.user;
+      const token = data?.data?.token || data?.token;
 
       if (!token || !userData) {
+        console.error('Invalid response format:', data);
         throw new Error('Invalid response from server');
       }
+
+      console.log('User data:', userData);
+      console.log('Token:', token.substring(0, 10) + '...');
 
       // Ensure we have a role property
       const normalizedUser = {
@@ -48,14 +65,26 @@ export const AuthProvider = ({ children }) => {
         role: userData.role || 'user' // Default to 'user' if no role
       };
 
-      const newAuth = { user: normalizedUser, token };
-      
       // Store in localStorage immediately
-      localStorage.setItem('authState', JSON.stringify(newAuth));
-      setAuthState(newAuth);
+      localStorage.setItem('authState', JSON.stringify({
+        user: {
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role || 'user'
+        },
+        token
+      }));
+      
+      // Update auth state
+      setAuthState({
+        user: normalizedUser,
+        token
+      });
       
       return { user: normalizedUser, token };
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
