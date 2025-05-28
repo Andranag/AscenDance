@@ -10,6 +10,21 @@ const UsersManagement = () => {
   const [loading, setLoading] = useState(true);
   const [editUser, setEditUser] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [formValues, setFormValues] = useState({
+    name: '',
+    email: '',
+    role: ''
+  });
+
+  useEffect(() => {
+    if (editUser) {
+      setFormValues({
+        name: editUser.name,
+        email: editUser.email,
+        role: editUser.role
+      });
+    }
+  }, [editUser]);
 
   // Check if user is admin
   useEffect(() => {
@@ -47,19 +62,63 @@ const UsersManagement = () => {
     setEditModalOpen(true);
   };
 
-  const handleUpdateRole = async (userId, role) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!editUser) {
+      toastError('No user selected');
+      return;
+    }
+
+    const updates = {
+      name: formValues.name || editUser.name,
+      email: formValues.email || editUser.email,
+      role: formValues.role || editUser.role
+    };
+
+    console.log('Updates to send:', updates);
+    handleUpdateUser(editUser._id, updates);
+  };
+
+  const handleUpdateUser = async (userId, updates) => {
     try {
       setLoading(true);
-      await fetchWithAuth(`/api/admin/users/${userId}`, {
+      console.log('=== Making API Request ===');
+      console.log('User ID:', userId);
+      console.log('Updates:', updates);
+      
+      const response = await fetchWithAuth(`/api/admin/users/${userId}`, {
         method: 'PUT',
-        body: JSON.stringify({ role })
+        body: JSON.stringify(updates)
       });
-      toastSuccess('User role updated successfully');
+      
+      console.log('=== API Response ===');
+      console.log('Response:', response);
+      
+      if (response.error) {
+        console.error('API Error:', response);
+        throw new Error(response.error || 'Failed to update user');
+      }
+
+      // Update the editUser state with the new data
+      setEditUser(response.data);
+      
+      toastSuccess('User updated successfully');
       setEditModalOpen(false);
       fetchUsers();
     } catch (error) {
-      console.error('Error updating user role:', error);
-      toastError(error.response?.data?.error || 'Failed to update user role');
+      console.error('=== Error Details ===');
+      console.error('Error:', error);
+      console.error('Error Message:', error.message);
+      toastError(error.message || 'Failed to update user');
     } finally {
       setLoading(false);
     }
@@ -102,22 +161,22 @@ const UsersManagement = () => {
               <Table.Cell>{user.email}</Table.Cell>
               <Table.Cell>{user.role}</Table.Cell>
               <Table.Cell>
-                <Button
-                  icon
-                  color="blue"
-                  onClick={() => handleEdit(user)}
-                  disabled={loading}
-                >
-                  <Icon name="edit" />
-                </Button>
-                <Button
-                  icon
-                  color="red"
-                  onClick={() => handleDelete(user._id)}
-                  disabled={loading}
-                >
-                  <Icon name="trash" />
-                </Button>
+                <Button.Group>
+                  <Button
+                    icon
+                    color="blue"
+                    onClick={() => handleEdit(user)}
+                  >
+                    <Icon name="edit" />
+                  </Button>
+                  <Button
+                    icon
+                    color="red"
+                    onClick={() => handleDelete(user._id)}
+                  >
+                    <Icon name="trash" />
+                  </Button>
+                </Button.Group>
               </Table.Cell>
             </Table.Row>
           ))}
@@ -129,14 +188,34 @@ const UsersManagement = () => {
         onClose={() => setEditModalOpen(false)}
         size="small"
       >
-        <Modal.Header>Edit User Role</Modal.Header>
+        <Modal.Header>Edit User</Modal.Header>
         <Modal.Content>
-          <Form>
+          <Form id="userForm" onSubmit={handleFormSubmit}>
+            <Form.Field>
+              <label>Name</label>
+              <input
+                name="name"
+                value={formValues.name}
+                onChange={handleInputChange}
+                disabled={loading}
+              />
+            </Form.Field>
+            <Form.Field>
+              <label>Email</label>
+              <input
+                name="email"
+                value={formValues.email}
+                onChange={handleInputChange}
+                disabled={loading}
+              />
+            </Form.Field>
             <Form.Field>
               <label>Role</label>
               <select
-                value={editUser?.role || ''}
-                onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}
+                name="role"
+                value={formValues.role}
+                onChange={handleInputChange}
+                disabled={loading}
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
@@ -149,9 +228,16 @@ const UsersManagement = () => {
             Cancel
           </Button>
           <Button
+            type="submit"
+            form="userForm"
             positive
-            onClick={() => handleUpdateRole(editUser._id, editUser.role)}
             loading={loading}
+            disabled={loading}
+            onClick={(e) => {
+              e.preventDefault();
+              console.log('Save button clicked');
+              handleFormSubmit(e);
+            }}
           >
             Save Changes
           </Button>

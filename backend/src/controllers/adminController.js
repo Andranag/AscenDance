@@ -94,6 +94,37 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const updateUser = async (req, res) => {
+  try {
+    const { name, email, role } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent admin from downgrading themselves
+    if (user._id.toString() === req.user._id.toString() && role !== 'admin') {
+      return res.status(400).json({ error: 'Cannot change your own role' });
+    }
+
+    // Update user fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (role) user.role = role;
+
+    await user.save();
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+};
+
+// Keep updateUserRole for backward compatibility
 const updateUserRole = async (req, res) => {
   try {
     const { role } = req.body;
@@ -181,6 +212,7 @@ module.exports = {
   updateCourse,
   deleteCourse,
   getAllUsers,
+  updateUser,
   updateUserRole,
   deleteUser
 };

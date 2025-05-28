@@ -5,6 +5,7 @@ const {
   updateCourse,
   deleteCourse,
   getAllUsers,
+  updateUser,
   updateUserRole,
   deleteUser
 } = require('../controllers/adminController');
@@ -23,7 +24,7 @@ router.delete('/courses/:id', deleteCourse);
 
 // User management routes
 router.get('/users', getAllUsers);
-router.put('/users/:id', updateUserRole);
+router.put('/users/:id', updateUser);
 router.delete('/users/:id', deleteUser);
 
 module.exports = router;
