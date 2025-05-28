@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const { generateToken } = require('../middleware/authMiddleware');
 const bcrypt = require('bcryptjs');
 
+// Import email validator
+const { isValidEmail } = require('../utils/emailValidator');
+
 // Helper to build user response
 const formatUser = (user) => ({
   id: user._id.toString(),
@@ -21,34 +24,57 @@ const handleError = (res, error) => {
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
     if (!name || !email || !password) {
-      return res.status(400).json({ message: 'All fields are required', error: 'missing_fields' });
+      return res.status(400).json({ message: 'All fields are required', error: 'validation_error' });
+    }
+
+    // Validate email domain
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ 
+        message: 'Please use a valid email from a supported domain', 
+        error: 'validation_error',
+        supportedDomains: ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com']
+      });
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists', error: 'email_taken' });
+      return res.status(400).json({ message: 'Email already registered', error: 'validation_error' });
     }
 
-    const user = await User.create({ name, email, password, role: 'user' });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'user'
+    });
 
     try {
+      await user.save();
       const token = generateToken(user);
-      return res.json({
+      res.status(201).json({
         success: true,
         data: {
-          token,
-          user: formatUser(user)
+          ...formatUser(user),
+          token
         }
       });
-    } catch (tokenError) {
-      await User.findByIdAndDelete(user._id); // Rollback
-      throw new Error('Failed to generate token');
+    } catch (validationError) {
+      if (validationError.name === 'ValidationError') {
+        const errorMessages = Object.values(validationError.errors).map(error => error.message);
+        return res.status(400).json({ 
+          message: errorMessages.join(', '),
+          error: 'validation_error'
+        });
+      }
+      throw validationError;
     }
   } catch (error) {
     handleError(res, error);
   }
-}
+};
 
 // Login
 const login = async (req, res) => {

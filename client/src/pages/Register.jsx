@@ -1,72 +1,127 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-// Remove this line since we're using useToast hook
+import { Container, Form, Input, Button, Segment, Icon } from 'semantic-ui-react';
 import { useToast } from '../contexts/ToastContext';
-import { Container, Form, Input, Button, Message, Segment, Icon } from 'semantic-ui-react';
-import { authContainerStyle, authFormContainerStyle, authFormStyle, authButtonStyle, authLinkStyle } from '../styles/authStyles';
+import {
+  authContainerStyle,
+  authFormContainerStyle
+} from '../styles/authStyles';
 
 const Register = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toastSuccess, toastError } = useToast();
 
-  // Validation functions
-  const validateEmail = (email) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showRequirements, setShowRequirements] = useState(false);
+  const [showPasswordMatch, setShowPasswordMatch] = useState(false);
+  const [showPasswordMatchMessage, setShowPasswordMatchMessage] = useState(false);
+
+  // Password requirements state
+  const [requirements, setRequirements] = useState({
+    minLength: false,
+    hasUpperCase: false,
+    hasLowerCase: false,
+    hasNumber: false,
+    hasSpecialChar: false
+  });
+
+  // Update requirements when password changes
+  const updateRequirements = (password) => {
+    setRequirements({
+      minLength: password.length >= 8,
+      hasUpperCase: /[A-Z]/.test(password),
+      hasLowerCase: /[a-z]/.test(password),
+      hasNumber: /\d/.test(password),
+      hasSpecialChar: /[^A-Za-z0-9]/.test(password)
+    });
   };
 
-  const validatePassword = (password) => {
-    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-    const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    return re.test(password);
+  // Check password match
+  const checkPasswordMatch = () => {
+    const passwordsMatch = formData.password === formData.confirmPassword;
+    setShowPasswordMatch(!passwordsMatch); // Show error when they don't match
+    setShowPasswordMatchMessage(true); // Always show the message when checking
   };
 
-  const validateName = (name) => {
-    return name.trim().length >= 2;
+  // Handle confirm password focus/blur
+  const handleConfirmPasswordFocus = () => {
+    setShowPasswordMatchMessage(true);
+  };
+
+  const handleConfirmPasswordBlur = () => {
+    setShowPasswordMatchMessage(false);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (name === 'password') {
+      updateRequirements(value);
+    } else if (name === 'confirmPassword') {
+      checkPasswordMatch();
+    }
+  };
+
+  // Handle focus/blur for requirements visibility
+  const handlePasswordFocus = () => {
+    setShowRequirements(true);
+  };
+
+  const handlePasswordBlur = () => {
+    setShowRequirements(false);
   };
 
   const validateForm = () => {
-    if (!validateName(name)) {
-      toastError('Name must be at least 2 characters long');
+    const { name, email, password, confirmPassword } = formData;
+
+    if (name.trim().length < 2) {
+      toastError('Name must be at least 2 characters');
       return false;
     }
-    if (!validateEmail(email)) {
-      toastError('Please enter a valid email address');
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toastError('Invalid email address');
       return false;
     }
-    if (!validatePassword(password)) {
-      toastError('Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one number');
+
+    const passwordValid =
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /\d/.test(password) &&
+      /[^A-Za-z0-9]/.test(password);
+
+    if (!passwordValid) {
+      toastError('Password must contain uppercase, lowercase, number, special char and be 8+ chars');
       return false;
     }
+
     if (password !== confirmPassword) {
       toastError('Passwords do not match');
       return false;
     }
+
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Client-side validation
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3050/api/auth/register', {
+      const res = await fetch('http://localhost:3050/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           email,
@@ -74,29 +129,21 @@ const Register = () => {
         })
       });
 
-      const data = await response.json();
-      
-      // Handle API errors
-      if (!response.ok) {
+      const data = await res.json();
+
+      if (!res.ok) {
         toastError(data.message || 'Registration failed');
-        setLoading(false);
         return;
       }
 
-      // Store token and navigate
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // Show success message
-      toastSuccess('Registration successful! Redirecting to login...');
-      
-      // Add a small delay before navigation to ensure the toast is visible
-      setTimeout(() => {
-        navigate('/login');
-      }, 1000);
-    } catch (error) {
-      console.error('Registration error:', error);
-      toastError('Registration failed. Please try again.');
+      toastSuccess('Registered successfully! Redirecting...');
+      setTimeout(() => navigate('/login'), 1000);
+    } catch (err) {
+      console.error(err);
+      toastError('Server error');
+    } finally {
       setLoading(false);
     }
   };
@@ -105,40 +152,44 @@ const Register = () => {
     <Container text style={authContainerStyle}>
       <Segment style={authFormContainerStyle}>
         <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Sign Up</h2>
-        {/* No error message needed since we're using toast */}
-        <Form onSubmit={handleSubmit} style={authFormStyle}>
+        <Form onSubmit={handleSubmit} loading={loading}>
           <Form.Field>
             <Input
-              icon='user'
+              icon={{ name: 'user' }}
               iconPosition='left'
-              type="text"
-              placeholder='Name'
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              placeholder="Full Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
               required
             />
           </Form.Field>
           <Form.Field>
             <Input
-              icon='mail'
+              icon={{ name: 'mail' }}
               iconPosition='left'
-              type="email"
-              placeholder='Email'
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               required
             />
           </Form.Field>
           <Form.Field>
-            <label>Password</label>
             <div style={{ position: 'relative' }}>
               <Input
+                type={showPassword ? 'text' : 'password'}
                 icon={{ name: 'lock' }}
                 iconPosition='left'
-                type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name="password"
+                value={formData.password}
+                onChange={(e) => {
+                  handleChange(e);
+                  updateRequirements(e.target.value);
+                }}
+                onFocus={handlePasswordFocus}
+                onBlur={handlePasswordBlur}
                 required
               />
               <Button
@@ -156,17 +207,43 @@ const Register = () => {
                 }}
               />
             </div>
+            <div style={{ marginTop: '8px', display: showRequirements ? 'block' : 'none' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Icon name={requirements.minLength ? 'check circle' : 'circle'} color={requirements.minLength ? 'green' : 'grey'} />
+                  <span style={{ marginLeft: '8px' }}>At least 8 characters</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Icon name={requirements.hasUpperCase ? 'check circle' : 'circle'} color={requirements.hasUpperCase ? 'green' : 'grey'} />
+                  <span style={{ marginLeft: '8px' }}>Contains uppercase letter</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Icon name={requirements.hasLowerCase ? 'check circle' : 'circle'} color={requirements.hasLowerCase ? 'green' : 'grey'} />
+                  <span style={{ marginLeft: '8px' }}>Contains lowercase letter</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Icon name={requirements.hasNumber ? 'check circle' : 'circle'} color={requirements.hasNumber ? 'green' : 'grey'} />
+                  <span style={{ marginLeft: '8px' }}>Contains number</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Icon name={requirements.hasSpecialChar ? 'check circle' : 'circle'} color={requirements.hasSpecialChar ? 'green' : 'grey'} />
+                  <span style={{ marginLeft: '8px' }}>Contains special character</span>
+                </div>
+              </div>
+            </div>
           </Form.Field>
           <Form.Field>
-            <label>Confirm Password</label>
             <div style={{ position: 'relative' }}>
               <Input
+                type={showConfirmPassword ? 'text' : 'password'}
                 icon={{ name: 'lock' }}
                 iconPosition='left'
-                type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                onFocus={handleConfirmPasswordFocus}
+                onBlur={handleConfirmPasswordBlur}
                 required
               />
               <Button
@@ -184,23 +261,31 @@ const Register = () => {
                 }}
               />
             </div>
+            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {showPasswordMatchMessage && (
+                <>
+                  {formData.password === formData.confirmPassword ? (
+                    <>
+                      <Icon name='check circle' color='green' />
+                      <span style={{ color: 'green' }}>Passwords match</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon name='warning circle' color='red' />
+                      <span style={{ color: 'red' }}>Passwords do not match</span>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </Form.Field>
-          <Button
-            type="submit"
-            primary
-            fluid
-            loading={loading}
-            disabled={loading}
-            style={authButtonStyle}
-          >
-            {loading ? 'Registering...' : 'Sign Up'}
+          <Button fluid primary type="submit">
+            Register
           </Button>
-          <div style={{ textAlign: 'center' }}>
-            <Link to="/login" style={authLinkStyle}>
-              Already have an account? Sign In
-            </Link>
-          </div>
         </Form>
+        <p style={{ marginTop: '1rem', textAlign: 'center' }}>
+          Already have an account? <Link to="/login">Log in</Link>
+        </p>
       </Segment>
     </Container>
   );
