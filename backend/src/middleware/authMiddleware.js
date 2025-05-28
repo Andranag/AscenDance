@@ -1,35 +1,90 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'ascendance-secret-key-2025', { expiresIn: '7d' });
+const JWT_SECRET = process.env.JWT_SECRET || 'ascendance-secret-key-2025';
+
+// Helper to verify token and get user
+const verifyTokenAndGetUser = async (token) => {
+  try {
+    if (!token) {
+      return null;
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    if (!decoded || !decoded.userId || !decoded.email || !decoded.role) {
+      return null;
+    }
+
+    const userId = decoded.userId;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return null;
+    }
+
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      return null;
+    }
+    
+    return user;
+  } catch (err) {
+    return null;
+  }
 };
 
-const protect = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ error: 'No authorization header provided' });
+// Generate token with user data
+const generateToken = (user) => {
+  if (!user || !user._id || !user.email || !user.role) {
+    throw new Error('Invalid user object provided to generateToken');
   }
 
-  const token = authHeader.split(' ')[1];
-  if (!token) {
+  const token = jwt.sign({
+    userId: user._id.toString(),
+    email: user.email,
+    role: user.role
+  }, JWT_SECRET, {
+    expiresIn: '24h'
+  });
+
+  return token;
+};
+
+// Middleware to protect routes
+const protect = async (req, res, next) => {
+  console.log('Auth middleware:', req.method, req.path);
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('No auth header or invalid format');
     return res.status(401).json({ error: 'No token provided' });
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ascendance-secret-key-2025');
-    const user = await User.findById(decoded.id).select('-password');
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
-    }
-    req.user = user;
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
+  const token = authHeader.split(' ')[1];
+  console.log('Verifying token:', token.substring(0, 10) + '...');
+  const user = await verifyTokenAndGetUser(token);
+
+  if (!user) {
+    console.log('Token verification failed');
+    return res.status(401).json({ error: 'Invalid or expired token' });
   }
+
+  req.userId = user._id;
+  req.user = user;
+  console.log('Authenticated user:', user._id, user.email);
+  next();
 };
 
+// Middleware to check admin role
+const isAdmin = async (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Not authorized' });
+  }
+  next();
+};
+
+// Export all middleware functions
 module.exports = {
   protect,
-  generateToken
+  generateToken,
+  isAdmin
 };

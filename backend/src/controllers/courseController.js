@@ -111,10 +111,15 @@ exports.unmarkLesson = async (req, res) => {
       remainingLessons: userProgress.completedLessons.length
     });
     
+<<<<<<< HEAD
     res.json(createSuccessResponse(
       course,
       'Successfully unmarked lesson'
     ));
+=======
+    // Return the course object directly
+    res.json(course);
+>>>>>>> temp-progress
   } catch (error) {
     logError('Unmark lesson', error, {
       courseId: req.params.id,
@@ -183,11 +188,73 @@ exports.markLessonComplete = async (req, res) => {
       lessonIndex: req.params.lessonIndex,
       userId: req.user._id
     });
+<<<<<<< HEAD
     res.status(500).json(createErrorResponse(
       500,
       'Failed to mark lesson complete',
       'An unexpected error occurred while marking the lesson as complete'
     ));
+=======
+
+    const { id, lessonIndex } = req.params;
+    const userId = req.user._id;
+    const course = await Course.findById(id);
+
+    if (!course) {
+      console.error('Course not found:', { courseId: id });
+      return res.status(404).json({ error: 'Course not found' });
+    }
+
+    console.log('Found course:', {
+      title: course.title,
+      lessonCount: course.lessons.length
+    });
+
+    // Find the lesson by its numeric index
+    const lessonIndexNum = parseInt(lessonIndex);
+    if (isNaN(lessonIndexNum) || lessonIndexNum < 0 || lessonIndexNum >= course.lessons.length) {
+      console.error('Invalid lesson index:', {
+        courseId: id,
+        lessonIndex,
+        lessonCount: course.lessons.length
+      });
+      return res.status(400).json({ error: 'Invalid lesson index' });
+    }
+
+    const lesson = course.lessons[lessonIndexNum];
+    console.log('Found lesson:', {
+      title: lesson.title,
+      index: lessonIndexNum
+    });
+
+    const progress = course.progress.find(p => p.userId.equals(userId));
+    if (progress) {
+      progress.completedLessons.push({ lessonId: lesson._id });
+    } else {
+      course.progress.push({
+        userId,
+        completedLessons: [{ lessonId: lesson._id }]
+      });
+    }
+
+    await course.save();
+    console.log('Successfully marked lesson as complete:', {
+      courseId: id,
+      lessonId: lesson._id,
+      userId
+    });
+    
+    // Return the course object directly
+    res.json(course);
+  } catch (error) {
+    console.error('Error marking lesson complete:', {
+      error,
+      courseId: req.params.id,
+      lessonIndex: req.params.lessonIndex,
+      userId: req.user._id
+    });
+    res.status(500).json({ error: 'Failed to mark lesson complete' });
+>>>>>>> temp-progress
   }
 };
 

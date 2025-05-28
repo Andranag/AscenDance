@@ -1,25 +1,57 @@
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { generateToken } = require('../middleware/authMiddleware');
+const bcrypt = require('bcryptjs');
 
+// Import email validator
+const { isValidEmail } = require('../utils/emailValidator');
+
+// Helper to build user response
+const formatUser = (user) => ({
+  id: user._id.toString(),
+  name: user.name,
+  email: user.email,
+  role: user.role
+});
+
+// Error handler
+const handleError = (res, error) => {
+  console.error(error);
+  res.status(500).json({ message: error.message || 'Internal server error', error: error.name || 'server_error' });
+};
+
+// Register
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    const existingUser = await User.findOne({ email });
-    
-    if (existingUser) {
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'All fields are required', error: 'validation_error' });
+    }
+
+    // Validate email domain
+    if (!isValidEmail(email)) {
       return res.status(400).json({ 
-        message: 'User already exists',
-        error: 'user_exists'
+        message: 'Please use a valid email from a supported domain', 
+        error: 'validation_error',
+        supportedDomains: ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com']
       });
     }
 
-    const user = await User.create({
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already registered', error: 'validation_error' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({
       name,
       email,
-      password
+      password: hashedPassword,
+      role: 'user'
     });
 
+<<<<<<< HEAD
     // Create JWT token using the same method as authMiddleware
     const token = generateToken(user._id);
 
@@ -29,125 +61,156 @@ const register = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email
+=======
+    try {
+      await user.save();
+      const token = generateToken(user);
+      res.status(201).json({
+        success: true,
+        data: {
+          ...formatUser(user),
+          token
+        }
+      });
+    } catch (validationError) {
+      if (validationError.name === 'ValidationError') {
+        const errorMessages = Object.values(validationError.errors).map(error => error.message);
+        return res.status(400).json({ 
+          message: errorMessages.join(', '),
+          error: 'validation_error'
+        });
+>>>>>>> temp-progress
       }
-    });
+      throw validationError;
+    }
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ 
-      message: 'Internal server error',
-      error: 'server_error'
-    });
+    handleError(res, error);
   }
 };
 
-const { protect, generateToken } = require('../middleware/authMiddleware');
-
+// Login
 const login = async (req, res) => {
   try {
-    console.log('Login attempt:', req.body.email);
     const { email, password } = req.body;
     
-    const user = await User.findOne({ email });
-    console.log('Found user:', user ? 'yes' : 'no');
-    
-    if (!user) {
-      console.log('User not found');
-      return res.status(401).json({ 
-        message: 'Invalid credentials',
-        error: 'user_not_found'
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
       });
     }
 
-    const isPasswordValid = await user.comparePassword(password);
-    console.log('Password valid:', isPasswordValid);
-    
-    if (!isPasswordValid) {
-      console.log('Invalid password');
-      return res.status(401).json({ 
-        message: 'Invalid credentials',
-        error: 'invalid_password'
-      });
-    }
-
-    // Create JWT token using the same method as authMiddleware
-    const token = generateToken(user._id);
-    console.log('Generated token:', token);
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
+    try {
+      const user = await User.findOne({ email }).select('+password');
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid credentials'
+        });
       }
-    });
+
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid credentials'
+        });
+      }
+
+      // Generate token and return success response
+      try {
+        const token = generateToken(user);
+        if (!token) {
+          console.error('Token generation failed');
+          return res.status(500).json({
+            success: false,
+            error: 'Failed to generate token'
+          });
+        }
+        
+        return res.json({
+          success: true,
+          data: {
+            token,
+            user: {
+              id: user._id.toString(),
+              name: user.name,
+              email: user.email,
+              role: user.role || 'user'
+            }
+          }
+        });
+      } catch (tokenError) {
+        console.error('Token generation error:', tokenError);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to generate token'
+        });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Internal server error'
+      });
+    }
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ 
-      message: 'Internal server error',
-      error: 'server_error'
-    });
-  }
-};
-
-const getProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select('-password');
-    if (!user) {
-      return res.status(404).json({
-        message: 'User not found',
-        error: 'user_not_found'
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid email or password' 
       });
     }
-    
-    res.json({
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
-      }
-    });
-  } catch (error) {
-    console.error('Profile error:', error);
-    res.status(500).json({ 
-      message: 'Internal server error',
-      error: 'server_error'
-    });
+    handleError(res, error);
   }
 };
 
+// Get Profile
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found', error: 'user_not_found' });
+    }
+    res.json({ success: true, data: formatUser(user) });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// Update Profile
 const updateProfile = async (req, res) => {
   try {
     const { name, email } = req.body;
-    const userId = req.user._id;
-    console.log('Updating profile for user:', userId);
-    
-    const user = await User.findById(userId);
-    
+    const user = await User.findById(req.user._id);
+
     if (!user) {
-      console.error('User not found for ID:', userId);
-      return res.status(404).json({ 
-        message: 'User not found',
-        error: 'user_not_found'
-      });
+      return res.status(404).json({ message: 'User not found', error: 'user_not_found' });
+    }
+
+    // Default role correction
+    if (!user.role || user.role === 'student') {
+      user.role = 'user';
     }
 
     if (name) user.name = name;
     if (email) user.email = email;
-    
-    const updatedUser = await user.save();
-    
-    res.json({
-      success: true,
-      data: {
-        id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email
+
+    // Only admin can update role (optional)
+    if (req.user.role === 'admin' && req.body.role) {
+      const validRoles = ['user', 'admin'];
+      if (validRoles.includes(req.body.role)) {
+        user.role = req.body.role;
       }
-    });
+    }
+
+    await user.save();
+    res.json({ success: true, data: formatUser(user) });
   } catch (error) {
-    console.error('Error updating profile:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Failed to update profile', error: 'server_error' });
   }
 };
 

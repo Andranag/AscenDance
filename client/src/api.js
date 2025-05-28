@@ -1,157 +1,76 @@
-const API_BASE_URL = 'http://localhost:3050';
+export const API_BASE_URL = 'http://localhost:3050';
 
-// Enhanced error handling for API responses
-const handleResponse = async (response) => {
+// Public API functions
+export const fetchPublic = async (endpoint, config = {}) => {
   try {
-    // Read the response body once
-    const text = await response.text();
-    const data = text ? JSON.parse(text) : {};
-    
-    console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers);
-    console.log('Response text:', text);
-    console.log('Parsed response data:', JSON.stringify(data, null, 2));
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...config,
+      headers: {
+        'Content-Type': 'application/json',
+        ...config.headers
+      }
+    });
     
     if (!response.ok) {
-      console.error('Error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        data
-      });
-      
-      // Handle 401 Unauthorized
-      if (response.status === 401) {
-        throw new Error('Unauthorized. Please login again.');
-      }
-      
-      // Handle token expired case
-      if (data.error === 'token_expired') {
-        throw new Error('Token expired. Please login again.');
-      }
-      
-      // Handle user not found case
-      if (data.error === 'user_not_found') {
-        throw new Error('User no longer exists. Please login again.');
-      }
-      
-      // Handle other error cases
-      if (data.error) {
-        throw new Error(data.message || `API error: ${data.error}`);
-      }
-      
-      throw new Error(`API error: ${response.statusText}`);
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || 'An error occurred');
     }
     
+    const data = await response.json();
+    
+    // Handle different response formats
+    if (data && typeof data === 'object') {
+      // If data is an array, return it directly
+      if (Array.isArray(data)) return data;
+      
+      // If data has a data property, return that
+      if (data.data) return data.data;
+      
+      // If data has success and data properties, return data
+      if (data.success && data.data) return data.data;
+      
+      // If data is an object with courses, return courses array
+      if (data.courses) return data.courses;
+    }
+    
+    // If we get here, return the raw data
     return data;
   } catch (error) {
-    console.error('Error in handleResponse:', {
-      error,
-      message: error.message,
-      name: error.name
-    });
+    console.error('API Error:', error);
     throw error;
   }
 };
 
-export const fetchWithAuth = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('No token found in localStorage');
-    throw new Error('No authentication token found');
-  }
-  
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-    ...options.headers
-  };
-
+// Authenticated API functions
+export const fetchAuth = async (endpoint, config = {}) => {
   try {
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
-    console.log('Making request to:', url);
-    console.log('Request headers:', headers);
-    
-    const response = await fetch(url, {
-      ...options,
-      headers,
-      credentials: 'include'
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...config,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...config.headers
+      }
     });
     
-    console.log('Response status:', response.status);
-    
-    // Read the response body once
-    const text = await response.text();
-    const data = text ? JSON.parse(text) : {};
-    
-    console.log('Response data:', data);
-    
     if (!response.ok) {
-      console.error('Error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        data
-      });
-      
-      if (response.status === 401) {
-        throw new Error('Unauthorized. Please login again.');
-      }
-      
-      throw new Error(data.message || `API error: ${response.statusText}`);
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || 'An error occurred');
     }
     
+    const data = await response.json();
+    // Return the full response object instead of just data
     return data;
   } catch (error) {
-    console.error('API error:', {
-      error,
-      message: error.message,
-      name: error.name
-    });
     throw error;
   }
 };
 
-export const fetchPublic = async (endpoint, options = {}) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers
-  };
-
-  try {
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
-    console.log(`Making public request to: ${url}`);
-    
-    // Add a timeout to prevent hanging requests
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-    
-    const response = await fetch(url, {
-      ...options,
-      headers,
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    
-    // Handle both JSON and empty responses
-    const contentType = response.headers.get('content-type');
-    let data = null;
-    
-    if (contentType && contentType.includes('application/json')) {
-      try {
-        data = await response.json();
-      } catch (err) {
-        console.error('Error parsing JSON response:', err);
-      }
-    }
-    
-    if (!response.ok) {
-      throw new Error(data?.message || response.statusText);
-    }
-    
-    return data || {}; // Return empty object if no data
-  } catch (error) {
-    console.error('API error:', error);
-    throw error;
-  }
+export default {
+  fetchPublic
 };
-
-export default { fetchWithAuth, fetchPublic };
