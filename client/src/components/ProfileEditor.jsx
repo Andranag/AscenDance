@@ -9,6 +9,7 @@ const ProfileEditor = ({ initialUser = { name: '', email: '' }, isLoading }) => 
     name: initialUser?.name || '',
     email: initialUser?.email || ''
   });
+  const [isUpdating, setIsUpdating] = useState(false);
   const { user, setUser } = useAuth();
   const { toastSuccess, toastError } = useToast();
 
@@ -30,6 +31,7 @@ const ProfileEditor = ({ initialUser = { name: '', email: '' }, isLoading }) => 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) return;
+    setIsUpdating(true);
 
     try {
       const response = await fetchAuth('/api/auth/update', {
@@ -46,13 +48,19 @@ const ProfileEditor = ({ initialUser = { name: '', email: '' }, isLoading }) => 
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setUser(updatedUser);
         toastSuccess('Profile updated successfully!');
-        return response;
+        // Reset form data to updated values
+        setFormData({
+          name: updatedUser.name,
+          email: updatedUser.email
+        });
+      } else {
+        throw new Error('Invalid response format');
       }
-      throw new Error('Invalid response format');
     } catch (error) {
       console.error('Update profile error:', error);
       toastError(error.message || 'Failed to update profile');
-      throw error;
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -103,12 +111,12 @@ const ProfileEditor = ({ initialUser = { name: '', email: '' }, isLoading }) => 
 
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isUpdating}
           className={`btn-primary w-full flex items-center justify-center gap-2 ${
-            isLoading ? 'opacity-70 cursor-not-allowed' : ''
+            isUpdating ? 'opacity-70 cursor-not-allowed' : ''
           }`}
         >
-          {isLoading ? (
+          {isUpdating ? (
             <>
               <div className="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full" />
               Updating Profile...

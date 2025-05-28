@@ -25,7 +25,7 @@ function App() {
           <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/course/:id" element={<CoursePage />} />
-          <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
         </Routes>
       </main>
