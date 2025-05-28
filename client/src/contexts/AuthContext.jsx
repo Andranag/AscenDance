@@ -14,6 +14,27 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(localStorage.getItem('token'));
+
+  const fetchWithAuth = async (endpoint, options = {}) => {
+    const defaultOptions = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` })
+      }
+    };
+
+    const mergedOptions = { ...defaultOptions, ...options };
+    
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, mergedOptions);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch data');
+    }
+
+    return data;
+  };
 
   const login = async (credentials) => {
     try {
@@ -116,8 +137,9 @@ export const AuthProvider = ({ children }) => {
     loading,
     setUser,
     login,
-    register,
-    logout
+    logout,
+    token,
+    fetchWithAuth
   };
 
   return (

@@ -7,6 +7,10 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Courses from './pages/Courses';
 import CoursePage from './pages/CoursePage';
+import AdminLayout from './components/Admin/AdminLayout';
+import UsersManagement from './components/Admin/UsersManagement';
+import CourseManagement from './components/Admin/CourseManagement';
+import Analytics from './components/Admin/Analytics';
 import { useAuth } from './contexts/AuthContext';
 import Toast from './components/Toast';
 
@@ -26,7 +30,11 @@ function App() {
           <Route path="/courses" element={<Courses />} />
           <Route path="/course/:id" element={<CoursePage />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/admin" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="users" element={<UsersManagement />} />
+            <Route path="courses" element={<CourseManagement />} />
+            <Route path="analytics" element={<Analytics />} />
+          </Route>
         </Routes>
       </main>
     </div>

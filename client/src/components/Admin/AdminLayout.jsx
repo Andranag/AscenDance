@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Link, useLocation, Outlet } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { BookOpen, Users, BarChart3, LogOut } from 'lucide-react';
 
 const AdminLayout = ({ children }) => {
@@ -66,7 +66,7 @@ const AdminLayout = ({ children }) => {
         </div>
       </div>
       <div className="ml-64 flex-1 p-8 bg-gray-50">
-        {children}
+        <Outlet />
       </div>
     </div>
   );

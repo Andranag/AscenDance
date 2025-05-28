@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Container, Grid, Header, Form, Icon, Table, Button, Segment, Message, Modal } from 'semantic-ui-react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useToast } from '../../contexts/ToastContext';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
+import { Plus, Edit2, Trash2, Check, X } from "lucide-react";
 
 const CourseManagement = () => {
   const navigate = useNavigate();
@@ -20,6 +20,13 @@ const CourseManagement = () => {
   });
   const [editCourse, setEditCourse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [formValues, setFormValues] = useState({
+    title: '',
+    description: '',
+    category: '',
+  });
 
   useEffect(() => {
     fetchCourses().catch((err) => {
@@ -93,6 +100,13 @@ const CourseManagement = () => {
 
   const handleEditCourse = (course) => {
     setEditCourse(course);
+    setFormValues({
+      title: course.title,
+      description: course.description,
+      category: course.category,
+    });
+    setEditing(true);
+    setOpen(true);
   };
   
   const handleDeleteCourse = async (courseId) => {
@@ -116,255 +130,174 @@ const CourseManagement = () => {
       setLoading(false);
     }
   };
-  
-  return (
-    <Container>
-      <Header as='h1'>Course Management</Header>
-      
 
-      {loading ? (
-        <div className='ui active inverted dimmer'>
-          <div className='ui text loader'>Loading courses...</div>
-        </div>
-      ) : (
-        <div style={{
-          padding: '2rem',
-          backgroundColor: 'white',
-          borderRadius: '4px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <Grid columns={2} stackable>
-            <Grid.Column>
-              <Header as='h2'>Create New Course</Header>
-              <Form>
-                {editCourse && (
-                  <Modal
-                    open={true}
-                    onClose={() => setEditCourse(null)}
-                    closeIcon
-                    size='small'
+  const handleOpenModal = () => {
+    setOpen(true);
+    setEditing(false);
+    setFormValues({
+      title: '',
+      description: '',
+      category: '',
+    });
+  };
+
+  const handleCloseModal = () => {
+    setOpen(false);
+  };
+
+  const handleSave = async () => {
+    if (editing) {
+      await handleUpdateCourse(editCourse._id, {
+        title: formValues.title,
+        description: formValues.description,
+        category: formValues.category,
+      });
+    } else {
+      await handleCreateCourse();
+    }
+    handleCloseModal();
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Course Management</h2>
+        <button
+          onClick={handleOpenModal}
+          className="btn-primary flex items-center gap-2"
+        >
+          <Plus className="w-5 h-5" />
+          Add Course
+        </button>
+      </div>
+
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Title
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Category
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Created At
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {courses.map((course) => (
+              <tr key={course._id}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {course.title}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {course.category}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {new Date(course.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <button
+                    onClick={() => handleEditCourse(course)}
+                    className="btn-secondary flex items-center gap-1"
                   >
-                    <Modal.Header>Edit Course</Modal.Header>
-                    <Modal.Content>
-                      <Form>
-                        <Form.Field>
-                          <label>Title</label>
-                          <input
-                            placeholder='Course title'
-                            value={editCourse.title}
-                            onChange={(e) => {
-                              setEditCourse({ ...editCourse, title: e.target.value });
-                            }}
-                            required
-                          />
-                        </Form.Field>
-                        <Form.Field>
-                          <label>Description</label>
-                          <textarea
-                            placeholder='Course description'
-                            value={editCourse.description}
-                            onChange={(e) => {
-                              setEditCourse({ ...editCourse, description: e.target.value });
-                            }}
-                            required
-                          />
-                        </Form.Field>
-                        <Form.Field>
-                          <label>Course Image URL</label>
-                          <input
-                            placeholder='Image URL'
-                            value={editCourse.image}
-                            onChange={(e) => {
-                              setEditCourse({ ...editCourse, image: e.target.value });
-                            }}
-                          />
-                        </Form.Field>
-                        <Form.Group widths='equal'>
-                          <Form.Field>
-                            <label>Category</label>
-                            <select
-                              value={editCourse.category}
-                              onChange={(e) => {
-                                setEditCourse({ ...editCourse, category: e.target.value });
-                              }}
-                              className='ui fluid search dropdown'
-                            >
-                              <option value=''>Select category</option>
-                              <option value='lindy-hop'>Lindy Hop</option>
-                              <option value='solo-jazz'>Solo Jazz</option>
-                              <option value='rhythm-and-blues'>Rhythm and Blues</option>
-                            </select>
-                          </Form.Field>
-                          <Form.Field>
-                            <label>Level</label>
-                            <select
-                              value={editCourse.level}
-                              onChange={(e) => {
-                                setEditCourse({ ...editCourse, level: e.target.value });
-                              }}
-                              className='ui fluid search dropdown'
-                            >
-                              <option value=''>Select level</option>
-                              <option value='beginner'>Beginner</option>
-                              <option value='intermediate'>Intermediate</option>
-                              <option value='advanced'>Advanced</option>
-                            </select>
-                          </Form.Field>
-                        </Form.Group>
-                        <Form.Field>
-                          <label>Duration</label>
-                          <input
-                            placeholder='Duration (e.g., 2 hours)'
-                            value={editCourse.duration}
-                            onChange={(e) => {
-                              setEditCourse({ ...editCourse, duration: e.target.value });
-                            }}
-                          />
-                        </Form.Field>
-                      </Form>
-                    </Modal.Content>
-                    <Modal.Actions>
-                      <Button negative onClick={() => setEditCourse(null)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        positive
-                        icon='checkmark'
-                        labelPosition='right'
-                        content='Save Changes'
-                        onClick={() => {
-                          handleUpdateCourse(editCourse._id, {
-                            title: editCourse.title,
-                            description: editCourse.description,
-                            category: editCourse.category,
-                            level: editCourse.level,
-                            duration: editCourse.duration,
-                            image: editCourse.image
-                          });
-                        }}
+                    <Edit2 className="w-4 h-4" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCourse(course._id)}
+                    className="btn-danger flex items-center gap-1 ml-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        className={`fixed inset-0 bg-black bg-opacity-50 z-50 ${open ? 'block' : 'hidden'}`}
+        onClick={handleCloseModal}
+      >
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all">
+            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div className="sm:flex sm:items-start">
+                <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    {editing ? "Edit Course" : "Add Course"}
+                  </h3>
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Title
+                      </label>
+                      <input
+                        type="text"
+                        value={formValues.title}
+                        onChange={(e) => setFormValues({ ...formValues, title: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                        placeholder="Course title"
                       />
-                    </Modal.Actions>
-                  </Modal>
-                )}
-                <Form.Field>
-                  <label>Title</label>
-                  <input
-                    placeholder='Course title'
-                    value={newCourse.title}
-                    onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
-                    required
-                  />
-                </Form.Field>
-                <Form.Field>
-                  <label>Description</label>
-                  <textarea
-                    placeholder='Course description'
-                    value={newCourse.description}
-                    onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
-                    required
-                  />
-                </Form.Field>
-                <Form.Field>
-                  <label>Course Image URL</label>
-                  <input
-                    placeholder='Image URL'
-                    value={newCourse.image}
-                    onChange={(e) => setNewCourse({ ...newCourse, image: e.target.value })}
-                  />
-                </Form.Field>
-                <Form.Group widths='equal'>
-                  <Form.Field>
-                    <label>Category</label>
-                    <select
-                      value={newCourse.category}
-                      onChange={(e) => setNewCourse({ ...newCourse, category: e.target.value })}
-                      className='ui fluid search dropdown'
-                    >
-                      <option value=''>Select category</option>
-                      <option value='lindy-hop'>Lindy Hop</option>
-                      <option value='solo-jazz'>Solo Jazz</option>
-                      <option value='rhythm-and-blues'>Rhythm and Blues</option>
-                    </select>
-                  </Form.Field>
-                  <Form.Field>
-                    <label>Level</label>
-                    <select
-                      value={newCourse.level}
-                      onChange={(e) => setNewCourse({ ...newCourse, level: e.target.value })}
-                      className='ui fluid search dropdown'
-                    >
-                      <option value=''>Select level</option>
-                      <option value='beginner'>Beginner</option>
-                      <option value='intermediate'>Intermediate</option>
-                      <option value='advanced'>Advanced</option>
-                    </select>
-                  </Form.Field>
-                </Form.Group>
-                <Form.Field>
-                  <label>Duration</label>
-                  <input
-                    placeholder='Duration (e.g., 2 hours)'
-                    value={newCourse.duration}
-                    onChange={(e) => setNewCourse({ ...newCourse, duration: e.target.value })}
-                  />
-                </Form.Field>
-                <button className='ui primary button' onClick={handleCreateCourse}>
-                  Create Course
-                </button>
-              </Form>
-            </Grid.Column>
-            <Grid.Column>
-              <Header as='h2'>Existing Courses</Header>
-              {courses.length > 0 ? (
-                <Table celled>
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.HeaderCell>Title & Description</Table.HeaderCell>
-                      <Table.HeaderCell>Category</Table.HeaderCell>
-                      <Table.HeaderCell>Level</Table.HeaderCell>
-                      <Table.HeaderCell>Duration</Table.HeaderCell>
-                      <Table.HeaderCell>Actions</Table.HeaderCell>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {courses.map((course) => (
-                      <Table.Row key={course._id}>
-                        <Table.Cell>
-                          <Header as='h4'>{course.title}</Header>
-                          <p style={{ color: '#666' }}>{course.description}</p>
-                        </Table.Cell>
-                        <Table.Cell>{course.category}</Table.Cell>
-                        <Table.Cell>{course.level}</Table.Cell>
-                        <Table.Cell>{course.duration}</Table.Cell>
-                        <Table.Cell>
-                          <button
-                            className='ui icon button yellow'
-                            onClick={() => handleEditCourse(course)}
-                          >
-                            <i className='edit icon' />
-                          </button>
-                          <button
-                            className='ui icon button red'
-                            onClick={() => handleDeleteCourse(course._id)}
-                          >
-                            <i className='delete icon' />
-                          </button>
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table>
-              ) : (
-                <Message info>
-                  <Message.Header>No courses found</Message.Header>
-                  <p>Create a new course to get started!</p>
-                </Message>
-              )}
-            </Grid.Column>
-          </Grid>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Category
+                      </label>
+                      <input
+                        type="text"
+                        value={formValues.category}
+                        onChange={(e) => setFormValues({ ...formValues, category: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                        placeholder="Category"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={formValues.description}
+                        onChange={(e) => setFormValues({ ...formValues, description: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                        rows={3}
+                        placeholder="Course description"
+                      />
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+              <button
+                type="button"
+                onClick={handleSave}
+                className={`btn-primary flex items-center gap-1 ${editing ? 'bg-green-600 hover:bg-green-700' : ''}`}
+              >
+                <Check className="w-4 h-4" />
+                {editing ? "Update" : "Add"}
+              </button>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="btn-secondary flex items-center gap-1 ml-3"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
-      )}
-    </Container>
+      </div>
+    </div>
   );
 };
 
