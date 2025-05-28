@@ -1,293 +1,253 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Container, Form, Input, Button, Segment, Icon } from 'semantic-ui-react';
-import { useToast } from '../contexts/ToastContext';
-import {
-  authContainerStyle,
-  authFormContainerStyle
-} from '../styles/authStyles';
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from "../contexts/ToastContext";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { toastSuccess, toastError } = useToast();
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
-
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [showRequirements, setShowRequirements] = useState(false);
-  const [showPasswordMatch, setShowPasswordMatch] = useState(false);
   const [showPasswordMatchMessage, setShowPasswordMatchMessage] = useState(false);
 
-  // Password requirements state
-  const [requirements, setRequirements] = useState({
-    minLength: false,
-    hasUpperCase: false,
-    hasLowerCase: false,
-    hasNumber: false,
-    hasSpecialChar: false
-  });
-
-  // Update requirements when password changes
-  const updateRequirements = (password) => {
-    setRequirements({
-      minLength: password.length >= 8,
-      hasUpperCase: /[A-Z]/.test(password),
-      hasLowerCase: /[a-z]/.test(password),
-      hasNumber: /\d/.test(password),
-      hasSpecialChar: /[^A-Za-z0-9]/.test(password)
-    });
-  };
-
-  // Check password match
-  const checkPasswordMatch = () => {
-    const passwordsMatch = formData.password === formData.confirmPassword;
-    setShowPasswordMatch(!passwordsMatch); // Show error when they don't match
-    setShowPasswordMatchMessage(true); // Always show the message when checking
-  };
-
-  // Handle confirm password focus/blur
-  const handleConfirmPasswordFocus = () => {
-    setShowPasswordMatchMessage(true);
-  };
-
-  const handleConfirmPasswordBlur = () => {
-    setShowPasswordMatchMessage(false);
-  };
+  const { register } = useAuth();
+  const { toastSuccess, toastError } = useToast();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    if (name === 'password') {
-      updateRequirements(value);
-    } else if (name === 'confirmPassword') {
-      checkPasswordMatch();
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  // Handle focus/blur for requirements visibility
-  const handlePasswordFocus = () => {
-    setShowRequirements(true);
-  };
-
-  const handlePasswordBlur = () => {
-    setShowRequirements(false);
-  };
-
-  const validateForm = () => {
-    const { name, email, password, confirmPassword } = formData;
-
-    if (name.trim().length < 2) {
-      toastError('Name must be at least 2 characters');
-      return false;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toastError('Invalid email address');
-      return false;
-    }
-
-    const passwordValid =
-      password.length >= 8 &&
-      /[A-Z]/.test(password) &&
-      /[a-z]/.test(password) &&
-      /\d/.test(password) &&
-      /[^A-Za-z0-9]/.test(password);
-
-    if (!passwordValid) {
-      toastError('Password must contain uppercase, lowercase, number, special char and be 8+ chars');
-      return false;
-    }
-
-    if (password !== confirmPassword) {
-      toastError('Passwords do not match');
-      return false;
-    }
-
-    return true;
-  };
+  const handlePasswordFocus = () => setShowRequirements(true);
+  const handlePasswordBlur = () => setShowRequirements(false);
+  const handleConfirmPasswordFocus = () => setShowPasswordMatchMessage(true);
+  const handleConfirmPasswordBlur = () => setShowPasswordMatchMessage(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-
     setLoading(true);
+
     try {
-      const res = await fetch('http://localhost:3050/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          password
-        })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toastError(data.message || 'Registration failed');
-        return;
-      }
-
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      toastSuccess('Registered successfully! Redirecting...');
-      setTimeout(() => navigate('/login'), 1000);
+      const result = await register(formData);
+      const userName = result?.user?.name || formData.name || 'User';
+      toastSuccess(`Registration successful! Welcome, ${userName}!`);
+      navigate('/login');
     } catch (err) {
-      console.error(err);
-      toastError('Server error');
+      console.error('Registration error:', err);
+      toastError(err.message || 'Registration failed. Try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const requirements = {
+    minLength: formData.password.length >= 8,
+    hasUpperCase: /[A-Z]/.test(formData.password),
+    hasLowerCase: /[a-z]/.test(formData.password),
+    hasNumber: /\d/.test(formData.password),
+    hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
+  };
+
   return (
-    <Container text style={authContainerStyle}>
-      <Segment style={authFormContainerStyle}>
-        <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Sign Up</h2>
-        <Form onSubmit={handleSubmit} loading={loading}>
-          <Form.Field>
-            <Input
-              icon={{ name: 'user' }}
-              iconPosition='left'
-              placeholder="Full Name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </Form.Field>
-          <Form.Field>
-            <Input
-              icon={{ name: 'mail' }}
-              iconPosition='left'
-              placeholder="Email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </Form.Field>
-          <Form.Field>
-            <div style={{ position: 'relative' }}>
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                icon={{ name: 'lock' }}
-                iconPosition='left'
-                placeholder="Password"
-                name="password"
-                value={formData.password}
-                onChange={(e) => {
-                  handleChange(e);
-                  updateRequirements(e.target.value);
-                }}
-                onFocus={handlePasswordFocus}
-                onBlur={handlePasswordBlur}
-                required
-              />
-              <Button
-                type="button"
-                icon={`eye${showPassword ? ' slash' : ''}`}
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: 0,
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#666',
-                  padding: '8px',
-                }}
-              />
-            </div>
-            <div style={{ marginTop: '8px', display: showRequirements ? 'block' : 'none' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Icon name={requirements.minLength ? 'check circle' : 'circle'} color={requirements.minLength ? 'green' : 'grey'} />
-                  <span style={{ marginLeft: '8px' }}>At least 8 characters</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Icon name={requirements.hasUpperCase ? 'check circle' : 'circle'} color={requirements.hasUpperCase ? 'green' : 'grey'} />
-                  <span style={{ marginLeft: '8px' }}>Contains uppercase letter</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Icon name={requirements.hasLowerCase ? 'check circle' : 'circle'} color={requirements.hasLowerCase ? 'green' : 'grey'} />
-                  <span style={{ marginLeft: '8px' }}>Contains lowercase letter</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Icon name={requirements.hasNumber ? 'check circle' : 'circle'} color={requirements.hasNumber ? 'green' : 'grey'} />
-                  <span style={{ marginLeft: '8px' }}>Contains number</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Icon name={requirements.hasSpecialChar ? 'check circle' : 'circle'} color={requirements.hasSpecialChar ? 'green' : 'grey'} />
-                  <span style={{ marginLeft: '8px' }}>Contains special character</span>
+    <div className="auth-container">
+      <div className="auth-form-container">
+        <div className="auth-card">
+          <div className="card-body">
+            <h1 className="auth-heading">Sign Up</h1>
+            <p className="auth-subtitle">Create your account to start your journey!</p>
+
+            <form onSubmit={handleSubmit} className="needs-validation">
+              <div className="mb-4">
+                <label htmlFor="name" className="form-label">Full Name</label>
+                <div className="input-group">
+                  <span className="input-group-text"><i className="bi bi-person"></i></span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="name"
+                    placeholder="Full Name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
               </div>
+
+              <div className="mb-4">
+                <label htmlFor="email" className="form-label">Email address</label>
+                <div className="input-group">
+                  <span className="input-group-text"><i className="bi bi-envelope"></i></span>
+                  <input
+                    type="email"
+                    className="form-control"
+                    id="email"
+                    placeholder="name@example.com"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="password" className="form-label">Password</label>
+                <div className="input-group position-relative">
+                  <span className="input-group-text"><i className="bi bi-lock"></i></span>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="form-control"
+                    id="password"
+                    placeholder="Password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    onFocus={handlePasswordFocus}
+                    onBlur={handlePasswordBlur}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm eye-button"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    <i className={`bi bi-eye${showPassword ? '-slash' : ''}`} />
+                  </button>
+                </div>
+                {showRequirements && (
+                  <div className="mt-2">
+                    <div className="form-check">
+                      <input 
+                        className="form-check-input" 
+                        type="checkbox" 
+                        checked={requirements.minLength} 
+                        disabled 
+                      />
+                      <label className="form-check-label">
+                        At least 8 characters
+                      </label>
+                    </div>
+                    <div className="form-check">
+                      <input 
+                        className="form-check-input" 
+                        type="checkbox" 
+                        checked={requirements.hasUpperCase} 
+                        disabled 
+                      />
+                      <label className="form-check-label">
+                        Contains uppercase letter
+                      </label>
+                    </div>
+                    <div className="form-check">
+                      <input 
+                        className="form-check-input" 
+                        type="checkbox" 
+                        checked={requirements.hasLowerCase} 
+                        disabled 
+                      />
+                      <label className="form-check-label">
+                        Contains lowercase letter
+                      </label>
+                    </div>
+                    <div className="form-check">
+                      <input 
+                        className="form-check-input" 
+                        type="checkbox" 
+                        checked={requirements.hasNumber} 
+                        disabled 
+                      />
+                      <label className="form-check-label">
+                        Contains number
+                      </label>
+                    </div>
+                    <div className="form-check">
+                      <input 
+                        className="form-check-input" 
+                        type="checkbox" 
+                        checked={requirements.hasSpecialChar} 
+                        disabled 
+                      />
+                      <label className="form-check-label">
+                        Contains special character
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+                <div className="input-group position-relative">
+                  <span className="input-group-text"><i className="bi bi-lock"></i></span>
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    className="form-control"
+                    id="confirmPassword"
+                    placeholder="Confirm Password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    onFocus={handleConfirmPasswordFocus}
+                    onBlur={handleConfirmPasswordBlur}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm eye-button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    <i className={`bi bi-eye${showConfirmPassword ? '-slash' : ''}`} />
+                  </button>
+                </div>
+                {showPasswordMatchMessage && (
+                  <div className="mt-2">
+                    <div className="form-check">
+                      <input 
+                        className="form-check-input" 
+                        type="checkbox" 
+                        checked={formData.password === formData.confirmPassword} 
+                        disabled 
+                      />
+                      <label className="form-check-label">
+                        Passwords match
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary auth-button"
+                disabled={loading}
+              >
+                {loading ? 'Creating account...' : 'Sign Up'}
+              </button>
+            </form>
+
+            <div className="auth-link">
+              <Link 
+                to="/login" 
+                className="text-decoration-none text-primary"
+              >
+                Already have an account? Sign In
+              </Link>
             </div>
-          </Form.Field>
-          <Form.Field>
-            <div style={{ position: 'relative' }}>
-              <Input
-                type={showConfirmPassword ? 'text' : 'password'}
-                icon={{ name: 'lock' }}
-                iconPosition='left'
-                placeholder="Confirm password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                onFocus={handleConfirmPasswordFocus}
-                onBlur={handleConfirmPasswordBlur}
-                required
-              />
-              <Button
-                type="button"
-                icon={`eye${showConfirmPassword ? ' slash' : ''}`}
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: 0,
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#666',
-                  padding: '8px',
-                }}
-              />
-            </div>
-            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {showPasswordMatchMessage && (
-                <>
-                  {formData.password === formData.confirmPassword ? (
-                    <>
-                      <Icon name='check circle' color='green' />
-                      <span style={{ color: 'green' }}>Passwords match</span>
-                    </>
-                  ) : (
-                    <>
-                      <Icon name='warning circle' color='red' />
-                      <span style={{ color: 'red' }}>Passwords do not match</span>
-                    </>
-                  )}
-                </>
-              )}
-            </div>
-          </Form.Field>
-          <Button fluid primary type="submit">
-            Register
-          </Button>
-        </Form>
-        <p style={{ marginTop: '1rem', textAlign: 'center' }}>
-          Already have an account? <Link to="/login">Log in</Link>
-        </p>
-      </Segment>
-    </Container>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

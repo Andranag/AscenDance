@@ -109,25 +109,38 @@ const login = async (req, res) => {
       // Generate token and return success response
       try {
         const token = generateToken(user);
+        if (!token) {
+          console.error('Token generation failed');
+          return res.status(500).json({
+            success: false,
+            error: 'Failed to generate token'
+          });
+        }
+        
         return res.json({
-          token,
-          user: {
-            id: user._id.toString(),
-            name: user.name,
-            email: user.email,
-            role: user.role || 'user'
+          success: true,
+          data: {
+            token,
+            user: {
+              id: user._id.toString(),
+              name: user.name,
+              email: user.email,
+              role: user.role || 'user'
+            }
           }
         });
       } catch (tokenError) {
-        console.error('Token generation failed:', tokenError);
+        console.error('Token generation error:', tokenError);
         return res.status(500).json({
+          success: false,
           error: 'Failed to generate token'
         });
       }
     } catch (error) {
       console.error('Login error:', error);
       return res.status(500).json({
-        error: 'Internal server error'
+        success: false,
+        error: error.message || 'Internal server error'
       });
     }
   } catch (error) {

@@ -1,113 +1,161 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Container, Form, Input, Button, Segment, Icon } from 'semantic-ui-react';
-import {
-  authContainerStyle,
-  authFormContainerStyle,
-  authFormStyle,
-  authButtonStyle,
-  authLinkStyle
-} from '../styles/authStyles';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { login } = useAuth();
+  const { toastSuccess, toastError } = useToast();
+  
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
-  const { toastSuccess, toastError } = useToast();
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Use AuthContext's login function directly
-      const result = await login(email, password);
-      // Get user name from the login response or extract from email
-      const userName = result?.user?.name || 
-        email?.split('@')[0] || 
-        'User';
-      toastSuccess(`Login successful! Welcome back, ${userName}!`);
-      navigate('/profile');
+      const result = await login(formData.email, formData.password);
+      const userName = result?.user?.name || formData.email.split('@')[0] || 'User';
+      toastSuccess(`Welcome back, ${userName}!`);
+      navigate('/');
     } catch (err) {
       console.error('Login error:', err);
-      toastError(err.message || 'Login failed. Try again.');
+      toastError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Container text style={authContainerStyle}>
-      <Segment style={authFormContainerStyle}>
-        <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Sign In</h2>
-        <Form onSubmit={handleSubmit} style={authFormStyle}>
-          <Form.Field>
-            <label>Email</label>
-            <Input
-              icon={{ name: 'envelope', link: true }}
-              iconPosition='left'
-              type="email"
-              placeholder="Enter email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </Form.Field>
-
-          <Form.Field>
-            <label>Password</label>
-            <div style={{ position: 'relative' }}>
-              <Input
-                icon={{ name: 'lock', link: true }}
-                iconPosition='left'
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <Button
-                type="button"
-                icon={`eye${showPassword ? ' slash' : ''}`}
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: 0,
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#666',
-                  padding: '8px',
-                }}
-              />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-custom">
+      <div className="w-full max-w-md">
+        <div className="card backdrop-blur-sm bg-white/90">
+          <div className="px-6 py-8 sm:p-10">
+            <div className="text-center mb-8">
+              <h1 className="heading-primary">Welcome Back</h1>
+              <p className="text-secondary">Sign in to your account to continue</p>
             </div>
-          </Form.Field>
 
-          <Button
-            type="submit"
-            primary
-            fluid
-            loading={loading}
-            disabled={loading}
-            style={authButtonStyle}
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </Button>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email address
+                </label>
+                <div className="relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-secondary" />
+                  </div>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="input-field pl-10"
+                    placeholder="name@example.com"
+                  />
+                </div>
+              </div>
 
-          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-            <Link to="/register" style={authLinkStyle}>
-              Don't have an account? Sign Up
-            </Link>
+              <div className="space-y-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <div className="relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-secondary" />
+                  </div>
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="input-field pl-10 pr-10"
+                    placeholder="••••••••"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-secondary hover:text-primary focus:outline-none transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="h-4 w-4 text-accent focus:ring-primary border-gray-300 rounded"
+                  />
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                    Remember me
+                  </label>
+                </div>
+                <div className="text-sm">
+                  <a href="#" className="font-medium text-accent hover:text-primary transition-colors">
+                    Forgot password?
+                  </a>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className={`btn-primary w-full ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                    Signing in...
+                  </div>
+                ) : (
+                  'Sign in'
+                )}
+              </button>
+            </form>
           </div>
-        </Form>
-      </Segment>
-    </Container>
+          
+          <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 sm:px-10 rounded-b-xl">
+            <p className="text-sm text-center text-gray-600">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-medium text-accent hover:text-primary transition-colors">
+                Sign up
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

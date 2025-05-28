@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 80, 32, 100;       /* #502064 */
+    --color-secondary: 130, 103, 190;   /* #8267BE */
+    --color-accent: 63, 167, 150;       /* #3FA796 */
+    --color-highlight: 255, 189, 53;    /* #FFBD35 */
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 ease-in-out;
+    background-color: rgb(var(--color-primary));
+  }
+
+  .btn-primary:hover {
+    background-color: rgba(var(--color-primary), 0.9);
+  }
+
+  .btn-secondary {
+    @apply text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 ease-in-out;
+    background-color: rgb(var(--color-secondary));
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200 ease-in-out;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--color-primary), 0.5);
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-200 ease-in-out;
+  }
+
+  .heading-primary {
+    @apply text-3xl font-bold mb-2;
+    color: rgb(var(--color-primary));
+  }
+
+  .heading-secondary {
+    @apply text-xl font-semibold mb-2;
+    color: rgb(var(--color-secondary));
+  }
+
+  .bg-gradient-custom {
+    background-image: linear-gradient(
+      to bottom right,
+      rgba(var(--color-primary), 0.1),
+      rgba(var(--color-secondary), 0.1),
+      rgba(var(--color-accent), 0.1)
+    );
+    backdrop-filter: blur(6px);
+  }
+}

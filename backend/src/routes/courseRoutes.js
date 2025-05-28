@@ -15,6 +15,6 @@ router.get('/:id', getCourseById);
 
 // Protected routes
 router.put('/:id/lessons/:lessonIndex/complete', protect, markLessonComplete);
-router.delete('/:id/lessons/:lessonIndex/complete', unmarkLesson);
+router.delete('/:id/lessons/:lessonIndex/complete', protect, unmarkLesson);
 
 module.exports = router;

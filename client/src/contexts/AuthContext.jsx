@@ -41,7 +41,11 @@ export const AuthProvider = ({ children }) => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('Login error response:', errorData);
-        throw new Error(errorData.error || 'Login failed');
+        const errorMessage = errorData.error || 
+          response.status === 401 ? 'Invalid email or password' :
+          response.status === 404 ? 'User not found' :
+          'An error occurred during login';
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
