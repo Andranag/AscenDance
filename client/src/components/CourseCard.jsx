@@ -1,29 +1,14 @@
-import { Card } from 'semantic-ui-react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useEffect } from 'react';
+import { Music2, ChevronRight } from 'lucide-react';
 
 const CourseCard = ({ course }) => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const isAuthenticated = !!user && !!token;
-
-  // Add useEffect to re-render when auth state changes
-  useEffect(() => {
-    console.log('Auth state changed:', isAuthenticated);
-  }, [user, token]);
-
-  // Listen for auth state changes
-  useEffect(() => {
-    const handleAuthStateChanged = () => {
-      console.log('Auth state changed event received');
-    };
-    window.addEventListener('authStateChanged', handleAuthStateChanged);
-    return () => window.removeEventListener('authStateChanged', handleAuthStateChanged);
-  }, []);
 
   const handleNavigate = () => {
-    if (isAuthenticated) {
+    if (user) {
       navigate(`/course/${course._id}`);
     } else {
       navigate('/login');
@@ -31,59 +16,44 @@ const CourseCard = ({ course }) => {
   };
 
   return (
-    <Card 
-      fluid 
-      style={{ 
-        minHeight: '400px',
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
-      <Card.Content 
-        style={{ 
-          flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        <Card.Header 
-          style={{ 
-            fontSize: '1.5rem',
-            marginBottom: '1rem'
-          }}
-        >
-          {course.title}
-        </Card.Header>
-        <Card.Description 
-          style={{ 
-            flexGrow: 1,
-            lineHeight: '1.5',
-            overflow: 'hidden'
-          }}
-        >
-          {course.description}
-        </Card.Description>
-      </Card.Content>
-      <Card.Content 
-        extra 
-        style={{ 
-          textAlign: 'center',
-          marginTop: '1rem'
-        }}
-      >
+    <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden">
+      <div className="p-6 flex-1">
+        <div className="flex items-center gap-3 mb-4">
+          <Music2 className="w-6 h-6 text-primary" />
+          <h3 className="text-xl font-semibold text-primary">{course.title}</h3>
+        </div>
+        <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-secondary">
+            <span className="font-medium">Style:</span>
+            <span>{course.style || 'Swing Dance'}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-secondary">
+            <span className="font-medium">Level:</span>
+            <span>{course.level || 'Beginner'}</span>
+          </div>
+        </div>
+      </div>
+      <div className="p-6 bg-gray-50/50 border-t border-gray-100">
         <button
           onClick={handleNavigate}
-          className='ui primary button'
-          style={{
-            minWidth: '120px',
-            padding: '0.75rem 1rem'
-          }}
+          className="btn-primary w-full flex items-center justify-center gap-2"
         >
-          {isAuthenticated ? 'Start Course' : 'Sign In'}
+          {user ? (
+            <>
+              Start Dancing
+              <ChevronRight className="w-5 h-5" />
+            </>
+          ) : (
+            <>
+              Sign in to Join
+              <ChevronRight className="w-5 h-5" />
+            </>
+          )}
         </button>
-      </Card.Content>
-    </Card>
+      </div>
+    </div>
   );
-}
+};
 
 export default CourseCard;

@@ -1,107 +1,35 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ToastProvider } from './contexts/ToastContext';
-
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
 import Courses from './pages/Courses';
 import CoursePage from './pages/CoursePage';
-import Profile from './pages/Profile';
-import CourseManagement from './components/Admin/CourseManagement';
-import UsersManagement from './components/Admin/UsersManagement';
-import Analytics from './components/Admin/Analytics';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminLayout from './components/Admin/AdminLayout';
-import Navbar from './components/Navbar';
-import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './contexts/AuthContext';
+import Toast from './components/Toast';
 
 function App() {
+  const { user } = useAuth();
+
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <BrowserRouter>
-          <div className="app" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <Navbar />
-            <div style={{ flex: 1, padding: '1rem' }}>
-              <Routes>
-                <Route path="/" element={<Navigate to="/courses" replace />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                
-                {/* Public routes */}
-                <Route
-                  path="/courses"
-                  element={
-                    <Courses />
-                  }
-                />
-                
-                {/* Protected routes */}
-                <Route
-                  path="/courses/:id"
-                  element={
-                    <ProtectedRoute>
-                      <div style={{
-                        padding: '2rem',
-                        backgroundColor: 'white',
-                        flex: 1,
-                        overflow: 'auto'
-                      }}>
-                        <CoursePage />
-                      </div>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <div style={{
-                        padding: '2rem',
-                        backgroundColor: 'white',
-                        flex: 1,
-                        overflow: 'auto'
-                      }}>
-                        <Profile />
-                      </div>
-                    </ProtectedRoute>
-                  }
-                />
-                
-                {/* Admin routes */}
-                <Route
-                  path="/admin/*"
-                  element={
-                    <ProtectedRoute>
-                      <AdminLayout>
-                        <Routes>
-                          <Route
-                            index
-                            element={<Navigate to="courses" replace />}
-                          />
-                          <Route
-                            path="courses"
-                            element={<CourseManagement />}
-                          />
-                          <Route
-                            path="users"
-                            element={<UsersManagement />}
-                          />
-                          <Route
-                            path="analytics"
-                            element={<Analytics />}
-                          />
-                        </Routes>
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
-            </div>
-          </div>
-        </BrowserRouter>
-      </ToastProvider>
-    </AuthProvider>
+    <div className="min-h-screen bg-gradient-custom flex flex-col">
+      <Navbar />
+      <Toast />
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+          <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
+          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/course/:id" element={<CoursePage />} />
+          <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
+          <Route path="/admin" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
 

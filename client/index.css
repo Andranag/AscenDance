@@ -4,10 +4,26 @@
 
 @layer base {
   :root {
-    --color-primary: 80, 32, 100;       /* #502064 */
-    --color-secondary: 130, 103, 190;   /* #8267BE */
-    --color-accent: 63, 167, 150;       /* #3FA796 */
-    --color-highlight: 255, 189, 53;    /* #FFBD35 */
+    --color-primary: 147, 51, 234;    /* Purple */
+    --color-secondary: 168, 85, 247;  /* Light Purple */
+    --color-accent: 236, 72, 153;     /* Pink */
+    --color-highlight: 249, 168, 212; /* Light Pink */
+    --color-success: 34, 197, 94;     /* Emerald */
+    --color-error: 239, 68, 68;       /* Red */
+    --color-warning: 245, 158, 11;    /* Amber */
+    --color-info: 59, 130, 246;       /* Blue */
+  }
+
+  body {
+    background-image: linear-gradient(
+      to bottom right,
+      rgba(var(--color-primary), 0.95),
+      rgba(var(--color-secondary), 0.95)
+    ),
+    url('https://images.pexels.com/photos/7095529/pexels-photo-7095529.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
   }
 }
 
@@ -27,21 +43,23 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent transition-all duration-200 ease-in-out;
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ease-in-out;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(var(--color-primary), 0.5);
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-200 ease-in-out;
+    @apply bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-200 ease-in-out backdrop-blur-sm;
   }
 
   .heading-primary {
-    @apply text-3xl font-bold mb-2;
-    color: rgb(var(--color-primary));
+    @apply text-3xl font-bold text-gray-900 mb-4;
   }
 
   .heading-secondary {
+    @apply text-xl font-semibold text-gray-800 mb-3;
+  }
+
+  .text-secondary {
     @apply text-xl font-semibold mb-2;
     color: rgb(var(--color-secondary));
   }
@@ -49,10 +67,48 @@
   .bg-gradient-custom {
     background-image: linear-gradient(
       to bottom right,
-      rgba(var(--color-primary), 0.1),
-      rgba(var(--color-secondary), 0.1),
-      rgba(var(--color-accent), 0.1)
-    );
-    backdrop-filter: blur(6px);
+      rgba(var(--color-primary), 0.95),
+      rgba(var(--color-secondary), 0.95)
+    ),
+    url('https://images.pexels.com/photos/7095529/pexels-photo-7095529.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+
+  .bg-auth-pattern {
+    background-image: linear-gradient(
+      to bottom right,
+      rgba(var(--color-primary), 0.9),
+      rgba(var(--color-secondary), 0.9)
+    ),
+    url('https://images.pexels.com/photos/7095529/pexels-photo-7095529.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+
+  .bg-courses-pattern {
+    background-image: linear-gradient(
+      to bottom right,
+      rgba(var(--color-primary), 0.85),
+      rgba(var(--color-secondary), 0.85)
+    ),
+    url('https://images.pexels.com/photos/7095476/pexels-photo-7095476.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+
+  .bg-profile-pattern {
+    background-image: linear-gradient(
+      to bottom right,
+      rgba(var(--color-primary), 0.92),
+      rgba(var(--color-secondary), 0.92)
+    ),
+    url('https://images.pexels.com/photos/7095482/pexels-photo-7095482.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
   }
 }

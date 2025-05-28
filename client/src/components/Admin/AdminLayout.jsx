@@ -1,7 +1,7 @@
 import React from 'react';
-import { Menu, Icon } from 'semantic-ui-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
+import { BookOpen, Users, BarChart3, LogOut } from 'lucide-react';
 
 const AdminLayout = ({ children }) => {
   const location = useLocation();
@@ -13,72 +13,60 @@ const AdminLayout = ({ children }) => {
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      minHeight: '100vh',
-      position: 'relative'
-    }}>
-      <div style={{
-        width: '250px',
-        borderRight: '1px solid #ddd',
-        backgroundColor: '#f5f5f5',
-        padding: '1rem 0',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        bottom: 0,
-        zIndex: 1000,
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        <div style={{
-          flex: 1,
-          overflow: 'auto',
-          paddingTop: '1rem'
-        }}>
-          <Menu vertical>
-            <Menu.Item
-              as={Link}
+    <div className="flex min-h-screen">
+      <div className="w-64 bg-white shadow-lg fixed h-full">
+        <div className="flex flex-col h-full">
+          <div className="p-4 border-b">
+            <h2 className="text-xl font-semibold text-primary">Admin Dashboard</h2>
+          </div>
+          <nav className="flex-1 p-4 space-y-2">
+            <Link
               to="/admin/courses"
-              name="admin-courses"
-              active={location.pathname === '/admin/courses'}
-              icon='book'
-              content='Course Management'
-            />
-            <Menu.Item
-              as={Link}
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                location.pathname === '/admin/courses'
+                  ? 'bg-primary text-white'
+                  : 'text-gray-600 hover:bg-primary/5'
+              }`}
+            >
+              <BookOpen className="w-5 h-5" />
+              <span>Course Management</span>
+            </Link>
+            <Link
               to="/admin/users"
-              name="admin-users"
-              active={location.pathname === '/admin/users'}
-              icon='users'
-              content='User Management'
-            />
-            <Menu.Item
-              as={Link}
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                location.pathname === '/admin/users'
+                  ? 'bg-primary text-white'
+                  : 'text-gray-600 hover:bg-primary/5'
+              }`}
+            >
+              <Users className="w-5 h-5" />
+              <span>User Management</span>
+            </Link>
+            <Link
               to="/admin/analytics"
-              name="admin-analytics"
-              active={location.pathname === '/admin/analytics'}
-              icon='chart line'
-              content='Analytics'
-            />
-          </Menu>
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                location.pathname === '/admin/analytics'
+                  ? 'bg-primary text-white'
+                  : 'text-gray-600 hover:bg-primary/5'
+              }`}
+            >
+              <BarChart3 className="w-5 h-5" />
+              <span>Analytics</span>
+            </Link>
+          </nav>
+          <div className="p-4 border-t">
+            <button
+              onClick={logout}
+              className="flex items-center space-x-3 p-3 w-full rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
-      <div style={{
-        marginLeft: '250px',
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        paddingTop: '64px'
-      }}>
-        <div style={{
-          flex: 1,
-          overflow: 'auto',
-          backgroundColor: 'white'
-        }}>
-          {children}
-        </div>
+      <div className="ml-64 flex-1 p-8 bg-gray-50">
+        {children}
       </div>
     </div>
   );

@@ -1,40 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Segment } from 'semantic-ui-react';
-import { useToast } from '../contexts/ToastContext';
+import { User, Mail, Save } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { fetchAuth } from '../api';
+import { useToast } from '../contexts/ToastContext';
 
-const ProfileEditor = ({ 
-  user = { name: '', email: '' }, 
-  onUpdate,
-  isLoading
-}) => {
+const ProfileEditor = ({ initialUser = { name: '', email: '' }, isLoading }) => {
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || ''
+    name: initialUser?.name || '',
+    email: initialUser?.email || ''
   });
-
-  const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
+  const { user, setUser } = useAuth();
+  const { toastSuccess, toastError } = useToast();
 
   useEffect(() => {
-    // Initialize form data on first render
-    if (initialLoad) {
-      setInitialLoad(false);
-      setFormData({
-        name: user?.name || '',
-        email: user?.email || ''
-      });
-      return;
-    }
-    
-    // Update form data when user changes
     setFormData({
       name: user?.name || '',
       email: user?.email || ''
     });
-  }, [user, initialLoad]);
-
-  const { toastError, toastSuccess } = useToast();
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,85 +29,97 @@ const ProfileEditor = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    if (!user) return;
+
     try {
-      const result = await onUpdate(formData);
-      if (result) {
+      const response = await fetchAuth('/api/auth/update', {
+        method: 'PUT',
+        body: JSON.stringify({
+          id: user.id,
+          name: formData.name,
+          email: formData.email
+        })
+      });
+
+      if (response.success && response.data) {
+        const updatedUser = { ...user, ...response.data };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
         toastSuccess('Profile updated successfully!');
+        return response;
       }
+      throw new Error('Invalid response format');
     } catch (error) {
-      console.error('Error updating profile:', error);
-      // Don't show toast here - it's already shown in Profile component
-    } finally {
-      setLoading(false);
+      console.error('Update profile error:', error);
+      toastError(error.message || 'Failed to update profile');
+      throw error;
     }
   };
 
   return (
-    <div>
-      {loading && (
-        <div className="ui form" style={{ maxWidth: '600px', margin: '2rem auto' }}>
-          <div style={{
-            padding: '1rem',
-            backgroundColor: '#f8f8f8',
-            borderRadius: '0.25rem',
-            marginBottom: '1rem'
-          }}>
-            <div className="ui active inline loader"></div>
-            <span>Updating profile...</span>
+    <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            Full Name
+          </label>
+          <div className="relative rounded-md shadow-sm">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <User className="h-5 w-5 text-secondary" />
+            </div>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="input-field pl-10"
+              placeholder="Your name"
+              disabled={isLoading}
+            />
           </div>
         </div>
-      )}
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ position: 'relative' }}>
-          <i className="user icon" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }}></i>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Name"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '0.75rem 1rem 0.75rem 3rem',
-              border: '1px solid #ddd',
-              borderRadius: '0.25rem',
-              fontSize: '1rem'
-            }}
-          />
+
+        <div className="space-y-2">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email Address
+          </label>
+          <div className="relative rounded-md shadow-sm">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Mail className="h-5 w-5 text-secondary" />
+            </div>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="input-field pl-10"
+              placeholder="you@example.com"
+              disabled={isLoading}
+            />
+          </div>
         </div>
-        <div style={{ position: 'relative' }}>
-          <i className="mail icon" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }}></i>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Email"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '0.75rem 1rem 0.75rem 3rem',
-              border: '1px solid #ddd',
-              borderRadius: '0.25rem',
-              fontSize: '1rem'
-            }}
-          />
-        </div>
-        <Button
+
+        <button
           type="submit"
-          primary
-          fluid
-          disabled={loading}
-          style={{
-            marginTop: '1rem',
-            cursor: 'pointer',
-            fontSize: '1rem'
-          }}
+          disabled={isLoading}
+          className={`btn-primary w-full flex items-center justify-center gap-2 ${
+            isLoading ? 'opacity-70 cursor-not-allowed' : ''
+          }`}
         >
-          {loading ? 'Updating...' : 'Update Profile'}
-        </Button>
+          {isLoading ? (
+            <>
+              <div className="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full" />
+              Updating Profile...
+            </>
+          ) : (
+            <>
+              <Save className="w-5 h-5" />
+              Update Profile
+            </>
+          )}
+        </button>
       </form>
     </div>
   );

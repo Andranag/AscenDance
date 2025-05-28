@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Container as UIContainer, Grid as UIGrid } from 'semantic-ui-react';
-import CourseCard from '../components/CourseCard';
 import { Link } from 'react-router-dom';
-import { fetchPublic } from '../api';
+import CourseCard from '../components/CourseCard';
+import { Music2, Loader } from 'lucide-react';
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -13,32 +12,34 @@ const Courses = () => {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        const response = await fetchPublic('/api/courses');
-        
-        if (!response || typeof response !== 'object') {
-          throw new Error('Invalid response format');
-        }
-
-        // Handle both array and nested object responses
-        let courses = Array.isArray(response) ? response : response.data || [];
-        
-        if (!Array.isArray(courses)) {
-          throw new Error('Invalid courses data format');
-        }
-
-        // Filter out courses with missing required fields
-        const validCourses = courses.filter(course => 
-          course && course.title && course.description
-        );
-
-        if (validCourses.length === 0) {
-          throw new Error('No courses found');
-        }
-
-        setCourses(validCourses);
+        // Simulated API call
+        const mockCourses = [
+          {
+            _id: '1',
+            title: 'Introduction to Swing',
+            description: 'Learn the fundamentals of swing dancing, from basic steps to rhythm and musicality.',
+            style: 'Swing',
+            level: 'Beginner'
+          },
+          {
+            _id: '2',
+            title: 'Lindy Hop Basics',
+            description: 'Master the essential moves and techniques of Lindy Hop, the original swing dance.',
+            style: 'Lindy Hop',
+            level: 'Beginner'
+          },
+          {
+            _id: '3',
+            title: 'Advanced Charleston',
+            description: 'Take your Charleston to the next level with advanced variations and styling.',
+            style: 'Charleston',
+            level: 'Advanced'
+          }
+        ];
+        setCourses(mockCourses);
       } catch (error) {
         console.error('Error fetching courses:', error);
-        setError(error.message || 'Failed to load courses. Please try again.');
+        setError(error.message || 'Failed to load courses');
       } finally {
         setLoading(false);
       }
@@ -49,60 +50,48 @@ const Courses = () => {
 
   if (loading) {
     return (
-      <UIContainer>
-        <h2>Loading courses...</h2>
-      </UIContainer>
+      <div className="min-h-screen bg-courses-pattern p-4 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-white">
+          <Loader className="w-6 h-6 animate-spin" />
+          <span className="text-lg font-medium">Loading dance courses...</span>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <UIContainer>
-        <h2>Error: {error}</h2>
-        <Link to='/login' className='ui primary button'>
-          Go to Login
-        </Link>
-      </UIContainer>
-    );
-  }
-
-  if (courses.length === 0) {
-    console.log('Courses data:', courses);
-    return (
-      <UIContainer>
-        <h2>No courses available</h2>
-      </UIContainer>
+      <div className="min-h-screen bg-courses-pattern p-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Error: {error}</h2>
+            <Link to="/login" className="btn-primary inline-flex items-center gap-2">
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <UIContainer style={{ textAlign: 'center', marginTop: '2rem' }}>
-      <h1 style={{ marginBottom: '2rem' }}>Available Courses</h1>
-      <UIGrid 
-        columns={3}
-        doubling
-        stackable
-        style={{ 
-          justifyContent: 'center',
-          alignItems: 'stretch',
-          marginBottom: '2rem'
-        }}
-      >
-        {courses.map(course => (
-          <UIGrid.Column 
-            key={course._id}
-            style={{ 
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'stretch',
-              padding: '1rem'
-            }}
-          >
-            <CourseCard course={course} />
-          </UIGrid.Column>
-        ))}
-      </UIGrid>
-    </UIContainer>
+    <div className="min-h-screen bg-courses-pattern p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Music2 className="w-8 h-8 text-white" />
+            <h1 className="text-4xl font-bold text-white">Dance Courses</h1>
+          </div>
+          <p className="text-xl text-white/90">Begin your journey into the world of dance</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {courses.map(course => (
+            <CourseCard key={course._id} course={course} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 

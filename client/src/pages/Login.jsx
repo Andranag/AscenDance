@@ -29,7 +29,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(formData);
       const userName = result?.user?.name || formData.email.split('@')[0] || 'User';
       toastSuccess(`Welcome back, ${userName}!`);
       navigate('/');
@@ -42,13 +42,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-custom">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-auth-pattern">
       <div className="w-full max-w-md">
-        <div className="card backdrop-blur-sm bg-white/90">
+        <div className="card backdrop-blur-sm bg-white/95">
           <div className="px-6 py-8 sm:p-10">
             <div className="text-center mb-8">
               <h1 className="heading-primary">Welcome Back</h1>
-              <p className="text-secondary">Sign in to your account to continue</p>
+              <p className="text-secondary">Sign in to continue your dance journey</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -149,7 +149,7 @@ const Login = () => {
             <p className="text-sm text-center text-gray-600">
               Don't have an account?{' '}
               <Link to="/register" className="font-medium text-accent hover:text-primary transition-colors">
-                Sign up
+                Join the dance community
               </Link>
             </p>
           </div>

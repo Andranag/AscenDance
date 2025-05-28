@@ -1,168 +1,157 @@
-import React, { useEffect, useRef } from 'react';
-import { Card, Grid, Statistic, Segment } from 'semantic-ui-react';
-import { useAuth } from '../../contexts/AuthContext';
+import React from 'react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+import { Line, Bar } from 'react-chartjs-2';
+import { Users, BookOpen, Clock } from 'lucide-react';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 const Analytics = () => {
-  const { user } = useAuth();
-  const completionChartRef = useRef(null);
-  const activityChartRef = useRef(null);
-  const enrollmentChartRef = useRef(null);
-
-  useEffect(() => {
-    // Draw completion chart
-    if (completionChartRef.current) {
-      const ctx = completionChartRef.current.getContext('2d');
-      const data = [
-        { name: 'Jan', completion: 4000 },
-        { name: 'Feb', completion: 3000 },
-        { name: 'Mar', completion: 2000 },
-        { name: 'Apr', completion: 2780 },
-        { name: 'May', completion: 1890 },
-        { name: 'Jun', completion: 2390 },
-        { name: 'Jul', completion: 3490 },
-      ];
-      ctx.clearRect(0, 0, 600, 300);
-      drawLineChart(ctx, data, 'completion', '#8884d8');
-    }
-
-    // Draw activity chart
-    if (activityChartRef.current) {
-      const ctx = activityChartRef.current.getContext('2d');
-      const data = [
-        { name: 'Mon', users: 4000 },
-        { name: 'Tue', users: 3000 },
-        { name: 'Wed', users: 2000 },
-        { name: 'Thu', users: 2780 },
-        { name: 'Fri', users: 1890 },
-        { name: 'Sat', users: 2390 },
-        { name: 'Sun', users: 3490 },
-      ];
-      ctx.clearRect(0, 0, 300, 200);
-      drawBarChart(ctx, data, 'users', '#8884d8');
-    }
-
-    // Draw enrollment chart
-    if (enrollmentChartRef.current) {
-      const ctx = enrollmentChartRef.current.getContext('2d');
-      const data = [
-        { name: 'Course 1', enrollments: 1200 },
-        { name: 'Course 2', enrollments: 980 },
-        { name: 'Course 3', enrollments: 1400 },
-        { name: 'Course 4', enrollments: 1000 },
-        { name: 'Course 5', enrollments: 1300 },
-      ];
-      ctx.clearRect(0, 0, 300, 200);
-      drawBarChart(ctx, data, 'enrollments', '#82ca9d');
-    }
-  }, []);
-
-  const drawLineChart = (ctx, data, key, color) => {
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    
-    const xStep = 600 / (data.length - 1);
-    const maxValue = Math.max(...data.map(d => d[key]));
-    const yScale = 280 / maxValue;
-
-    data.forEach((d, i) => {
-      const x = i * xStep;
-      const y = 300 - (d[key] * yScale);
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
-
-    ctx.stroke();
+  const completionData = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+    datasets: [
+      {
+        label: 'Course Completions',
+        data: [4000, 3000, 2000, 2780, 1890, 2390, 3490],
+        borderColor: 'rgb(var(--color-primary))',
+        backgroundColor: 'rgba(var(--color-primary), 0.1)',
+        tension: 0.4,
+      },
+    ],
   };
 
-  const drawBarChart = (ctx, data, key, color) => {
-    const barWidth = 25;
-    const maxValue = Math.max(...data.map(d => d[key]));
-    const yScale = 180 / maxValue;
-
-    data.forEach((d, i) => {
-      const x = i * (barWidth + 10);
-      const y = 200 - (d[key] * yScale);
-      ctx.fillStyle = color;
-      ctx.fillRect(x, y, barWidth, d[key] * yScale);
-    });
+  const activityData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [
+      {
+        label: 'Active Users',
+        data: [4000, 3000, 2000, 2780, 1890, 2390, 3490],
+        backgroundColor: 'rgba(var(--color-secondary), 0.8)',
+      },
+    ],
   };
 
   return (
-    <div>
-      <h1>Analytics Dashboard</h1>
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
       
-      <Grid columns={3} stackable>
-        <Grid.Row>
-          <Grid.Column>
-            <Card>
-              <Card.Content>
-                <Card.Header>Total Users</Card.Header>
-                <Card.Description>
-                  <Statistic>
-                    <Statistic.Value>1,234</Statistic.Value>
-                    <Statistic.Label>Users</Statistic.Label>
-                  </Statistic>
-                </Card.Description>
-              </Card.Content>
-            </Card>
-          </Grid.Column>
-          
-          <Grid.Column>
-            <Card>
-              <Card.Content>
-                <Card.Header>Total Courses</Card.Header>
-                <Card.Description>
-                  <Statistic>
-                    <Statistic.Value>45</Statistic.Value>
-                    <Statistic.Label>Courses</Statistic.Label>
-                  </Statistic>
-                </Card.Description>
-              </Card.Content>
-            </Card>
-          </Grid.Column>
-          
-          <Grid.Column>
-            <Card>
-              <Card.Content>
-                <Card.Header>Active Users</Card.Header>
-                <Card.Description>
-                  <Statistic>
-                    <Statistic.Value>850</Statistic.Value>
-                    <Statistic.Label>Active</Statistic.Label>
-                  </Statistic>
-                </Card.Description>
-              </Card.Content>
-            </Card>
-          </Grid.Column>
-        </Grid.Row>
-      </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary/10 rounded-lg">
+              <Users className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Total Users</p>
+              <p className="text-2xl font-bold text-gray-900">1,234</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-secondary/10 rounded-lg">
+              <BookOpen className="w-6 h-6 text-secondary" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Total Courses</p>
+              <p className="text-2xl font-bold text-gray-900">45</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-accent/10 rounded-lg">
+              <Clock className="w-6 h-6 text-accent" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Active Users</p>
+              <p className="text-2xl font-bold text-gray-900">850</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Segment>
-        <h2>Course Completion Rate</h2>
-        <canvas ref={completionChartRef} width="600" height="300"></canvas>
-      </Segment>
+      <div className="bg-white p-6 rounded-xl shadow-sm">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Completion Rate</h2>
+        <Line data={completionData} options={{
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        }} />
+      </div>
 
-      <Grid columns={2} stackable>
-        <Grid.Row>
-          <Grid.Column>
-            <Segment>
-              <h3>User Activity</h3>
-              <canvas ref={activityChartRef} width="300" height="200"></canvas>
-            </Segment>
-          </Grid.Column>
-          
-          <Grid.Column>
-            <Segment>
-              <h3>Course Enrollment</h3>
-              <canvas ref={enrollmentChartRef} width="300" height="200"></canvas>
-            </Segment>
-          </Grid.Column>
-        </Grid.Row>
-      </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">User Activity</h2>
+          <Bar data={activityData} options={{
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'top',
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
+            },
+          }} />
+        </div>
+        
+        <div className="bg-white p-6 rounded-xl shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Enrollment</h2>
+          <Bar data={{
+            labels: ['Course 1', 'Course 2', 'Course 3', 'Course 4', 'Course 5'],
+            datasets: [{
+              label: 'Enrollments',
+              data: [1200, 980, 1400, 1000, 1300],
+              backgroundColor: 'rgba(var(--color-accent), 0.8)',
+            }],
+          }} options={{
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'top',
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
+            },
+          }} />
+        </div>
+      </div>
     </div>
   );
 };
