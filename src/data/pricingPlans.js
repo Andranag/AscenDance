@@ -9,13 +9,7 @@ export const pricingPlans = [
       'Monthly live Q&A sessions',
       'Basic progress tracking'
     ],
-    buttonText: 'Start Monthly Plan',
-    style: {
-      container: 'bg-white hover:bg-gray-50 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300',
-      button: 'bg-gray-900 text-white hover:bg-gray-800 border-2 border-transparent',
-      price: 'text-gray-900',
-      highlight: 'bg-gray-100 text-gray-800'
-    }
+    buttonText: 'Start Monthly Plan'
   },
   {
     name: 'Quarterly',
@@ -29,14 +23,7 @@ export const pricingPlans = [
       'Personal feedback sessions',
       'Save 10% vs monthly'
     ],
-    buttonText: 'Choose Best Value',
-    style: {
-      container: 'bg-primary text-white transform scale-105 border-2 border-primary shadow-2xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300',
-      button: 'bg-white text-primary hover:bg-gray-100 border-2 border-white font-bold',
-      price: 'text-white',
-      highlight: 'bg-white/10 text-white',
-      badge: 'bg-white text-primary'
-    }
+    buttonText: 'Choose Best Value'
   },
   {
     name: 'Annual',
@@ -49,12 +36,6 @@ export const pricingPlans = [
       'Custom learning path',
       'Save 25% vs monthly'
     ],
-    buttonText: 'Start Annual Plan',
-    style: {
-      container: 'bg-white hover:bg-gray-50 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300',
-      button: 'bg-gray-900 text-white hover:bg-gray-800 border-2 border-transparent',
-      price: 'text-gray-900',
-      highlight: 'bg-gray-100 text-gray-800'
-    }
+    buttonText: 'Start Annual Plan'
   }
 ];

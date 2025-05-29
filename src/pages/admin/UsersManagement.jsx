@@ -242,12 +242,12 @@ const UsersManagement = () => {
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => handleEdit(user)}
-                        className="group relative inline-flex items-center px-3 py-1.5 bg-amber-50 text-amber-600 rounded-md hover:bg-amber-100 transition-all duration-200 hover:shadow-md"
+                        className="group relative inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-all duration-200 hover:shadow-md"
                         title="Edit user"
                       >
                         <Pencil className="w-4 h-4 mr-1.5 transition-transform group-hover:scale-110" />
                         <span className="font-medium">Edit</span>
-                        <span className="absolute inset-0 rounded-md border-2 border-amber-200 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                        <span className="absolute inset-0 rounded-md border-2 border-indigo-200 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                       </button>
                       <button
                         onClick={() => handleDelete(user._id)}
