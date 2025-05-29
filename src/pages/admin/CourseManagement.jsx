@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Pencil, Trash2, Loader, X, Music2 } from 'lucide-react';
+import { courseService } from '../../services/api';
+import { useToast } from '../../contexts/ToastContext';
 
 const CourseManagement = () => {
+  const { showToast } = useToast();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingCourse, setEditingCourse] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortField, setSortField] = useState('title');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -40,33 +44,28 @@ const CourseManagement = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const mockCourses = [
-          {
-            _id: '1',
-            title: 'Introduction to Swing',
-            description: 'Learn the fundamentals of swing dancing.',
-            style: 'Lindy Hop',
-            level: 'Beginner'
-          },
-          {
-            _id: '2',
-            title: 'Lindy Hop Basics',
-            description: 'Master the essential moves of Lindy Hop.',
-            style: 'Lindy Hop',
-            level: 'Beginner'
-          },
-          {
-            _id: '3',
-            title: 'Advanced Charleston',
-            description: 'Take your Charleston to the next level with advanced variations and styling.',
-            style: 'Authentic Jazz',
-            level: 'Advanced'
-          }
-        ];
-        setCourses(mockCourses);
+        const response = await courseService.getAllCourses();
+        if (!response?.success) {
+          throw new Error(response?.message || 'Failed to fetch courses');
+        }
+        showToast({
+          type: 'success',
+          message: 'Courses loaded successfully!'
+        });
+        
+        const courses = response.data;
+        console.log('Received courses:', JSON.stringify(courses, null, 2));
+        
+        if (!Array.isArray(courses)) {
+          throw new Error('Courses data is not an array');
+        }
+        
+        setCourses(courses);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching courses:', error);
+        setError(error.message || 'Failed to fetch courses');
+        setCourses([]);
         setLoading(false);
       }
     };
@@ -104,9 +103,21 @@ const CourseManagement = () => {
   const handleDelete = async (courseId) => {
     if (window.confirm('Are you sure you want to delete this course?')) {
       try {
-        setCourses(courses.filter(course => course._id !== courseId));
+        await courseService.deleteCourse(courseId);
+        // Refresh the courses list
+        const response = await courseService.getAllCourses();
+        setCourses(response.data);
+        showToast({
+          type: 'success',
+          message: 'Course deleted successfully!'
+        });
       } catch (error) {
         console.error('Error deleting course:', error);
+        setError(error.message || 'Failed to delete course');
+        showToast({
+          type: 'error',
+          message: 'Failed to delete course. Please try again.'
+        });
       }
     }
   };
@@ -115,15 +126,21 @@ const CourseManagement = () => {
     e.preventDefault();
     try {
       if (editingCourse) {
+        const updatedCourse = await courseService.updateCourse(editingCourse._id, formData);
         setCourses(courses.map(course => 
-          course._id === editingCourse._id ? { ...course, ...formData } : course
+          course._id === editingCourse._id ? updatedCourse : course
         ));
+        showToast({
+          type: 'success',
+          message: 'Course updated successfully!'
+        });
       } else {
-        const newCourse = {
-          _id: Date.now().toString(),
-          ...formData
-        };
+        const newCourse = await courseService.createCourse(formData);
         setCourses([...courses, newCourse]);
+        showToast({
+          type: 'success',
+          message: 'Course created successfully!'
+        });
       }
       setIsModalOpen(false);
       setEditingCourse(null);
@@ -168,6 +185,17 @@ const CourseManagement = () => {
       </div>
     </th>
   );
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="bg-red-500/10 text-red-500 p-6 rounded-lg text-center">
+          <h3 className="text-lg font-semibold mb-2">Error</h3>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

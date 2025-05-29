@@ -4,6 +4,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { Music2, ChevronRight, Clock, Users, Star, BookOpen } from 'lucide-react';
 
 const CourseCard = ({ course }) => {
+  console.log('Rendering CourseCard with course:', {
+    id: course?._id,
+    title: course?.title,
+    style: course?.style,
+    level: course?.level
+  });
+
+  if (!course || !course._id || !course.title || !course.style || !course.level) {
+    console.error('Invalid course data:', course);
+    return null;
+  }
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -61,15 +72,23 @@ const CourseCard = ({ course }) => {
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
                 <Clock className="w-4 h-4 text-primary mb-1" />
-                <span className="text-xs text-gray-600">2 hours</span>
+                <span className="text-xs text-gray-600">{course.duration || '2 hours'}</span>
               </div>
               <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
                 <Users className="w-4 h-4 text-primary mb-1" />
-                <span className="text-xs text-gray-600">156 students</span>
+                <span className="text-xs text-gray-600">{course.studentsCount || '0'} students</span>
               </div>
               <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
                 <Star className="w-4 h-4 text-yellow-400 fill-current mb-1" />
-                <span className="text-xs text-gray-600">4.8/5.0</span>
+                <span className="text-xs text-gray-600">{course.rating || '0.0'}/5.0</span>
+              </div>
+            </div>
+            
+            {/* Course Style */}
+            <div className="mt-4">
+              <div className="flex items-center gap-2">
+                <Music2 className="w-4 h-4 text-primary" />
+                <span className="text-sm text-gray-600">{course.style}</span>
               </div>
             </div>
 

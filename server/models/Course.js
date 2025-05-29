@@ -27,7 +27,25 @@ const courseSchema = new mongoose.Schema({
       type: Boolean,
       default: false
     }
-  }]
+  }],
+  duration: {
+    type: String,
+    default: '2 hours'
+  },
+  studentsCount: {
+    type: Number,
+    default: 0
+  },
+  rating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5
+  },
+  reviewsCount: {
+    type: Number,
+    default: 0
+  }
 }, {
   timestamps: true
 });

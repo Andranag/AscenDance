@@ -57,19 +57,82 @@ export const authService = {
   getProfile: async () => {
     try {
       const response = await api.get(API_ENDPOINTS.auth.profile);
-      return response.data;
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to get profile');
+      }
+      return response.data.data;
     } catch (error) {
-      throw handleApiError(error);
+      console.error('Get profile error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to get profile');
     }
   }
 };
 
 export const courseService = {
-  getAllCourses: () => api.get(API_ENDPOINTS.courses.list),
-  getCourse: (id) => api.get(API_ENDPOINTS.courses.detail(id)),
-  createCourse: (data) => api.post(API_ENDPOINTS.courses.create, data),
-  updateCourse: (id, data) => api.put(API_ENDPOINTS.courses.update(id), data),
-  deleteCourse: (id) => api.delete(API_ENDPOINTS.courses.delete(id)),
+  getAllCourses: async () => {
+    try {
+      const response = await api.get(API_ENDPOINTS.courses.list);
+      console.log('Raw API Response:', response);
+      
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to fetch courses');
+      }
+      
+      // Return the data object
+      return response.data;
+    } catch (error) {
+      console.error('Get courses error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch courses');
+    }
+  },
+  getCourse: async (id) => {
+    try {
+      const response = await api.get(API_ENDPOINTS.courses.detail(id));
+      if (!response.data?.success) {
+        throw new Error(response.data.message || 'Failed to fetch course');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Get course error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch course');
+    }
+  },
+  createCourse: async (data) => {
+    try {
+      const response = await api.post(API_ENDPOINTS.courses.create, data);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to create course');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Create course error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to create course');
+    }
+  },
+  updateCourse: async (id, data) => {
+    try {
+      const response = await api.put(API_ENDPOINTS.courses.update(id), data);
+      if (!response.data?.success) {
+        throw new Error(response.data.message || 'Failed to update course');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Update course error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to update course');
+    }
+  },
+  deleteCourse: async (id) => {
+    try {
+      const response = await api.delete(API_ENDPOINTS.courses.delete(id));
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to delete course');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Delete course error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to delete course');
+    }
+  }
 };
 
 export const userService = {
