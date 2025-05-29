@@ -7,8 +7,10 @@ const PricingCard = ({ plan }) => {
   }
   return (
     <div
-      className={`relative flex flex-col h-full rounded-2xl overflow-hidden backdrop-blur-sm bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 ${
-        plan?.popular === true ? 'transform scale-105' : ''
+      className={`relative flex flex-col h-full rounded-2xl overflow-hidden backdrop-blur-sm bg-white border-2 border-gray-200 shadow-lg transition-all duration-300 transform ${
+        plan?.popular ? 'scale-105' : ''
+      } hover:perspective-1000 hover:shadow-lg ${
+        plan?.popular ? 'hover:scale-105 hover:translate-z-20' : 'hover:translate-z-20'
       }`}
     >
       <div className="p-8 flex-1">

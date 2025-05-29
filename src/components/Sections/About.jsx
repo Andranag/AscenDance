@@ -9,7 +9,7 @@ const AboutSection = () => {
           <div className="relative">
             <div className="aspect-square rounded-2xl overflow-hidden shadow-2xl">
               <img
-                src="public/327289287_1123038485028639_1573762663774985215_n.jpg"
+                src="/327289287_1123038485028639_1573762663774985215_n.jpg"
                 alt="Dance Instructor"
                 className="w-full h-full object-cover"
               />

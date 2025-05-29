@@ -8,7 +8,6 @@ import Profile from './pages/Profile';
 import LandingPage from './pages/LandingPage';
 import Courses from './pages/Courses';
 import CoursePage from './pages/CoursePage';
-import AdminLayout from './layouts/AdminLayout';
 import CourseManagement from './pages/admin/CourseManagement';
 import UsersManagement from './pages/admin/UsersManagement';
 import Analytics from './pages/admin/Analytics';
@@ -33,7 +32,7 @@ function App() {
     <ToastProvider>
       <div className="min-h-screen bg-gradient-custom flex flex-col">
         {!isAuthPage && user && <Navbar />}
-        <div className={`flex-1 ${!isAuthPage && user ? 'ml-64' : ''}`}>
+        <div className="flex-1">
           <main className="min-h-screen">
             <Routes>
               {/* Public Routes */}

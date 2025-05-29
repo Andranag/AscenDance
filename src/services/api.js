@@ -211,13 +211,16 @@ export const userService = {
   },
   updateUser: async (id, data) => {
     try {
+      if (!id) {
+        throw new Error('Invalid user ID');
+      }
       const response = await api.put(API_ENDPOINTS.users.update(id), data);
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Failed to update user');
       }
       const userData = response.data.data;
       return {
-        id: userData.id,
+        _id: userData._id,
         name: userData.name,
         email: userData.email,
         role: userData.role,
@@ -225,7 +228,7 @@ export const userService = {
       };
     } catch (error) {
       console.error('Update user error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to update user');
+      throw error;
     }
   },
   deleteUser: async (id) => {
