@@ -155,15 +155,12 @@ const Courses = () => {
     <>
       <div className="min-h-screen bg-courses-pattern p-4">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Music2 className="w-8 h-8 text-white" />
-              <h1 className="text-4xl font-bold text-white">
-                Available Courses
-              </h1>
-            </div>
-            <p className="text-xl text-white/90">
-              Explore our collection of dance courses
+          <div className="text-center mb-16">
+            <h1 className="text-4xl font-bold text-white">
+              Available Courses
+            </h1>
+            <p className="text-xl text-white/90 mt-4">
+              Explore our collection of dance lessons
             </p>
           </div>
 

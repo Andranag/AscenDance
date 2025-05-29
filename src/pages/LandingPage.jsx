@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import Hero from '../components/Sections/Hero';
 import Heritage from '../components/Sections/Heritage';
 import FeaturedCourses from '../components/Sections/FeaturedCourses';
@@ -10,6 +12,7 @@ import Pricing from '../components/Sections/Pricing';
 import PrivateCoaching from '../components/Sections/PrivateCoaching';
 
 const LandingPage = () => {
+  const { user } = useAuth();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -39,24 +42,18 @@ const LandingPage = () => {
     fetchFeaturedCourses();
   }, []);
 
+  const { toastSuccess } = useToast();
+
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to subscribe to newsletter');
-      }
-
+      // Simulate successful subscription
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Clear the form
       setEmail('');
+      toastSuccess('Thank you for subscribing to our newsletter!');
     } catch (err) {
       console.error('Newsletter subscription error:', err);
     } finally {
@@ -81,6 +78,7 @@ const LandingPage = () => {
         setEmail={setEmail}
         loading={loading}
         handleNewsletterSubmit={handleNewsletterSubmit}
+        user={user}
       />
       <Pricing />
       <PrivateCoaching

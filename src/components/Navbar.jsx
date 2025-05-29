@@ -77,13 +77,13 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { id: 'about', icon: User, label: 'About Me' },
     { id: 'featured-courses', icon: Award, label: 'Featured Courses' },
+    { id: 'about', icon: User, label: 'About Me' },
+    { id: 'extras', icon: Headphones, label: 'Extras' },
+    { id: 'testimonials', icon: MessageCircle, label: 'What Students Say' },
     { id: 'newsletter', icon: Mail, label: 'Newsletter' },
     { id: 'pricing', icon: CreditCard, label: 'Payment Plans' },
-    { id: 'testimonials', icon: MessageCircle, label: 'What Students Say' },
-    { id: 'private-lessons', icon: Headphones, label: '1-on-1 Online' },
-    { id: 'extras', icon: Headphones, label: 'Extras' }
+    { id: 'private-lessons', icon: Headphones, label: '1-on-1 Online' }
   ];
 
 
@@ -127,19 +127,7 @@ const Navbar = () => {
                   </button>
                 </div>
               </div>
-              <div className="flex-1"></div>
-              <div className="pt-6 border-t border-white/10">
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/10 transition-colors w-full"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span className="font-medium">Logout</span>
-                </button>
-              </div>
+               <div className="flex-1"></div>
             </div>
 
           {/* Navigation */}
@@ -183,6 +171,15 @@ const Navbar = () => {
                   ))}
                 </>
               )}
+              <div className="pt-6">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-300 text-white hover:bg-red-500/10 hover:translate-x-2 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-medium">Logout</span>
+                </button>
+              </div>
             </div>
           </nav>
         </div>
