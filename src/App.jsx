@@ -41,37 +41,35 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/course/:courseId" element={<CoursePage />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/course/:courseId" element={<CoursePage />} />
 
-            {/* Protected Routes */}
-            <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin/analytics" element={
-              <AdminRoute>
-                <Analytics />
-              </AdminRoute>
-            } />
-            <Route path="/admin/courses" element={
-              <AdminRoute>
-                <CourseManagement />
-              </AdminRoute>
-            } />
-            <Route path="/admin/users" element={
-              <AdminRoute>
-                <UsersManagement />
-              </AdminRoute>
-            } />
-            <Route path="/admin" element={<Navigate to="/admin/analytics\" replace />} />
+              {/* Protected Routes */}
+              <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
 
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </main>
-        {!isAuthPage && <Footer />}
+              {/* Admin Routes */}
+              <Route path="/admin/analytics" element={
+                <AdminRoute>
+                  <Analytics />
+                </AdminRoute>
+              } />
+              <Route path="/admin/courses" element={
+                <AdminRoute>
+                  <CourseManagement />
+                </AdminRoute>
+              } />
+              <Route path="/admin/users" element={
+                <AdminRoute>
+                  <UsersManagement />
+                </AdminRoute>
+              } />
+              <Route path="/admin" element={<Navigate to="/admin/analytics" replace />} />
+
+              {/* Catch all route */}
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
+          {!isAuthPage && <Footer />}
+        </div>
       </div>
-    </div>
     </ToastProvider>
   );
 }

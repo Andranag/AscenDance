@@ -83,7 +83,7 @@ const UsersManagement = () => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         await userService.deleteUser(userId);
-        setUsers(users.filter(user => user._id !== userId));
+        setUsers(users.filter(user => user.id !== userId));
         toastSuccess('User deleted successfully');
       } catch (error) {
         console.error('Error deleting user:', error);
@@ -94,16 +94,24 @@ const UsersManagement = () => {
 
   const toggleRole = async (userId) => {
     try {
-      const updatedUsers = users.map(user =>
-        user._id === userId
-          ? { ...user, role: user.role === 'admin' ? 'user' : 'admin' }
+      if (!userId) {
+        throw new Error('Invalid user ID');
+      }
+
+      // Make API call first to get the updated user data
+      const updatedUserData = await userService.toggleRole(userId);
+
+      // Update local state with the backend response
+      setUsers(users.map(user =>
+        user.id === userId
+          ? { ...user, ...updatedUserData }
           : user
-      );
-      setUsers(updatedUsers);
-      await userService.toggleRole(userId);
+      ));
+
+      toastSuccess('Role updated successfully');
     } catch (error) {
       console.error('Error toggling user role:', error);
-      setUsers(users); // revert if error
+      toastError(error.message || 'Failed to toggle user role');
     }
   };
 
@@ -123,7 +131,7 @@ const UsersManagement = () => {
         toastSuccess('User created successfully');
       } else {
         // Update existing user
-        if (!editingUser._id) {
+        if (!editingUser) {
           throw new Error('Invalid user ID');
         }
 
@@ -133,13 +141,13 @@ const UsersManagement = () => {
         }
 
         console.log('Sending update to server:', {
-          userId: editingUser._id,
+          userId: editingUser.id,
           data: updatedData
         });
 
-        const updatedUserData = await userService.updateUser(editingUser._id, updatedData);
+        const updatedUserData = await userService.updateUser(editingUser.id, updatedData);
         setUsers(users.map(user =>
-          user._id === editingUser._id
+          user.id === editingUser.id
             ? { ...user, ...updatedUserData }
             : user
         ));
@@ -186,14 +194,12 @@ const UsersManagement = () => {
 
   return (
     <div className="space-y-6">
-
       {loading ? (
         <div className="flex items-center justify-center h-full">
           <Loader className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : (
         <>
-          {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
               <h1 className="text-3xl font-bold text-white">User Management</h1>
@@ -203,11 +209,17 @@ const UsersManagement = () => {
               onClick={() => {
                 setEditingUser(null);
                 setIsModalOpen(true);
+                setFormData({
+                  name: '',
+                  email: '',
+                  password: '',
+                  role: 'user'
+                });
               }}
-              className="btn-primary hover:scale-105 transform transition-transform duration-200 shadow-lg hover:shadow-xl bg-white text-primary hover:bg-white/90"
+              className="btn-primary flex items-center gap-3 hover:scale-105 transform disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <PlusCircle className="w-5 h-5" />
-              <span>Add New User</span>
+              <PlusCircle className="w-4 h-4" />
+              <span>Create New User</span>
             </button>
           </div>
 
@@ -227,20 +239,15 @@ const UsersManagement = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {sortedUsers.map((user) => (
                     <tr key={`user-row-${user._id}`} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <User className="h-6 w-6 text-primary" />
-                            </div>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                            <div className="text-sm text-gray-500">{user.email}</div>
-                          </div>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {user.email}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <button
                           onClick={() => toggleRole(user._id)}
                           className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
@@ -253,25 +260,19 @@ const UsersManagement = () => {
                           {user.role}
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-6 py-4 text-right text-sm font-medium">
+                        <div className="flex gap-2">
                           <button
                             onClick={() => handleEdit(user)}
-                            className="group relative inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-all duration-200 hover:shadow-md"
-                            title="Edit user"
+                            className="text-primary hover:text-primary-dark"
                           >
-                            <Pencil className="w-4 h-4 mr-1.5 transition-transform group-hover:scale-110" />
-                            <span className="font-medium">Edit</span>
-                            <span className="absolute inset-0 rounded-md border-2 border-indigo-200 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <Pencil className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(user._id)}
-                            className="group relative inline-flex items-center px-3 py-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-all duration-200 hover:shadow-md"
-                            title="Delete user"
+                            onClick={() => handleDelete(user.id)}
+                            className="text-red-500 hover:text-red-700"
                           >
-                            <Trash2 className="w-4 h-4 mr-1.5 transition-transform group-hover:scale-110" />
-                            <span className="font-medium">Delete</span>
-                            <span className="absolute inset-0 rounded-md border-2 border-red-200 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -282,16 +283,24 @@ const UsersManagement = () => {
             </div>
           </div>
 
-          {/* Modal */}
           {isModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
               <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-                <div className="flex justify-between items-center p-6 border-b">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    {editingUser ? 'Edit User' : 'Add New User'}
-                  </h2>
+                <div className="flex justify-between items-center p-4 border-b">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    {editingUser ? 'Edit User' : 'Create User'}
+                  </h3>
                   <button
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setEditingUser(null);
+                      setFormData({
+                        name: '',
+                        email: '',
+                        password: '',
+                        role: 'user'
+                      });
+                    }}
                     className="text-gray-400 hover:text-gray-500"
                   >
                     <X className="w-5 h-5" />
@@ -299,9 +308,7 @@ const UsersManagement = () => {
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      Full Name
-                    </label>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
                     <input
                       type="text"
                       id="name"
@@ -313,9 +320,7 @@ const UsersManagement = () => {
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                      Email Address
-                    </label>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
                     <input
                       type="email"
                       id="email"
@@ -327,9 +332,7 @@ const UsersManagement = () => {
                     />
                   </div>
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                      {editingUser ? 'New Password (leave blank to keep current)' : 'Password'}
-                    </label>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
@@ -343,16 +346,14 @@ const UsersManagement = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2 top-[60%] transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                      Role
-                    </label>
+                    <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
                     <select
                       id="role"
                       name="role"
@@ -361,23 +362,33 @@ const UsersManagement = () => {
                       className="input-field mt-1"
                       required
                     >
-                      {roles.map((role) => (
-                        <option key={`role-option-${role}`} value={role}>
-                          {role}
-                        </option>
+                      {roles.map(role => (
+                        <option key={role} value={role}>{role}</option>
                       ))}
                     </select>
                   </div>
-                  <div className="flex justify-end gap-3 mt-6">
+                  <div className="flex justify-end gap-4">
                     <button
                       type="button"
-                      onClick={() => setIsModalOpen(false)}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        setEditingUser(null);
+                        setFormData({
+                          name: '',
+                          email: '',
+                          password: '',
+                          role: 'user'
+                        });
+                      }}
+                      className="bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 px-4 py-2 rounded-md"
                     >
                       Cancel
                     </button>
-                    <button type="submit" className="btn-primary">
-                      {editingUser ? 'Update User' : 'Create User'}
+                    <button
+                      type="submit"
+                      className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {editingUser ? 'Update' : 'Create'} User
                     </button>
                   </div>
                 </form>

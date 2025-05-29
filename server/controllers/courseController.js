@@ -45,13 +45,13 @@ const getCourseById = async (req, res) => {
 
 const createCourse = async (req, res) => {
   try {
+    console.log('Received course data:', req.body);
     const course = new Course(req.body);
+    console.log('Created course object:', course);
     await course.save();
-    res.status(201).json({
-      success: true,
-      data: course
-    });
+    res.status(201).json(course);
   } catch (error) {
+    console.error('Course creation error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -116,10 +116,57 @@ const deleteCourse = async (req, res) => {
   }
 };
 
+const getFeaturedCourses = async (req, res) => {
+  try {
+    // Get the top 3 most enrolled courses
+    const featuredCourses = await Course.aggregate([
+      {
+        $lookup: {
+          from: 'enrollments',
+          localField: '_id',
+          foreignField: 'courseId',
+          as: 'enrollments'
+        }
+      },
+      {
+        $addFields: {
+          enrollmentCount: { $size: '$enrollments' }
+        }
+      },
+      {
+        $sort: { enrollmentCount: -1 }
+      },
+      {
+        $limit: 3
+      },
+      {
+        $project: {
+          title: 1,
+          description: 1,
+          style: 1,
+          level: 1,
+          enrollmentCount: 1
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: featuredCourses
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 export {
   getAllCourses,
   getCourseById,
   createCourse,
   updateCourse,
-  deleteCourse
+  deleteCourse,
+  getFeaturedCourses
 };

@@ -161,11 +161,15 @@ export const userService = {
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Failed to create user');
       }
+      const userData = response.data.data;
+      if (!userData || !userData.id) {
+        throw new Error('Invalid user data received from server');
+      }
       return {
-        id: response.data.data.id,
-        name: response.data.data.name,
-        email: response.data.data.email,
-        role: response.data.data.role
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role
       };
     } catch (error) {
       console.error('Create user error:', error);
@@ -213,7 +217,8 @@ export const userService = {
         id: userData.id,
         name: userData.name,
         email: userData.email,
-        role: userData.role
+        role: userData.role,
+        courseProgress: userData.courseProgress
       };
     } catch (error) {
       console.error('Update user error:', error);
@@ -222,6 +227,9 @@ export const userService = {
   },
   deleteUser: async (id) => {
     try {
+      if (!id) {
+        throw new Error('Invalid user ID');
+      }
       const response = await api.delete(API_ENDPOINTS.users.delete(id));
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Failed to delete user');

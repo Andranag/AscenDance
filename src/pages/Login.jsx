@@ -55,7 +55,7 @@ const Login = () => {
           <div className="px-6 py-8 sm:p-10">
             <div className="text-center mb-8">
               <h1 className="heading-primary">Welcome Back</h1>
-              <p className="text-secondary">Sign in to continue your dance journey</p>
+              <p className="text-gray-900">Sign in to continue your dance journey</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -64,9 +64,12 @@ const Login = () => {
                   Email address
                 </label>
                 <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-secondary" />
-                  </div>
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-600 hover:text-primary focus:outline-none transition-colors"
+                  >
+                    <Mail className="h-5 w-5" />
+                  </button>
                   <input
                     id="email"
                     name="email"
@@ -86,9 +89,12 @@ const Login = () => {
                   Password
                 </label>
                 <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-secondary" />
-                  </div>
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-600 hover:text-primary focus:outline-none transition-colors"
+                  >
+                    <Lock className="h-5 w-5" />
+                  </button>
                   <input
                     id="password"
                     name="password"
@@ -104,7 +110,7 @@ const Login = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-secondary hover:text-primary focus:outline-none transition-colors"
+                      className="text-gray-600 hover:text-primary focus:outline-none transition-colors"
                     >
                       {showPassword ? (
                         <EyeOff className="h-5 w-5" />
@@ -129,7 +135,7 @@ const Login = () => {
                   </label>
                 </div>
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-accent hover:text-primary transition-colors">
+                  <a href="#" className="font-medium text-gray-600 hover:text-gray-800 transition-colors">
                     Forgot password?
                   </a>
                 </div>
@@ -153,11 +159,8 @@ const Login = () => {
           </div>
           
           <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 sm:px-10 rounded-b-xl">
-            <p className="text-sm text-center text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-medium text-accent hover:text-primary transition-colors">
-                Join the dance community
-              </Link>
+            <p className="text-sm text-gray-900">
+              Don't have an account? <Link to="/register" className="text-primary-link">Join the dance community</Link>
             </p>
           </div>
         </div>

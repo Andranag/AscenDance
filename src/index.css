@@ -9,6 +9,7 @@
     --color-secondary: 255, 201, 70;  /* Golden Ochre */
     --color-accent: 63, 105, 141;     /* Muted Teal */
     --color-neutral: 243, 244, 246;   /* Light Gray */
+    --color-red: 239, 68, 68;         /* Bright Red */
   }
 
   body {
@@ -18,6 +19,16 @@
 }
 
 @layer components {
+  /* Text Link Styles */
+  .text-primary-link {
+    color: rgb(var(--color-primary));
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  .text-primary-link:hover {
+    color: rgb(var(--color-primary)/80);
+  }
+
   /* Button Styles */
   .btn-primary {
     @apply text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg;
@@ -40,7 +51,7 @@
 
   /* Form Styles */
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 ease-in-out bg-white/80 backdrop-blur-sm text-lg;
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 ease-in-out bg-white/80 backdrop-blur-sm text-lg text-gray-900;
     outline: none;
   }
 
