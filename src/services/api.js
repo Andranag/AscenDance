@@ -155,10 +155,27 @@ export const courseService = {
 };
 
 export const userService = {
+  createUser: async (data) => {
+    try {
+      const response = await api.post(API_ENDPOINTS.users.list, data);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to create user');
+      }
+      return {
+        id: response.data.data.id,
+        name: response.data.data.name,
+        email: response.data.data.email,
+        role: response.data.data.role
+      };
+    } catch (error) {
+      console.error('Create user error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to create user');
+    }
+  },
   toggleRole: async (id) => {
     try {
       const response = await api.patch(API_ENDPOINTS.users.toggleRole(id));
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('Toggle role error:', error);
       throw error;
@@ -191,7 +208,13 @@ export const userService = {
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Failed to update user');
       }
-      return response.data.data;
+      const userData = response.data.data;
+      return {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role
+      };
     } catch (error) {
       console.error('Update user error:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to update user');

@@ -16,7 +16,10 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: function() {
+      // Password is required only during creation
+      return this.isNew;
+    }
   },
   role: {
     type: String,

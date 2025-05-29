@@ -18,7 +18,7 @@ export const createUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email already exists'
+        message: 'This email is already registered. Please use a different email address.'
       });
     }
 
@@ -38,6 +38,7 @@ export const createUser = async (req, res) => {
 
     res.status(201).json({
       success: true,
+      message: 'User created successfully',
       data: {
         id: user._id,
         name: user.name,
@@ -132,7 +133,14 @@ export const updateUser = async (req, res) => {
       });
       res.status(200).json({
         success: true,
-        data: user.toObject({ getters: true })
+        message: 'User updated successfully',
+        data: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          updatedFields: Object.keys(updateData)
+        }
       });
     } catch (saveError) {
       console.error('Error saving user:', {

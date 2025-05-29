@@ -82,10 +82,12 @@ const UsersManagement = () => {
   const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        setUsers(users.filter(user => user._id !== userId));
         await userService.deleteUser(userId);
+        setUsers(users.filter(user => user._id !== userId));
+        toastSuccess('User deleted successfully');
       } catch (error) {
         console.error('Error deleting user:', error);
+        toastError(error.message || 'Failed to delete user');
       }
     }
   };
@@ -108,26 +110,40 @@ const UsersManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!editingUser && !formData.password) {
-      alert('Password is required for new users');
-      return;
-    }
-
     try {
-      const updatedData = editingUser
-        ? { ...formData, ...(formData.password ? { password: formData.password } : {}) }
-        : formData;
+      if (!editingUser && !formData.password) {
+        toastError('Password is required for new users');
+        return;
+      }
 
-      if (editingUser) {
-        await userService.updateUser(editingUser._id, updatedData);
+      if (!editingUser) {
+        // Create new user
+        const createdUser = await userService.createUser(formData);
+        setUsers([...users, createdUser]);
+        toastSuccess('User created successfully');
+      } else {
+        // Update existing user
+        if (!editingUser._id) {
+          throw new Error('Invalid user ID');
+        }
+
+        const updatedData = { ...formData };
+        if (!formData.password) {
+          delete updatedData.password;
+        }
+
+        console.log('Sending update to server:', {
+          userId: editingUser._id,
+          data: updatedData
+        });
+
+        const updatedUserData = await userService.updateUser(editingUser._id, updatedData);
         setUsers(users.map(user =>
           user._id === editingUser._id
-            ? { ...user, ...formData }
+            ? { ...user, ...updatedUserData }
             : user
         ));
-      } else {
-        const response = await userService.createUser(formData);
-        setUsers([...users, response.data]);
+        toastSuccess('User updated successfully');
       }
 
       setIsModalOpen(false);
@@ -140,7 +156,7 @@ const UsersManagement = () => {
       });
     } catch (error) {
       console.error('Error saving user:', error);
-      alert(error.message || 'Failed to save user');
+      toastError(error.message || 'Failed to save user');
     }
   };
 
@@ -210,7 +226,7 @@ const UsersManagement = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {sortedUsers.map((user) => (
-                    <tr key={user._id} className="hover:bg-gray-50">
+                    <tr key={`user-row-${user._id}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
@@ -346,7 +362,7 @@ const UsersManagement = () => {
                       required
                     >
                       {roles.map((role) => (
-                        <option key={role} value={role}>
+                        <option key={`role-option-${role}`} value={role}>
                           {role}
                         </option>
                       ))}
