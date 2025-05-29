@@ -1,0 +1,163 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useToast } from './ToastContext';
+import { authService } from '../services/api';
+
+const AuthContext = createContext();
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { toastError } = useToast();
+
+  useEffect(() => {
+    // Check for existing token and user data
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser({
+        ...parsedUser,
+        token
+      });
+      setLoading(false);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const response = await authService.getProfile();
+      const userData = response.data;
+      localStorage.setItem('user', JSON.stringify({
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role
+      }));
+      setUser({
+        ...userData,
+        token: localStorage.getItem('token')
+      });
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setLoading(false);
+    }
+  };
+
+  const updateProfile = async (data) => {
+    try {
+      const userData = await authService.updateProfile(data);
+      
+      // Update local storage
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+      localStorage.setItem('user', JSON.stringify({
+        ...currentUser,
+        name: userData.name,
+        email: userData.email
+      }));
+      
+      // Update state with full user data
+      setUser(prev => ({
+        ...prev,
+        ...userData,
+        token: prev.token
+      }));
+      
+      return userData;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+//   id: 'test-user-123',
+//   name: 'Dance Master',
+//   email: 'admin@example.com',
+//   role: 'admin',
+//   token: 'test-token'
+// };
+
+  const login = async (credentials) => {
+    try {
+      const data = await authService.login(credentials);
+      
+      // Store the token
+      localStorage.setItem('token', data.data.token);
+      
+      // Store user data
+      localStorage.setItem('user', JSON.stringify({
+        id: data.data.id,
+        name: data.data.name,
+        email: data.data.email,
+        role: data.data.role
+      }));
+      
+      setUser({
+        id: data.data.id,
+        name: data.data.name,
+        email: data.data.email,
+        role: data.data.role,
+        token: data.data.token
+      });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      const newUser = {
+        id: 'new-user-' + Date.now(),
+        name: userData.name,
+        email: userData.email,
+        role: 'admin',
+        token: 'new-token'
+      };
+      
+      return { user: newUser };
+    } catch (error) {
+      throw new Error('Registration failed. Please try again.');
+    }
+  };
+
+  // Remove the updateUser function since we're using updateProfile
+  // const updateUser = async (updates) => {
+  //   try {
+  //     const updatedUser = { ...user, ...updates };
+  //     localStorage.setItem('user', JSON.stringify(updatedUser));
+  //     setUser(updatedUser);
+  //     return updatedUser;
+  //   } catch (error) {
+  //     throw new Error('Failed to update profile.');
+  //   }
+  // };
+
+  const logout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      register, 
+      logout,
+      updateProfile
+    }}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+};

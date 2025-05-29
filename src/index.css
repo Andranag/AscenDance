@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Retro Swing Theme Colors */
+    --color-primary: 109, 31, 0;     /* Deep Burgundy */
+    --color-secondary: 255, 201, 70;  /* Golden Ochre */
+    --color-accent: 63, 105, 141;     /* Muted Teal */
+    --color-neutral: 243, 244, 246;   /* Light Gray */
+  }
+
+  body {
+    @apply antialiased;
+    background-color: rgb(var(--color-neutral));
+  }
+}
+
+@layer components {
+  /* Button Styles */
+  .btn-primary {
+    @apply text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg;
+    background-color: rgb(var(--color-primary));
+  }
+
+  .btn-primary:hover {
+    background-color: rgba(var(--color-primary), 0.9);
+  }
+
+  .btn-secondary {
+    @apply text-primary font-medium py-3 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2 text-lg;
+    background-color: rgb(var(--color-secondary));
+  }
+
+  .btn-accent {
+    @apply text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2 text-lg;
+    background-color: rgb(var(--color-accent));
+  }
+
+  /* Form Styles */
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 ease-in-out bg-white/80 backdrop-blur-sm text-lg;
+    outline: none;
+  }
+
+  /* Card Styles */
+  .card {
+    @apply bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 ease-in-out border border-gray-100;
+  }
+
+  /* Typography */
+  .heading-primary {
+    @apply text-4xl font-bold mb-4 leading-tight;
+    color: rgb(var(--color-primary));
+  }
+
+  .heading-secondary {
+    @apply text-2xl font-semibold mb-3;
+    color: rgb(var(--color-secondary));
+  }
+
+  /* Background Patterns */
+  .bg-gradient-custom {
+    background-image: linear-gradient(
+      to bottom right,
+      rgba(var(--color-primary), 0.85),
+      rgba(var(--color-accent), 0.85)
+    ),
+    url('/pexels-josh-hild-1270765-4606770.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+
+  /* Navigation Styles */
+  .nav-link {
+    @apply flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-200 relative overflow-hidden;
+  }
+
+  .nav-link::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 transition-transform duration-300 origin-left;
+  }
+
+  .nav-link:hover::after {
+    @apply scale-x-100;
+  }
+
+  .nav-link-active {
+    @apply bg-white text-primary shadow-md;
+  }
+
+  .nav-link-active::after {
+    @apply scale-x-100 bg-primary;
+  }
+
+  /* Custom Animations */
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+
+  .fade-in {
+    @apply opacity-0 animate-[fadeIn_0.3s_ease-in_forwards];
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
