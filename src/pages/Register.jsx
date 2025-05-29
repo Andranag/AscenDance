@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Eye, EyeOff, Mail, Lock, User, Shield } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Shield, X, Check, AlertCircle } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -59,9 +59,15 @@ const Register = () => {
 
     try {
       const result = await register(formData);
-      const userName = result?.user?.name || formData.name || 'User';
+      if (!result || !result.success) {
+        throw new Error(result?.message || 'Registration failed');
+      }
+      
+      const userName = result.data.name || formData.name || 'User';
       toastSuccess(`Welcome to Ascendance, ${userName}! Let's start your dance journey!`);
-      navigate('/login');
+      
+      // Since we're already logged in after registration, redirect to home instead of login
+      navigate('/');
     } catch (err) {
       console.error('Registration error:', err);
       toastError(err.message || 'Registration failed. Try again.');
@@ -86,9 +92,9 @@ const Register = () => {
 
   const renderRequirementIcon = (fulfilled) => {
     return fulfilled ? (
-      <FaCheck className="h-4 w-4 text-gray-800" />
+      <Check className="h-4 w-4 text-green-500" />
     ) : (
-      <FaTimes className="h-5 w-5 text-gray-800" />
+      <X className="h-5 w-5 text-red-500" />
     );
   };
 
@@ -190,7 +196,7 @@ const Register = () => {
                       <div className={`text-xs font-medium ${
                         passwordStrength <= 2 ? 'text-red-500' : 
                         passwordStrength <= 3 ? 'text-yellow-500' : 
-                        'text-accent'
+                        'text-green-500'
                       }`}>
                         {getStrengthText()}
                       </div>
@@ -201,27 +207,28 @@ const Register = () => {
                         style={{ width: `${(passwordStrength / 5) * 100}%` }}
                       />
                     </div>
-
-                    <div className={`mt-3 space-y-2 text-sm ${passwordFocused ? 'block' : 'hidden'}`}>
-                      <div className="flex items-center gap-2">
-                        {renderRequirementIcon(passwordRequirements.minLength)}
-                        <span className="text-gray-600">At least 8 characters</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {renderRequirementIcon(passwordRequirements.hasUpperCase)}
-                        <span className="text-gray-600">Contains uppercase letter</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {renderRequirementIcon(passwordRequirements.hasLowerCase)}
-                        <span className="text-gray-600">Contains lowercase letter</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {renderRequirementIcon(passwordRequirements.hasNumber)}
-                        <span className="text-gray-600">Contains number</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {renderRequirementIcon(passwordRequirements.hasSpecialChar)}
-                        <span className="text-gray-600">Contains special character</span>
+                    <div className="mt-2">
+                      <div className="space-y-2">
+                        <div className={`flex items-center gap-2 ${passwordRequirements.minLength ? 'text-green-500' : 'text-red-500'}`}>
+                          {renderRequirementIcon(passwordRequirements.minLength)}
+                          <span>At least 8 characters</span>
+                        </div>
+                        <div className={`flex items-center gap-2 ${passwordRequirements.hasUpperCase ? 'text-green-500' : 'text-red-500'}`}>
+                          {renderRequirementIcon(passwordRequirements.hasUpperCase)}
+                          <span>Contains uppercase letters</span>
+                        </div>
+                        <div className={`flex items-center gap-2 ${passwordRequirements.hasLowerCase ? 'text-green-500' : 'text-red-500'}`}>
+                          {renderRequirementIcon(passwordRequirements.hasLowerCase)}
+                          <span>Contains lowercase letters</span>
+                        </div>
+                        <div className={`flex items-center gap-2 ${passwordRequirements.hasNumber ? 'text-green-500' : 'text-red-500'}`}>
+                          {renderRequirementIcon(passwordRequirements.hasNumber)}
+                          <span>Contains numbers</span>
+                        </div>
+                        <div className={`flex items-center gap-2 ${passwordRequirements.hasSpecialChar ? 'text-green-500' : 'text-red-500'}`}>
+                          {renderRequirementIcon(passwordRequirements.hasSpecialChar)}
+                          <span>Contains special characters (!@#$%^&*(),.?":{}|&lt;&gt;)</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -267,27 +274,25 @@ const Register = () => {
                     </button>
                   </div>
                 </div>
-                
-                {showPasswordMatch && (
-                  <div className="mt-2">
-                    <div className={`flex items-center gap-2 text-sm ${
-                      passwordsMatch ? 'text-accent' : 'text-red-600'
-                    }`}>
-                      {passwordsMatch ? (
-                        <>
-                          <Check className="h-4 w-4" />
-                          <span>Passwords match</span>
-                        </>
-                      ) : (
-                        <>
-                          <AlertTriangle className="h-5 w-5 text-red-500" />
-                          <span>Passwords do not match</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
+
+              {showPasswordMatch && (
+                <div className="mt-2">
+                  <div className={`flex items-center gap-2 ${passwordsMatch ? 'text-green-500' : 'text-red-500'}`}>
+                    {passwordsMatch ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        <span>Passwords match</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-5 w-5" />
+                        <span>Passwords do not match</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -309,7 +314,7 @@ const Register = () => {
           <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 sm:px-10 rounded-b-xl">
             <p className="text-sm text-center text-gray-600">
               Already part of our community?{' '}
-               <Link to="/login" className="font-medium text-primary-link">
+              <Link to="/login" className="font-medium text-primary-link">
                 Sign in
               </Link>
             </p>

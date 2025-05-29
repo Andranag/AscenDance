@@ -14,6 +14,7 @@ import UsersManagement from './pages/admin/UsersManagement';
 import Analytics from './pages/admin/Analytics';
 import { useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+import Toast from './components/Toast';
 
 function App() {
   const { user } = useAuth();
@@ -69,6 +70,7 @@ function App() {
           </main>
           {!isAuthPage && <Footer />}
         </div>
+        <Toast />
       </div>
     </ToastProvider>
   );

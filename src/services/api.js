@@ -39,6 +39,9 @@ export const authService = {
   register: async (userData) => {
     try {
       const response = await api.post(API_ENDPOINTS.auth.register, userData);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Registration failed');
+      }
       return response.data;
     } catch (error) {
       throw handleApiError(error);

@@ -117,17 +117,31 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const newUser = {
-        id: 'new-user-' + Date.now(),
-        name: userData.name,
-        email: userData.email,
-        role: 'admin',
-        token: 'new-token'
-      };
+      const response = await authService.register(userData);
       
-      return { user: newUser };
+      // Store token
+      localStorage.setItem('token', response.token);
+      
+      // Store user data
+      localStorage.setItem('user', JSON.stringify({
+        id: response.data.id,
+        name: response.data.name,
+        email: response.data.email,
+        role: response.data.role
+      }));
+      
+      // Update auth state
+      setUser({
+        id: response.data.id,
+        name: response.data.name,
+        email: response.data.email,
+        role: response.data.role,
+        token: response.token
+      });
+      
+      return response;
     } catch (error) {
-      throw new Error('Registration failed. Please try again.');
+      throw error;
     }
   };
 
