@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Eye, EyeOff, Mail, Lock, User, Check, X, AlertCircle, Shield } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Shield } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -86,9 +86,9 @@ const Register = () => {
 
   const renderRequirementIcon = (fulfilled) => {
     return fulfilled ? (
-      <Check className="h-4 w-4 text-accent" />
+      <FaCheck className="h-4 w-4 text-gray-800" />
     ) : (
-      <X className="h-4 w-4 text-red-400" />
+      <FaTimes className="h-5 w-5 text-gray-800" />
     );
   };
 
@@ -98,7 +98,7 @@ const Register = () => {
         <div className="card backdrop-blur-sm bg-white/95">
           <div className="px-6 py-8 sm:p-10">
             <div className="text-center mb-6">
-              <h1 className="heading-primary">Join Ascendance</h1>
+              <h1 className="heading-primary">Join LindyVerse</h1>
               <p className="text-secondary">Begin your dance journey today</p>
             </div>
 
@@ -108,8 +108,8 @@ const Register = () => {
                   Full Name
                 </label>
                 <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-secondary" />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none focus:outline-none transition-all">
+                    <User className="h-5 w-5 text-gray-700 hover:text-gray-600" />
                   </div>
                   <input
                     id="name"
@@ -131,7 +131,7 @@ const Register = () => {
                 </label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-secondary" />
+                    <Mail className="h-5 w-5 text-gray-700 hover:text-gray-600" />
                   </div>
                   <input
                     id="email"
@@ -153,7 +153,7 @@ const Register = () => {
                 </label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-secondary" />
+                    <Lock className="h-5 w-5 text-gray-700 hover:text-gray-600" />
                   </div>
                   <input
                     id="password"
@@ -234,7 +234,7 @@ const Register = () => {
                 </label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Shield className="h-5 w-5 text-secondary" />
+                    <Shield className="h-5 w-5 text-gray-700 hover:text-gray-600" />
                   </div>
                   <input
                     id="confirmPassword"
@@ -280,7 +280,7 @@ const Register = () => {
                         </>
                       ) : (
                         <>
-                          <AlertCircle className="h-4 w-4" />
+                          <AlertTriangle className="h-5 w-5 text-red-500" />
                           <span>Passwords do not match</span>
                         </>
                       )}
@@ -309,7 +309,7 @@ const Register = () => {
           <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 sm:px-10 rounded-b-xl">
             <p className="text-sm text-center text-gray-600">
               Already part of our community?{' '}
-              <Link to="/login" className="font-medium text-accent hover:text-primary transition-colors">
+               <Link to="/login" className="font-medium text-primary-link">
                 Sign in
               </Link>
             </p>

@@ -8,10 +8,6 @@ import Testimonials from '../components/Sections/Testimonials';
 import Newsletter from '../components/Sections/Newsletter';
 import Pricing from '../components/Sections/Pricing';
 import PrivateCoaching from '../components/Sections/PrivateCoaching';
-import { historicImages } from '../data/historicImages';
-import { testimonials } from '../data/testimonials';
-import { pricingPlans } from '../data/pricingPlans';
-import PrivateCoachingForm from '../components/modals/PrivateCoachingForm';
 
 const LandingPage = () => {
   const [courses, setCourses] = useState([]);

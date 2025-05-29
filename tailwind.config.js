@@ -47,6 +47,19 @@ export default {
           800: '#92400e',
           900: '#78350f',
         },
+        burgundy: {
+          DEFAULT: '#85144b',
+          50: '#fde0eb',
+          100: '#fce4f0',
+          200: '#f9c2d5',
+          300: '#f6a3bc',
+          400: '#f284a3',
+          500: '#ee658a',
+          600: '#d94670',
+          700: '#b32c56',
+          800: '#8d133c',
+          900: '#680022',
+        },
         // Text colors with better contrast
         text: {
           primary: '#1e293b',
