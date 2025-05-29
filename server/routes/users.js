@@ -2,6 +2,7 @@ import express from 'express';
 import { 
   getAllUsers, 
   getUserById, 
+  createUser,
   updateUser, 
   deleteUser, 
   toggleUserRole 
@@ -12,6 +13,9 @@ const router = express.Router();
 
 // Admin routes
 router.use(auth);
+
+// Create user
+router.post('/', createUser);
 
 // Get all users
 router.get('/', getAllUsers);
@@ -28,4 +32,4 @@ router.delete('/:id', deleteUser);
 // Toggle user role
 router.patch('/:id/toggle-role', toggleUserRole);
 
-export default router;
+export const userRoutes = router;

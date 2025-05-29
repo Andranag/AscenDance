@@ -8,15 +8,15 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import authRoutes from './routes/auth.js';
-import courseRoutes from './routes/courses.js';
-import analyticsRoutes from './routes/analytics.js';
-import paymentRoutes from './routes/payments.js';
-import progressRoutes from './routes/progress.js';
-import lessonRoutes from './routes/lessons.js';
-import enrollmentRoutes from './routes/enrollments.js';
-import debugRoutes from './routes/debug.js';
-import userRoutes from './routes/users.js';
+import { authRoutes } from './routes/auth.js';
+import { courseRoutes } from './routes/courses.js';
+import { analyticsRoutes } from './routes/analytics.js';
+import { paymentRoutes } from './routes/payments.js';
+import { progressRoutes } from './routes/progress.js';
+import { lessonRoutes } from './routes/lessons.js';
+import { enrollmentRoutes } from './routes/enrollments.js';
+import { debugRoutes } from './routes/debug.js';
+import { userRoutes } from './routes/users.js';
 
 dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env') });
 
@@ -50,8 +50,8 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/debug', debugRoutes);
 app.use('/api/users', userRoutes);
-app.use('/debug', debugRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

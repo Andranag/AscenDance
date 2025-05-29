@@ -10,4 +10,4 @@ router.post('/register', authLimiter, register);
 router.put('/profile', auth, authLimiter, updateProfile);
 router.get('/profile', auth, getProfile);
 
-export default router;
+export const authRoutes = router;

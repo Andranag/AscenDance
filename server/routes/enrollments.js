@@ -12,4 +12,4 @@ router.post('/courses/:courseId', auth, enrollInCourse);
 router.get('/user', auth, getUserEnrollments);
 router.patch('/:enrollmentId', [auth, adminAuth], updateEnrollmentStatus);
 
-export default router;
+export const enrollmentRoutes = router;

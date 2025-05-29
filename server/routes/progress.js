@@ -8,4 +8,4 @@ router.post('/:userId/courses/:courseId/lessons/:lessonId', auth, updateLessonPr
 router.get('/:userId/courses/:courseId', auth, getProgress);
 router.get('/:userId/courses/:courseId/certificate', auth, getCertificate);
 
-export default router;
+export const progressRoutes = router;

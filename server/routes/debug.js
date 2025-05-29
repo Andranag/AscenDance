@@ -13,4 +13,4 @@ router.get('/users', async (req, res) => {
   }
 });
 
-export default router;
+export const debugRoutes = router;

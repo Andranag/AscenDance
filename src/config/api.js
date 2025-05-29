@@ -2,9 +2,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export const API_ENDPOINTS = {
   auth: {
-    login: 'http://localhost:5000/auth/login',
-    register: 'http://localhost:5000/auth/register',
-    profile: 'http://localhost:5000/auth/profile',
+    login: 'http://localhost:5000/api/auth/login',
+    register: 'http://localhost:5000/api/auth/register',
+    profile: 'http://localhost:5000/api/auth/profile',
   },
   courses: {
     list: 'http://localhost:5000/api/courses',

@@ -8,4 +8,4 @@ router.get('/overview', [auth, adminAuth], getOverview);
 router.get('/courses', [auth, adminAuth], getCourseStats);
 router.get('/users', [auth, adminAuth], getUserStats);
 
-export default router;
+export const analyticsRoutes = router;

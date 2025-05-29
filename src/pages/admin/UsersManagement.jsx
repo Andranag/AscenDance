@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Pencil, Trash2, Loader, Shield, User, X, Eye, EyeOff } from 'lucide-react';
-import { authService } from '../../services/api';
 import { userService } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -84,7 +83,7 @@ const UsersManagement = () => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         setUsers(users.filter(user => user._id !== userId));
-        await authService.deleteUser(userId);
+        await userService.deleteUser(userId);
       } catch (error) {
         console.error('Error deleting user:', error);
       }
@@ -99,7 +98,7 @@ const UsersManagement = () => {
           : user
       );
       setUsers(updatedUsers);
-      await authService.toggleUserRole(userId);
+      await userService.toggleRole(userId);
     } catch (error) {
       console.error('Error toggling user role:', error);
       setUsers(users); // revert if error
@@ -120,14 +119,14 @@ const UsersManagement = () => {
         : formData;
 
       if (editingUser) {
-        await authService.updateProfile(updatedData);
+        await userService.updateUser(editingUser._id, updatedData);
         setUsers(users.map(user =>
           user._id === editingUser._id
             ? { ...user, ...formData }
             : user
         ));
       } else {
-        const response = await authService.register(formData);
+        const response = await userService.createUser(formData);
         setUsers([...users, response.data]);
       }
 

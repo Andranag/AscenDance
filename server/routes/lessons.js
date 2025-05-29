@@ -16,4 +16,4 @@ router.put('/:id', [auth, adminAuth], updateLesson);
 router.delete('/:id', [auth, adminAuth], deleteLesson);
 router.post('/:lessonId/quiz', auth, submitQuiz);
 
-export default router;
+export const lessonRoutes = router;

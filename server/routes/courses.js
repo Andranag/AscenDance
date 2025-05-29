@@ -16,4 +16,4 @@ router.post('/', [auth, adminAuth], createCourse);
 router.put('/:id', [auth, adminAuth], updateCourse);
 router.delete('/:id', [auth, adminAuth], deleteCourse);
 
-export default router;
+export const courseRoutes = router;

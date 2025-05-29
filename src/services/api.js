@@ -151,10 +151,19 @@ export const courseService = {
       console.error('Delete course error:', error);
       throw error;
     }
-  }
+  },
 };
 
 export const userService = {
+  toggleRole: async (id) => {
+    try {
+      const response = await api.patch(API_ENDPOINTS.users.toggleRole(id));
+      return response.data;
+    } catch (error) {
+      console.error('Toggle role error:', error);
+      throw error;
+    }
+  },
   getAllUsers: async () => {
     try {
       const response = await api.get(API_ENDPOINTS.users.list);
