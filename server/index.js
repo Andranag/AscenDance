@@ -16,6 +16,7 @@ import progressRoutes from './routes/progress.js';
 import lessonRoutes from './routes/lessons.js';
 import enrollmentRoutes from './routes/enrollments.js';
 import debugRoutes from './routes/debug.js';
+import userRoutes from './routes/users.js';
 
 dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env') });
 
@@ -49,6 +50,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/users', userRoutes);
 app.use('/debug', debugRoutes);
 
 // Serve static files in production

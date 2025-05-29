@@ -6,8 +6,10 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  baseURL: import.meta.env.VITE_API_URL
+  baseURL: ''
 });
+
+
 
 // Request interceptor
 api.interceptors.request.use(
@@ -65,6 +67,42 @@ export const authService = {
       console.error('Get profile error:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to get profile');
     }
+  },
+  getAllUsers: async () => {
+    try {
+      const response = await api.get(API_ENDPOINTS.users.list);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to fetch users');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Get users error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch users');
+    }
+  },
+  deleteUser: async (userId) => {
+    try {
+      const response = await api.delete(API_ENDPOINTS.users.delete(userId));
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to delete user');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Delete user error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to delete user');
+    }
+  },
+  toggleUserRole: async (userId) => {
+    try {
+      const response = await api.patch(API_ENDPOINTS.users.toggleRole(userId));
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to toggle user role');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Toggle role error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to toggle user role');
+    }
   }
 };
 
@@ -72,74 +110,96 @@ export const courseService = {
   getAllCourses: async () => {
     try {
       const response = await api.get(API_ENDPOINTS.courses.list);
-      console.log('Raw API Response:', response);
-      
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to fetch courses');
-      }
-      
-      // Return the data object
       return response.data;
     } catch (error) {
       console.error('Get courses error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch courses');
+      throw error;
     }
   },
   getCourse: async (id) => {
     try {
       const response = await api.get(API_ENDPOINTS.courses.detail(id));
-      if (!response.data?.success) {
-        throw new Error(response.data.message || 'Failed to fetch course');
-      }
       return response.data;
     } catch (error) {
       console.error('Get course error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch course');
+      throw error;
     }
   },
   createCourse: async (data) => {
     try {
       const response = await api.post(API_ENDPOINTS.courses.create, data);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to create course');
-      }
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error('Create course error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to create course');
+      throw error;
     }
   },
   updateCourse: async (id, data) => {
     try {
       const response = await api.put(API_ENDPOINTS.courses.update(id), data);
-      if (!response.data?.success) {
-        throw new Error(response.data.message || 'Failed to update course');
-      }
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error('Update course error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to update course');
+      throw error;
     }
   },
   deleteCourse: async (id) => {
     try {
       const response = await api.delete(API_ENDPOINTS.courses.delete(id));
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to delete course');
-      }
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error('Delete course error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to delete course');
+      throw error;
     }
   }
 };
 
 export const userService = {
-  getAllUsers: () => api.get(API_ENDPOINTS.users.list),
-  getUser: (id) => api.get(API_ENDPOINTS.users.detail(id)),
-  updateUser: (id, data) => api.put(API_ENDPOINTS.users.update(id), data),
-  deleteUser: (id) => api.delete(API_ENDPOINTS.users.delete(id)),
+  getAllUsers: async () => {
+    try {
+      const response = await api.get(API_ENDPOINTS.users.list);
+      return response.data;
+    } catch (error) {
+      console.error('Get users error:', error);
+      throw error;
+    }
+  },
+  getUser: async (id) => {
+    try {
+      const response = await api.get(API_ENDPOINTS.users.detail(id));
+      if (!response.data?.success) {
+        throw new Error(response.data.message || 'Failed to fetch user');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Get user error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch user');
+    }
+  },
+  updateUser: async (id, data) => {
+    try {
+      const response = await api.put(API_ENDPOINTS.users.update(id), data);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to update user');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Update user error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to update user');
+    }
+  },
+  deleteUser: async (id) => {
+    try {
+      const response = await api.delete(API_ENDPOINTS.users.delete(id));
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to delete user');
+      }
+      return response.data.data;
+    } catch (error) {
+      console.error('Delete user error:', error);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to delete user');
+    }
+  }
 };
 
 export const analyticsService = {

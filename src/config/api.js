@@ -1,29 +1,29 @@
-// API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export const API_ENDPOINTS = {
   auth: {
-    login: `${API_BASE_URL}/auth/login`,
-    register: `${API_BASE_URL}/auth/register`,
-    profile: `${API_BASE_URL}/auth/profile`,
+    login: 'http://localhost:5000/auth/login',
+    register: 'http://localhost:5000/auth/register',
+    profile: 'http://localhost:5000/auth/profile',
   },
   courses: {
-    list: `${API_BASE_URL}/courses`,
-    detail: (id) => `${API_BASE_URL}/courses/${id}`,
-    create: `${API_BASE_URL}/courses`,
-    update: (id) => `${API_BASE_URL}/courses/${id}`,
-    delete: (id) => `${API_BASE_URL}/courses/${id}`,
+    list: 'http://localhost:5000/api/courses',
+    detail: (id) => `http://localhost:5000/api/courses/${id}`,
+    create: 'http://localhost:5000/api/courses',
+    update: (id) => `http://localhost:5000/api/courses/${id}`,
+    delete: (id) => `http://localhost:5000/api/courses/${id}`,
   },
   users: {
-    list: `${API_BASE_URL}/users`,
-    detail: (id) => `${API_BASE_URL}/users/${id}`,
-    update: (id) => `${API_BASE_URL}/users/${id}`,
-    delete: (id) => `${API_BASE_URL}/users/${id}`,
+    list: 'http://localhost:5000/api/users',
+    detail: (id) => `http://localhost:5000/api/users/${id}`,
+    update: (id) => `http://localhost:5000/api/users/${id}`,
+    delete: (id) => `http://localhost:5000/api/users/${id}`,
+    toggleRole: (id) => `http://localhost:5000/api/users/${id}/toggle-role`,
   },
   analytics: {
-    overview: `${API_BASE_URL}/analytics/overview`,
-    courseStats: `${API_BASE_URL}/analytics/courses`,
-    userStats: `${API_BASE_URL}/analytics/users`,
+    overview: 'http://localhost:5000/analytics/overview',
+    courseStats: 'http://localhost:5000/analytics/courses',
+    userStats: 'http://localhost:5000/analytics/users',
   }
 };
 

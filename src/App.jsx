@@ -13,7 +13,7 @@ import CourseManagement from './pages/admin/CourseManagement';
 import UsersManagement from './pages/admin/UsersManagement';
 import Analytics from './pages/admin/Analytics';
 import { useAuth } from './contexts/AuthContext';
-import Toast from './components/Toast';
+import { ToastProvider } from './contexts/ToastContext';
 
 function App() {
   const { user } = useAuth();
@@ -29,16 +29,18 @@ function App() {
   const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
 
   return (
-    <div className="min-h-screen bg-gradient-custom flex flex-col">
-      {!isAuthPage && user && <Navbar />}
-      <div className={`flex-1 ${!isAuthPage && user ? 'ml-64' : ''}`}>
-        <Toast />
-        <main className="min-h-screen">
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-            <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
-            <Route path="/" element={<LandingPage />} />
+    <ToastProvider>
+      <div className="min-h-screen bg-gradient-custom flex flex-col">
+        {!isAuthPage && user && <Navbar />}
+        <div className={`flex-1 ${!isAuthPage && user ? 'ml-64' : ''}`}>
+          <main className="min-h-screen">
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+              <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/course/:courseId" element={<CoursePage />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/course/:courseId" element={<CoursePage />} />
 
@@ -70,6 +72,7 @@ function App() {
         {!isAuthPage && <Footer />}
       </div>
     </div>
+    </ToastProvider>
   );
 }
 
