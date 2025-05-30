@@ -1,6 +1,6 @@
 import React from 'react';
 import { LinkButton } from '../Button';
-import { ArrowRight, Play, User } from 'lucide-react';
+import { ArrowRight, Play, User, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const HeroSection = () => {
@@ -26,17 +26,16 @@ const HeroSection = () => {
               <LinkButton
                 to="/courses"
                 variant="primary"
-                className="text-white bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out px-8 py-4 rounded-lg text-lg font-semibold flex items-center gap-2"
+                className="btn-primary px-8 py-4 text-lg"
               >
-                <Play className="w-5 h-5" />
                 Start Learning
               </LinkButton>
               <LinkButton
                 to="/profile"
                 variant="secondary"
-                className="text-primary bg-primary/5 hover:bg-primary/10 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out px-8 py-4 rounded-lg text-lg font-semibold flex items-center gap-2"
+                className="text-primary bg-primary/5 shadow-md px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
               >
-                <User className="w-5 h-5" />
+                <User className="w-4 h-4" />
                 My Profile
               </LinkButton>
             </>

@@ -31,16 +31,19 @@ const UserModal = ({ isOpen, onClose, user, onSubmit }) => {
         ? await userService.updateUser(user._id, formData)
         : await userService.createUser(formData);
 
-      if (!response?.success) {
-        throw new Error(response?.message || 'Failed to save user');
-      }
-
       onSubmit(response);
       toastSuccess(user ? 'User updated successfully' : 'User created successfully');
       onClose();
     } catch (error) {
       console.error('Error saving user:', error);
-      toastError(error.message || 'Failed to save user');
+      // Handle specific error cases
+      if (error.response?.data?.message) {
+        toastError(error.response.data.message);
+      } else if (error.message) {
+        toastError(error.message);
+      } else {
+        toastError('Failed to save user');
+      }
     } finally {
       setLoading(false);
     }
@@ -49,10 +52,10 @@ const UserModal = ({ isOpen, onClose, user, onSubmit }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-8 z-50">
+      <div className="bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-md z-50">
         <div className="flex justify-between items-center p-4 border-b">
-          <h3 className="text-lg font-medium text-gray-900">
+          <h3 className="text-xl font-semibold text-gray-900">
             {user ? 'Edit User' : 'Create User'}
           </h3>
           <button
@@ -64,31 +67,33 @@ const UserModal = ({ isOpen, onClose, user, onSubmit }) => {
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-800 mb-1">Name</label>
             <input
               type="text"
               id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="input-field mt-1"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white placeholder-gray-500 text-gray-900 shadow-sm transition-all duration-200"
               required
+              placeholder="Enter user name"
             />
           </div>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-800 mb-1">Email</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="input-field mt-1"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white placeholder-gray-500 text-gray-900 shadow-sm transition-all duration-200"
               required
+              placeholder="Enter email address"
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-800 mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -96,8 +101,9 @@ const UserModal = ({ isOpen, onClose, user, onSubmit }) => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="input-field mt-1 pr-10"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white placeholder-gray-500 text-gray-900 shadow-sm transition-all duration-200"
                 required={!user}
+                placeholder="Enter password"
               />
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                 <button
@@ -115,13 +121,13 @@ const UserModal = ({ isOpen, onClose, user, onSubmit }) => {
             </div>
           </div>
           <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
+            <label htmlFor="role" className="block text-sm font-medium text-gray-800 mb-1">Role</label>
             <select
               id="role"
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="input-field mt-1"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white text-gray-900 shadow-sm transition-all duration-200"
             >
               <option value="user">User</option>
               <option value="admin">Admin</option>
