@@ -48,15 +48,13 @@ console.log('🔄 Connecting to MongoDB...');
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000, // Increased timeout
+  serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 45000,
   connectTimeoutMS: 30000,
   family: 4,
   maxPoolSize: 10,
   minPoolSize: 2,
-  maxIdleTimeMS: 30000,
-  keepAlive: true,
-  keepAliveInitialDelay: 300000
+  maxIdleTimeMS: 30000
 })
 .then(() => console.log("✅ Connected to MongoDB"))
 .catch((err) => {
