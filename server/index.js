@@ -19,22 +19,24 @@ import { userRoutes } from './routes/users.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Load environment variables from .env file
 dotenv.config();
+
+console.log("🔄 Connecting to MongoDB with hardcoded URI...");
+
+// Connect to MongoDB
+const MONGO_URI = 'mongodb+srv://lindyverse:lindyverse@cluster0.mongodb.net/lindyverse?retryWrites=true&w=majority';
+
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("✅ Connected to MongoDB"))
+.catch((err) => console.error("❌ MongoDB connection error:", err));
+
 
 const app = express();
 const httpServer = createServer(app);
 const io = initializeSocket(httpServer);
-
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  console.log("🔄 Connecting to MongoDB with URI:", process.env.MONGO_URI ? "Found" : "Missing");
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("Connected to MongoDB"))
-    console.log("🔄 Connecting to MongoDB with URI:", process.env.MONGO_URI ? "Found" : "Missing");
-.catch((err) => console.error("MongoDB connection error:", err));
 
 // Middleware
 const corsOptions = {
