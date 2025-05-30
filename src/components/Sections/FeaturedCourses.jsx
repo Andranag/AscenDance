@@ -25,7 +25,7 @@ const FeaturedCourses = ({ courses, loading, error }) => {
 
   if (loading) {
     return (
-      <section id="featured-courses" className="py-24 px-4">
+      <section id="featured-courses\" className="py-24 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center">
             <Loader className="w-8 h-8 animate-spin text-white" />
