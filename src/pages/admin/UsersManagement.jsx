@@ -290,112 +290,39 @@ const UsersManagement = () => {
                         </td>
                       </tr>
                     ))}
-          setEditingUser(null);
-          setIsModalOpen(true);
-        }}
-      >
-        <PlusCircle className="w-4 h-4" />
-        <span>Create New User</span>
-      </button>
-    </div>
-
-    {loading ? (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <div className="animate-spin h-8 w-8 border-4 border-white border-t-transparent rounded-full"></div>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-    ) : (
-      <>
-        {/* Sort Controls */}
-        <div className="flex justify-between items-center mb-4">
-          <div></div>
-        </div>
 
-        {/* User Table */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl overflow-hidden border border-white/20">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <SortButton field="name">Name</SortButton>
-                  <SortButton field="email">Email</SortButton>
-                  <SortButton field="role">Role</SortButton>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sortedUsers.map((user) => (
-                  <tr key={`user-row-${user._id}`} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {user.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {user.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.role === 'admin' ? 'bg-primary text-white' : 'bg-green-100 text-green-800'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm font-medium">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(user)}
-                          className="text-primary hover:text-primary-dark"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(user._id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </>
-    )}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedUserId(null);
+        }}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+        onConfirm={confirmDelete}
+        confirmText="Delete User"
+        cancelText="Cancel"
+        type="danger"
+      />
 
-    <ConfirmationModal
-      isOpen={showDeleteModal}
-      onClose={() => {
-        setShowDeleteModal(false);
-        setSelectedUserId(null);
-      }}
-      title="Delete User"
-      message="Are you sure you want to delete this user? This action cannot be undone."
-      onConfirm={confirmDelete}
-      confirmText="Delete User"
-      cancelText="Cancel"
-      type="danger"
-    />
-
-    <UserModal
-      isOpen={isModalOpen}
-      onClose={() => {
-        setIsModalOpen(false);
-        setEditingUser(null);
-      }}
-      user={editingUser}
-      onSubmit={handleUserSaved}
-    />
-  </div>
-);
+      <UserModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingUser(null);
+        }}
+        user={editingUser}
+        onSubmit={handleUserSaved}
+      />
+    </>
+  );
+};
 
 export default UsersManagement;
