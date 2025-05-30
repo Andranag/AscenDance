@@ -20,22 +20,21 @@ import { userRoutes } from './routes/users.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Load environment variables from .env file
-dotenv.config({ path: join(__dirname, '.env') });
+dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
 const io = initializeSocket(httpServer);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB Atlas');
-    console.log('Database connection successful!');
-  })
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1); // Exit if database connection fails
-  });
+mongoose.connect(process.env.MONGO_URI, {
+  console.log("🔄 Connecting to MongoDB with URI:", process.env.MONGO_URI ? "Found" : "Missing");
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("Connected to MongoDB"))
+    console.log("🔄 Connecting to MongoDB with URI:", process.env.MONGO_URI ? "Found" : "Missing");
+.catch((err) => console.error("MongoDB connection error:", err));
 
 // Middleware
 const corsOptions = {
