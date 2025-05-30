@@ -19,6 +19,7 @@ import { userRoutes } from './routes/users.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Load environment variables
 dotenv.config();
 
 const app = express();
@@ -35,12 +36,46 @@ app.use(cors({
 
 app.use(express.json());
 
-// Connect to MongoDB
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://lindyverse:lindyverse@cluster0.mongodb.net/lindyverse?retryWrites=true&w=majority';
+// MongoDB Connection
+const MONGO_URI = process.env.MONGODB_URI;
+if (!MONGO_URI) {
+  console.error('❌ MONGODB_URI is not defined in environment variables');
+  process.exit(1);
+}
 
-mongoose.connect(MONGO_URI)
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+console.log('🔄 Connecting to MongoDB...');
+
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 30000, // Increased timeout
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 30000,
+  family: 4,
+  maxPoolSize: 10,
+  minPoolSize: 2,
+  maxIdleTimeMS: 30000,
+  keepAlive: true,
+  keepAliveInitialDelay: 300000
+})
+.then(() => console.log("✅ Connected to MongoDB"))
+.catch((err) => {
+  console.error("❌ MongoDB connection error:", err);
+  process.exit(1);
+});
+
+// Handle MongoDB connection events
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('MongoDB reconnected');
+});
 
 // Rate limiting
 app.use('/api/', apiLimiter);
