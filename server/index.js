@@ -40,7 +40,7 @@ app.use(express.json());
 const MONGO_URI = process.env.MONGO_URI;
 
 if (!MONGO_URI) {
-  console.error('❌ MONGODB_URI is not defined in environment variables');
+  console.error('❌ MONGO_URI is not defined in environment variables');
   process.exit(1);
 }
 
