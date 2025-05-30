@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader, ChevronRight, Clock, Star } from 'lucide-react';
-import { courseService } from '../../services/api';
 import CourseCard from '../cards/CourseCard';
 
 const getLevelColor = (level) => {
@@ -27,6 +26,12 @@ const getStyleColor = (style) => {
 };
 
 const FeaturedCoursesSection = ({ courses, loading, error }) => {
+  // Helper function to select random courses
+  const selectRandomCourses = (courses, count) => {
+    const shuffled = [...courses].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  };
+
   const [detailedCourses, setDetailedCourses] = useState([]);
   const [fetchingDetails, setFetchingDetails] = useState(false);
 
@@ -35,35 +40,27 @@ const FeaturedCoursesSection = ({ courses, loading, error }) => {
       setFetchingDetails(true);
       const fetchDetails = async () => {
         try {
-          const response = await courseService.getFeaturedCourses();
+          // Fetch all courses
+          const response = await fetch('http://localhost:5000/api/courses');
+          const allCourses = await response.json();
           
-          if (!response?.success) {
-            console.error('Failed to fetch featured courses:', response?.message);
+          if (!allCourses?.success) {
+            console.error('Failed to fetch courses:', allCourses?.message);
             return;
           }
+
+          const courses = allCourses.data || [];
           
-          if (!response?.data) {
-            console.error('No data received from server');
+          if (courses.length === 0) {
+            console.error('No courses found');
             return;
           }
-          // Generate temporary IDs for courses if none exist
-          const normalizedCourses = response.data.map((course, index) => {
-            // Generate a temporary ID using the course title and index
-            const courseId = course._id || course.id || `temp-${course.title.replace(/\s+/g, '-').toLowerCase()}-${index}`;
-            return {
-              ...course,
-              _id: courseId // Ensure we always have a _id field
-            };
-          });
-          
-          if (normalizedCourses.length === 0) {
-            console.error('No valid courses found after normalization');
-            return;
-          }
-          
-          setDetailedCourses(normalizedCourses);
+
+          // Select 4 random courses
+          const featuredCourses = selectRandomCourses(courses, 4);
+          setDetailedCourses(featuredCourses);
         } catch (err) {
-          console.error('Error fetching featured courses:', err);
+          console.error('Error fetching courses:', err);
         } finally {
           setFetchingDetails(false);
         }

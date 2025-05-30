@@ -7,6 +7,7 @@ import LessonCard from '../components/course/LessonCard';
 import ProgressBar from '../components/course/ProgressBar';
 import QuizCard from '../components/course/QuizCard';
 import ResourceList from '../components/course/ResourceList';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const CoursePage = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const CoursePage = () => {
   const [activeLesson, setActiveLesson] = useState(null);
   const [progress, setProgress] = useState(0);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   // Debug log for course ID
   useEffect(() => {
@@ -51,6 +53,16 @@ const CoursePage = () => {
   }, [location, navigate, courseId]);
 
   useEffect(() => {
+    // Check if this is a temporary course ID
+    const isTemporaryId = courseId?.includes('temp-course-');
+    
+    if (isTemporaryId) {
+      // For temporary courses, show an error message
+      setError('This is a temporary course. Please try again later.');
+      setLoading(false);
+      return;
+    }
+
     const fetchCourse = async () => {
       try {
         setLoading(true);
@@ -80,8 +92,9 @@ const CoursePage = () => {
         setActiveLesson(courseData.lessons[0]);
         
         // Calculate initial progress
-        const completedLessons = courseData.lessons.filter(l => l.completed).length;
-        setProgress((completedLessons / courseData.lessons.length) * 100);
+        const totalLessons = courseData.lessons?.length || 0;
+        const completedLessons = courseData.lessons?.filter(l => l.completed)?.length || 0;
+        setProgress(totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0);
         setError(null);
       } catch (err) {
         console.error('Error fetching course:', err);
@@ -91,8 +104,8 @@ const CoursePage = () => {
       }
     };
 
-    // Fetch course data if we have a course ID
-    if (courseId) {
+    // Fetch course data if we have a course ID and it's not temporary
+    if (courseId && !isTemporaryId) {
       fetchCourse();
     }
   }, [courseId]);
@@ -176,14 +189,14 @@ const CoursePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-custom">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-accent/5 to-secondary/5">
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <Loader className="w-12 h-12 animate-spin text-primary" />
           </div>
         ) : error ? (
-          <div className="text-center text-red-500">
+          <div className="text-center text-gray-500">
             <h3 className="text-xl font-semibold mb-2">Error</h3>
             <p className="text-lg">{error}</p>
             <button 
@@ -195,14 +208,31 @@ const CoursePage = () => {
           </div>
         ) : course ? (
           <div className="space-y-8">
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg">
-              <h1 className="text-4xl font-bold text-gray-900 mb-6">
-                {course.title}
-              </h1>
-              <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-                {course.description}
-              </p>
-              <div className="flex flex-wrap gap-4 mb-6">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-100">
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex-1">
+                  <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                    {course.title}
+                  </h1>
+                  <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+                    {course.description}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-gray-500" />
+                    <span className="text-sm text-gray-600">{course.duration}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-yellow-400" />
+                    <span className="text-sm text-gray-600">{course.rating} ★</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">{course.studentsCount} students</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-8 flex flex-wrap gap-4">
                 <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
                   {course.style}
                 </span>
@@ -210,32 +240,49 @@ const CoursePage = () => {
                   {course.level}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-6">
-                <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-gray-500" />
-                  <span className="text-sm text-gray-600">{course.duration}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Award className="w-5 h-5 text-yellow-400" />
-                  <span className="text-sm text-gray-600">{course.rating} ★</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600">{course.studentsCount} students</span>
-                </div>
-              </div>
             </div>
 
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-100">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-bold text-gray-900">Course Progress</h2>
                 {course && Array.isArray(course.lessons) ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-medium text-primary">
-                      {Math.round(progress)}% Complete
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      ({course.lessons.filter(l => l.completed).length} of {course.lessons.length} lessons)
-                    </span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-medium text-primary">
+                        {course?.lessons?.length > 0 ? Math.round(progress) : 0}% Complete
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {course?.lessons?.length > 0 
+                          ? `${course.lessons.filter(l => l.completed).length} of ${course.lessons.length} lessons`
+                          : 'No lessons available'}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => {
+                          if (course?.lessons?.length === 0) {
+                            // Show toast or alert if no lessons
+                            alert('No lessons available in this course yet!');
+                            return;
+                          }
+                          
+                          if (course.lessons.some(l => !l.completed)) {
+                            const nextLesson = course.lessons.find(l => !l.completed);
+                            setActiveLesson(nextLesson);
+                          } else {
+                            // If all lessons are completed
+                            setShowModal(true);
+                          }
+                        }}
+                        className="btn-secondary text-sm px-4 py-2"
+                      >
+                        {course?.lessons?.length === 0 
+                          ? 'View Course Details'
+                          : course.lessons.some(l => !l.completed) 
+                            ? 'Continue Learning'
+                            : 'Course Completed'}
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-sm text-gray-500">
@@ -252,8 +299,25 @@ const CoursePage = () => {
               )}
             </div>
 
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-900 mb-8">Lessons</h2>
+            {showModal && (
+              <ConfirmationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title="Course Completed"
+                message="Congratulations! You have completed all lessons in this course."
+                confirmText="Close"
+                onConfirm={() => setShowModal(false)}
+              />
+            )}
+
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Lessons</h2>
+              <button
+                onClick={() => setShowModal(true)}
+                className="btn-primary mb-4"
+              >
+                Test Modal
+              </button>
               <div className="space-y-4">
                 {course && Array.isArray(course.lessons) ? (
                   course.lessons.map((lesson) => (

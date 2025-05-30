@@ -66,7 +66,15 @@ const CourseCard = ({ course }) => {
 
   const handleNavigate = () => {
     if (user) {
-      navigate(`/course/${course._id}`);
+      // Check if this is a temporary course
+      const isTemporary = course.isTemporary || !course._id;
+      if (isTemporary) {
+        // For temporary courses, show a message instead of navigating
+        alert('This is a temporary course. Please try again later.');
+      } else {
+        // For real courses, navigate to course details
+        navigate(`/course/${course._id}`);
+      }
     } else {
       navigate('/login');
     }
@@ -91,7 +99,7 @@ const CourseCard = ({ course }) => {
       <div className="relative h-48">
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-10" />
         <img
-          src="https://images.pexels.com/photos/2188012/pexels-photo-2188012.jpeg"
+          src={course.image}
           alt={course.title}
           className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
         />

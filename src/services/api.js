@@ -106,13 +106,16 @@ export const authService = {
       console.error('Toggle role error:', error);
       throw new Error(error.response?.data?.message || error.message || 'Failed to toggle user role');
     }
-  }
+  } 
 };
 
 export const courseService = {
   getAllCourses: async () => {
     try {
       const response = await api.get(API_ENDPOINTS.courses.list);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to fetch courses');
+      }
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -121,6 +124,9 @@ export const courseService = {
   getFeaturedCourses: async () => {
     try {
       const response = await api.get(API_ENDPOINTS.courses.featured);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to fetch featured courses');
+      }
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -129,6 +135,9 @@ export const courseService = {
   getCourse: async (id) => {
     try {
       const response = await api.get(API_ENDPOINTS.courses.detail(id));
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to fetch course');
+      }
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -136,23 +145,40 @@ export const courseService = {
   },
   createCourse: async (data) => {
     try {
+      console.log('Creating course with data:', data);
       const response = await api.post(API_ENDPOINTS.courses.create, data);
-      return response.data;
+      console.log('Create course response:', response.data);
+      // If response doesn't have success property, assume it's the course data
+      if (!response.data?.success) {
+        return response.data;
+      }
+      return response.data.data;
     } catch (error) {
+      console.error('Create course error:', error.response?.data || error);
       throw handleApiError(error);
     }
   },
   updateCourse: async (id, data) => {
     try {
+      console.log('Updating course with id:', id, 'and data:', data);
       const response = await api.put(API_ENDPOINTS.courses.update(id), data);
-      return response.data;
+      console.log('Update course response:', response.data);
+      // If response doesn't have success property, assume it's the course data
+      if (!response.data?.success) {
+        return response.data;
+      }
+      return response.data.data;
     } catch (error) {
+      console.error('Update course error:', error.response?.data || error);
       throw handleApiError(error);
     }
   },
   deleteCourse: async (id) => {
     try {
       const response = await api.delete(API_ENDPOINTS.courses.delete(id));
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to delete course');
+      }
       return response.data;
     } catch (error) {
       throw handleApiError(error);
