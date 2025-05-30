@@ -1,7 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader, ChevronRight, Clock, Star } from 'lucide-react';
-import { API_ENDPOINTS } from "../../config/api";
+import { courseService } from '../../services/api';
+import CourseCard from '../cards/CourseCard';
+
+const getLevelColor = (level) => {
+  const levelColors = {
+    'Beginner': 'bg-emerald-500',
+    'Intermediate': 'bg-amber-500',
+    'Advanced': 'bg-rose-500',
+    'Expert': 'bg-indigo-500'
+  };
+  return levelColors[level] || 'bg-gray-500';
+};
+
+const getStyleColor = (style) => {
+  const styleColors = {
+    'Lindy Hop': 'bg-purple-500',
+    'Swing': 'bg-blue-500',
+    'Boogie Woogie': 'bg-pink-500',
+    'Bachata': 'bg-orange-500',
+    'Salsa': 'bg-yellow-500',
+    'Kizomba': 'bg-green-500'
+  };
+  return styleColors[style] || 'bg-gray-500';
+};
 
 const FeaturedCoursesSection = ({ courses, loading, error }) => {
   const [detailedCourses, setDetailedCourses] = useState([]);
@@ -12,26 +35,35 @@ const FeaturedCoursesSection = ({ courses, loading, error }) => {
       setFetchingDetails(true);
       const fetchDetails = async () => {
         try {
-          const detailed = await Promise.all(
-            courses.map(async (course) => {
-              try {
-                const response = await fetch(`${API_ENDPOINTS.courses.detail(course._id)}`);
-                
-                if (!response.ok) {
-                  throw new Error('Failed to fetch course details');
-                }
-                
-                const data = await response.json();
-                return data;
-              } catch (err) {
-                console.error(`Failed to fetch details for course ${course._id}:`, err);
-                return course;
-              }
-            })
-          );
-          setDetailedCourses(detailed);
+          const response = await courseService.getFeaturedCourses();
+          
+          if (!response?.success) {
+            console.error('Failed to fetch featured courses:', response?.message);
+            return;
+          }
+          
+          if (!response?.data) {
+            console.error('No data received from server');
+            return;
+          }
+          // Generate temporary IDs for courses if none exist
+          const normalizedCourses = response.data.map((course, index) => {
+            // Generate a temporary ID using the course title and index
+            const courseId = course._id || course.id || `temp-${course.title.replace(/\s+/g, '-').toLowerCase()}-${index}`;
+            return {
+              ...course,
+              _id: courseId // Ensure we always have a _id field
+            };
+          });
+          
+          if (normalizedCourses.length === 0) {
+            console.error('No valid courses found after normalization');
+            return;
+          }
+          
+          setDetailedCourses(normalizedCourses);
         } catch (err) {
-          console.error('Error fetching course details:', err);
+          console.error('Error fetching featured courses:', err);
         } finally {
           setFetchingDetails(false);
         }
@@ -43,11 +75,11 @@ const FeaturedCoursesSection = ({ courses, loading, error }) => {
   return (
     <section id="featured-courses" className="py-24 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-white mb-4">
+        <div className="text-center mb-16">
+          <h2 className="text-5xl font-bold text-white mb-6">
             Featured Courses
           </h2>
-          <p className="text-xl text-white/90">
+          <p className="text-xl text-white/90 mb-6 max-w-2xl mx-auto">
             Start your dance journey with our most popular courses
           </p>
         </div>
@@ -59,64 +91,9 @@ const FeaturedCoursesSection = ({ courses, loading, error }) => {
         ) : error ? (
           <div className="text-center text-red-500">{error}</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 min-[1200px]:grid-cols-4">
-            {courses.map((course) => (
-              <div
-                key={course._id}
-                className="card hover-lift backdrop-blur-sm bg-white/95 min-h-[550px] flex flex-col"
-              >
-                {fetchingDetails ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                ) : error ? (
-                  <div className="text-center text-red-500">{error}</div>
-                ) : (
-                  <div className="p-8 flex-grow flex flex-col justify-between h-full">
-                    <div className="flex-grow flex flex-col justify-between">
-                      <div className="flex-shrink">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                          {course.title}
-                        </h3>
-                        <p className="text-gray-600 text-base leading-relaxed">
-                          {course.description}
-                        </p>
-                        <div className="flex justify-center items-center gap-3 mt-8">
-                          <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                            {course.style || 'Unknown Style'}
-                          </span>
-                          <span className="px-3 py-1.5 bg-accent/10 text-accent rounded-full text-sm font-medium">
-                            {course.level || 'Unknown Level'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex justify-center items-center gap-4 mt-12">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-5 h-5 text-blue-500" />
-                          <span className="text-sm text-gray-600 font-medium">
-                            {course.duration || 'Unknown duration'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Star className="w-5 h-5 text-yellow-400" />
-                          <span className="text-sm text-gray-600 font-medium">
-                            {course.rating ? `${course.rating} / 5` : 'No rating'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mt-auto">
-                        <Link
-                          to={`/course/${course._id}`}
-                          className="btn-primary w-full px-4 py-2 flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity duration-200"
-                        >
-                          View Course Details
-                          <ChevronRight className="w-4 h-4" />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {detailedCourses.map((course) => (
+              <CourseCard key={course._id} course={course} />
             ))}
           </div>
         )}

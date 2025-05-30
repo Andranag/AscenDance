@@ -110,6 +110,14 @@ export const authService = {
 };
 
 export const courseService = {
+  getAllCourses: async () => {
+    try {
+      const response = await api.get(API_ENDPOINTS.courses.list);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
   getFeaturedCourses: async () => {
     try {
       const response = await api.get(API_ENDPOINTS.courses.featured);

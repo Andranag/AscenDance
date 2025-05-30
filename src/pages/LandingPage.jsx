@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { courseService } from '../services/api';
 import Hero from "../components/Sections/Hero";
 import Heritage from "../components/Sections/Heritage";
 import FeaturedCourses from "../components/Sections/FeaturedCourses";
@@ -22,27 +23,21 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchFeaturedCourses = async () => {
       try {
-        // Use hardcoded API URL for development
-        const response = await fetch('http://localhost:5000/api/courses/featured');
+        setLoading(true);
+        const response = await courseService.getFeaturedCourses();
+        console.log('API Response:', response);
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch featured courses');
-        }
-        
-        const data = await response.json();
-        console.log('API Response:', data);
-        
-        if (data.success && data.data && Array.isArray(data.data)) {
-          console.log('Setting courses:', data.data);
-          console.log('Courses length:', data.data.length);
-          console.log('First course:', data.data[0]);
+        if (response?.success && response?.data && Array.isArray(response.data)) {
+          console.log('Setting courses:', response.data);
+          console.log('Courses length:', response.data.length);
+          console.log('First course:', response.data[0]);
           setCourses(prevCourses => {
             console.log('Previous courses:', prevCourses);
-            console.log('New courses:', data.data);
-            return data.data;
+            console.log('New courses:', response.data);
+            return response.data;
           });
         } else {
-          throw new Error(data.message || 'Invalid response format');
+          throw new Error(response?.message || 'Failed to fetch featured courses');
         }
       } catch (err) {
         console.error('Error fetching featured courses:', err);

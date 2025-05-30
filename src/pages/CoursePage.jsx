@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { courseService } from '../services/api';
 import { Music2, CheckCircle, Clock, ChevronRight, Loader, Play, Video, FileText, Award } from 'lucide-react';
@@ -12,6 +12,7 @@ const CoursePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { courseId } = useParams();
+  const location = useLocation();
   const [course, setCourse] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,43 +20,78 @@ const CoursePage = () => {
   const [progress, setProgress] = useState(0);
   const [showQuiz, setShowQuiz] = useState(false);
 
+  // Debug log for course ID
   useEffect(() => {
     console.log('CoursePage: courseId:', courseId);
+    console.log('Current URL:', location.pathname);
+    console.log('Search params:', location.search);
+
+    // Get course ID from URL path
+    const urlPath = location.pathname;
+    const pathParts = urlPath.split('/');
+    const urlCourseId = pathParts[pathParts.length - 1];
+
+    // Validate course ID format (should be a valid ID)
+    if (!urlCourseId || urlCourseId === 'course') {
+      console.error('Invalid course ID in URL:', urlCourseId);
+      navigate('/');
+      return;
+    }
+
+    // If we have a course ID in the URL path
+    if (urlCourseId) {
+      // Use the URL course ID directly
+      if (courseId !== urlCourseId) {
+        console.log('Course ID changed:', courseId, '=>', urlCourseId);
+        setCourse(null); // Reset course state if ID changes
+        setActiveLesson(null);
+        setProgress(0);
+      }
+    }
+  }, [location, navigate, courseId]);
+
+  useEffect(() => {
     const fetchCourse = async () => {
       try {
         setLoading(true);
-        console.log('Fetching course:', courseId);
-        const response = await courseService.getCourse(courseId);
-        console.log('API Response:', JSON.stringify(response, null, 2));
-        try {
-          // The courseService already returns the data object
-          const courseData = response;
-          console.log('Course data:', JSON.stringify(courseData, null, 2));
-          if (courseData && typeof courseData === 'object') {
-            setCourse(courseData);
-            // Calculate initial progress if lessons exist
-            if (Array.isArray(courseData.lessons)) {
-              const completedLessons = courseData.lessons.filter(l => l?.completed).length;
-              setProgress((completedLessons / courseData.lessons.length) * 100);
-            }
-            setError(null); // Clear any previous error
-          } else {
-            console.error('Invalid course data:', courseData);
-            setError('Invalid course data received');
-          }
-        } catch (err) {
-          console.error('Error processing course data:', err);
-          setError('Failed to process course data');
+        
+        if (!courseId) {
+          console.error('No course ID available');
+          setError('Course not found');
+          setLoading(false);
+          return;
         }
+
+        console.log('Fetching course with ID:', courseId);
+        const response = await courseService.getCourse(courseId);
+        
+        if (!response?.success) {
+          throw new Error(response?.message || 'Failed to fetch course');
+        }
+        
+        const courseData = response.data;
+        console.log('Fetched course data:', courseData);
+        
+        if (!courseData) {
+          throw new Error('No course data received from server');
+        }
+
+        setCourse(courseData);
+        setActiveLesson(courseData.lessons[0]);
+        
+        // Calculate initial progress
+        const completedLessons = courseData.lessons.filter(l => l.completed).length;
+        setProgress((completedLessons / courseData.lessons.length) * 100);
+        setError(null);
       } catch (err) {
         console.error('Error fetching course:', err);
-        console.error('Response:', response);
-        setError('Failed to fetch course details');
+        setError(err.message || 'Failed to fetch course data');
       } finally {
         setLoading(false);
       }
     };
 
+    // Fetch course data if we have a course ID
     if (courseId) {
       fetchCourse();
     }
@@ -106,39 +142,6 @@ const CoursePage = () => {
       };
     }
   };
-
-  useEffect(() => {
-    const fetchCourse = async () => {
-      try {
-        console.log('Fetching course with ID:', courseId);
-        const response = await courseService.getCourse(courseId);
-        console.log('API Response:', response);
-        
-        if (!response?.success) {
-          throw new Error(response?.message || 'Failed to fetch course');
-        }
-        
-        const course = response.data;
-        console.log('Fetched course:', course);
-        
-        setCourse(course);
-        setActiveLesson(course.lessons[0]);
-        
-        // Calculate initial progress
-        const completedLessons = course.lessons.filter(l => l.completed).length;
-        setProgress((completedLessons / course.lessons.length) * 100);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching course:', err);
-        setError(err.message || 'Failed to fetch course data');
-        setLoading(false);
-      }
-    };
-
-    if (courseId) {
-      fetchCourse();
-    }
-  }, [courseId]);
 
   if (!user) {
     navigate('/login');

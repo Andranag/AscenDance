@@ -150,6 +150,7 @@ const getFeaturedCourses = async (req, res) => {
 
     // Format the courses
     const formattedCourses = finalCourses.map(course => ({
+      _id: course._id.toString(),
       title: course.title,
       description: course.description,
       style: course.style,

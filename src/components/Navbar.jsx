@@ -118,6 +118,16 @@ const Navbar = () => {
                   <h1 className="text-2xl font-bold text-white cursor-pointer" onClick={handleLogoClick}>LindyVerse</h1>
                 </div>
                 <div className="flex items-center gap-4">
+                  {user && (
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsOpen(false)}
+                      className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white"
+                      title="Profile"
+                    >
+                      <User className="w-6 h-6" />
+                    </Link>
+                  )}
                   <button
                     onClick={toggleMenu}
                     className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white"

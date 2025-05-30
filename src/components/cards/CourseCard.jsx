@@ -1,9 +1,24 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../../contexts/AuthContext";
-import { Music2, ChevronRight, Clock, Users, Star, BookOpen } from 'lucide-react';
+import { ChevronRight, Clock, Users, Star, BookOpen } from 'lucide-react';
 
 const CourseCard = ({ course }) => {
+  // Get appropriate color for dance style
+  const getStyleColor = (style) => {
+    const styleColors = {
+      'Lindy Hop': 'bg-purple-500 text-white',
+      'Swing': 'bg-blue-500 text-white',
+      'Boogie Woogie': 'bg-pink-500 text-white',
+      'Bachata': 'bg-orange-500 text-white',
+      'Salsa': 'bg-yellow-500 text-gray-900',
+      'Kizomba': 'bg-green-500 text-white',
+      'Solo Jazz': 'bg-gray-500 text-white'
+    };
+    return styleColors[style?.toLowerCase()] || 'bg-gray-500 text-white';
+  };
+
+
   console.log('Rendering CourseCard with course:', {
     id: course?._id,
     title: course?.title,
@@ -31,13 +46,21 @@ const CourseCard = ({ course }) => {
     level: course.level || 'Unknown Level'
   };
 
-  // Check for missing optional fields
-  const missingFields = [];
-  if (!course.image) missingFields.push('Image');
-  if (!course.instructor) missingFields.push('Instructor');
-  if (!course.lessons?.length) missingFields.push('Lessons');
+  // Handle missing optional fields with default values
+  const courseWithDefaults = {
+    ...course,
+    image: course.image || 'https://images.pexels.com/photos/2188012/pexels-photo-2188012.jpeg',
+    instructor: course.instructor || {
+      name: 'Unknown Instructor',
+      avatar: '/images/default-avatar.png'
+    },
+    lessons: course.lessons || [
+      { title: 'Introduction', duration: '10 min' },
+      { title: 'Lesson 1', duration: '30 min' },
+      { title: 'Lesson 2', duration: '30 min' }
+    ]
+  };
 
-  const hasMissingFields = missingFields.length > 0;
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -72,85 +95,66 @@ const CourseCard = ({ course }) => {
           alt={course.title}
           className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
         />
-        <div className="absolute top-4 left-4 z-20">
+        <div className="absolute top-4 left-4 z-20 flex gap-2">
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getLevelColor(course.level)}`}>
             {course.level}
+          </span>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStyleColor(course.style)}`}>
+            {course.style}
           </span>
         </div>
       </div>
 
       {/* Course Content */}
-      <div className="p-6">
-        <div className="flex items-start gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <Music2 className="w-5 h-5 text-primary" />
-              <h3 className="text-xl font-semibold text-gray-900 group-hover:text-primary transition-colors">
-                {course.title}
-              </h3>
-            </div>
-            <p className="text-gray-600 mb-4 line-clamp-2">{course.description}</p>
-
-            {/* Course Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
-                <Clock className="w-4 h-4 text-primary mb-1" />
-                <span className="text-xs text-gray-600">{normalizedCourse.duration}</span>
-              </div>
-              <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
-                <Users className="w-4 h-4 text-primary mb-1" />
-                <span className="text-xs text-gray-600">{normalizedCourse.studentsCount} students</span>
-              </div>
-              <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
-                <Star className="w-4 h-4 text-yellow-400 fill-current mb-1" />
-                <span className="text-xs text-gray-600">{normalizedCourse.rating}/5.0</span>
-              </div>
-            </div>
-
-            {/* Missing Fields Warning */}
-            {hasMissingFields && (
-              <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                <p className="text-sm text-yellow-700">
-                  This course is missing some information:
-                  <ul className="mt-1 list-disc list-inside text-yellow-600">
-                    {missingFields.map((field, index) => (
-                      <li key={index}>{field}</li>
-                    ))}
-                  </ul>
-                </p>
-              </div>
-            )}
+      <div className="p-6 flex flex-col h-[300px]">
+        <div className="flex-1">
+          <div className="space-y-2">
+            {/* Course Title */}
+            <h3 className="text-xl font-semibold text-gray-900 group-hover:text-primary transition-colors">
+              {course.title}
+            </h3>
             
-            {/* Course Style */}
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <Music2 className="w-4 h-4 text-primary" />
-                <span className="text-sm text-gray-600">{course.style}</span>
-              </div>
-            </div>
+            {/* Course Description */}
+            <p className="text-gray-600 line-clamp-2">{course.description}</p>
+          </div>
 
-            {/* Action Button */}
-            <button
-              onClick={handleNavigate}
-              className="relative w-full btn-primary group overflow-hidden"
-            >
-              <span className="flex items-center justify-center gap-2">
-                {user ? (
-                  <>
-                    <BookOpen className="w-5 h-5" />
-                    Start Learning
-                    <ChevronRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
-                  </>
-                ) : (
-                  <>
-                    Sign in to Join
-                    <ChevronRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </span>
-            </button>
+          {/* Course Stats */}
+          <div className="grid grid-cols-3 gap-4 mt-4">
+            <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
+              <Clock className="w-4 h-4 text-primary mb-1" />
+              <span className="text-xs text-gray-600">{course.duration}</span>
+            </div>
+            <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
+              <Users className="w-4 h-4 text-primary mb-1" />
+              <span className="text-xs text-gray-600">{course.studentsCount} students</span>
+            </div>
+            <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
+              <Star className="w-4 h-4 text-yellow-400 fill-current mb-1" />
+              <span className="text-xs text-gray-600">{course.rating}/5.0</span>
+            </div>
           </div>
         </div>
+
+        {/* Action Button */}
+        <button
+          onClick={handleNavigate}
+          className="relative w-full h-12 bg-secondary text-white rounded-lg shadow-md hover:bg-secondary-dark transition-all duration-200 flex items-center justify-center gap-2 px-6"
+        >
+          <span className="flex items-center">
+            {user ? (
+              <>
+                <BookOpen className="w-5 h-5" />
+                <span className="text-sm font-medium ml-2">Start Learning</span>
+                <ChevronRight className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" />
+              </>
+            ) : (
+              <>
+                <span className="text-sm font-medium">Sign in to Join</span>
+                <ChevronRight className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
+          </span>
+        </button>
       </div>
     </div>
   );
