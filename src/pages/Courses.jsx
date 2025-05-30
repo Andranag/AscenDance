@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import CourseCard from "../components/CourseCard";
+import CourseCard from "../components/cards/CourseCard";
 import { Loader, Music2 } from "lucide-react";
 import { courseService } from "../services/api";
 import SearchBar from "../components/SearchBar";

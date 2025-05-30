@@ -16,7 +16,7 @@ export const historicImages = [
   },
   {
     src: "/MV5BMmQ1YjZmNzItMDJiOS00Y2UxLTg1YmEtZGY2ZDc0YTIxNTJmXkEyXkFqcGc@._V1_.jpg",
-    caption: "The elegance and style of the swing era",
+    caption: "Cab Calloway being elegant and stylish whilst singing Minnie the Moocher",
     year: "1940s",
   },
 ];

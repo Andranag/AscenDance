@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import Hero from '../components/Sections/Hero';
-import Heritage from '../components/Sections/Heritage';
-import FeaturedCourses from '../components/Sections/FeaturedCourses';
-import About from '../components/Sections/About';
-import Extras from '../components/Sections/Extras';
-import Testimonials from '../components/Sections/Testimonials';
-import Newsletter from '../components/Sections/Newsletter';
-import Pricing from '../components/Sections/Pricing';
-import PrivateCoaching from '../components/Sections/PrivateCoaching';
+import Hero from "../components/Sections/Hero";
+import Heritage from "../components/Sections/Heritage";
+import FeaturedCourses from "../components/Sections/FeaturedCourses";
+import About from "../components/Sections/About";
+import Extras from "../components/Sections/Extras";
+import Testimonials from "../components/Sections/Testimonials";
+import NewsletterSection from "../components/Sections/Newsletter";
+import PricingSection from "../components/Sections/Pricing";
+import PrivateCoaching from "../components/Sections/PrivateCoaching";
 
 const LandingPage = () => {
   const { user } = useAuth();
   const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
   const [showCoachingForm, setShowCoachingForm] = useState(false);
@@ -22,15 +22,21 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchFeaturedCourses = async () => {
       try {
-        const response = await fetch('/api/courses/featured');
+        const response = await fetch('/api/courses/featured', {
+          credentials: 'include'
+        });
+        
         if (!response.ok) {
           throw new Error('Failed to fetch featured courses');
         }
-        const { success, data: courses } = await response.json();
-        if (success) {
-          setCourses(courses);
+        
+        const data = await response.json();
+        console.log('API Response:', data); // Add this line to debug
+        
+        if (data.success) {
+          setCourses(data.data);
         } else {
-          throw new Error('Failed to fetch featured courses');
+          throw new Error(data.message || 'Failed to fetch featured courses');
         }
       } catch (err) {
         setError(err.message);
@@ -73,14 +79,14 @@ const LandingPage = () => {
       <About />
       <Extras />
       <Testimonials />
-      <Newsletter
+      <NewsletterSection
         email={email}
         setEmail={setEmail}
         loading={loading}
-        handleNewsletterSubmit={handleNewsletterSubmit}
+        error={error}
         user={user}
       />
-      <Pricing />
+      <PricingSection />
       <PrivateCoaching
         showCoachingForm={showCoachingForm}
         setShowCoachingForm={setShowCoachingForm}

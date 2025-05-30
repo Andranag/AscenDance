@@ -118,34 +118,21 @@ const deleteCourse = async (req, res) => {
 
 const getFeaturedCourses = async (req, res) => {
   try {
-    // Get the top 3 most enrolled courses
+    // Get 4 random courses
     const featuredCourses = await Course.aggregate([
-      {
-        $lookup: {
-          from: 'enrollments',
-          localField: '_id',
-          foreignField: 'courseId',
-          as: 'enrollments'
-        }
-      },
-      {
-        $addFields: {
-          enrollmentCount: { $size: '$enrollments' }
-        }
-      },
-      {
-        $sort: { enrollmentCount: -1 }
-      },
-      {
-        $limit: 3
-      },
+      { $sample: { size: 3 } }, // Changed from 4 to 3 courses for a cleaner display
       {
         $project: {
           title: 1,
           description: 1,
           style: 1,
           level: 1,
-          enrollmentCount: 1
+          instructor: 1,
+          price: 1,
+          duration: 1,
+          rating: 1,
+          enrolled: 1,
+          image: 1
         }
       }
     ]);

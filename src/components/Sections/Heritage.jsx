@@ -2,6 +2,7 @@ import React from 'react';
 import { historicImages } from '../../data/historicImages';
 
 const HeritageSection = () => {
+
   return (
     <section className="py-20 px-4 bg-white/5">
       <div className="max-w-7xl mx-auto">
@@ -18,15 +19,19 @@ const HeritageSection = () => {
           {historicImages.map((image, index) => (
             <div
               key={index}
-              className="group relative overflow-hidden rounded-xl bg-black/50 backdrop-blur-sm"
+              className="group relative overflow-hidden rounded-xl bg-black/50 backdrop-blur-sm aspect-[4/3]"
             >
               <img
                 src={image.src}
                 alt={image.caption}
-                className="w-full h-[300px] object-cover opacity-80 group-hover:opacity-100 transition-all duration-300"
+                className={`w-full h-full ${
+                image.caption.includes('Fred Astaire') 
+                  ? 'object-cover object-top opacity-80 group-hover:opacity-100 transition-all duration-300'
+                  : 'object-cover opacity-80 group-hover:opacity-100 transition-all duration-300'
+              }`}
               />
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-white text-sm">{image.year}</p>
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                <p className="text-white text-sm mb-2">{image.year}</p>
                 <p className="text-white font-medium">{image.caption}</p>
               </div>
             </div>

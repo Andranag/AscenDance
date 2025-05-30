@@ -25,18 +25,18 @@ const LessonCard = ({ lesson, isCompleted, isLocked, onSelect, isActive }) => {
         </div>
         
         <div className="flex-1">
-          <h3 className={`font-medium mb-1 ${isLocked ? 'text-gray-400' : 'text-gray-900'}`}>
+          <h3 className={`font-medium mb-1 ${isLocked ? 'text-gray-500' : 'text-gray-800'}`}>
             {lesson.title}
           </h3>
           
           <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1 text-gray-500">
-              <Clock className="w-4 h-4" />
+            <div className="flex items-center gap-1 text-gray-600">
+              <Clock className="w-4 h-4 text-gray-500" />
               <span>{lesson.duration} min</span>
             </div>
             {lesson.resources?.length > 0 && (
-              <div className="flex items-center gap-1 text-gray-500">
-                <FileText className="w-4 h-4" />
+              <div className="flex items-center gap-1 text-gray-600">
+                <FileText className="w-4 h-4 text-gray-500" />
                 <span>{lesson.resources.length} resources</span>
               </div>
             )}

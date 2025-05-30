@@ -15,7 +15,6 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { toastError } = useToast();
 
   useEffect(() => {
     // Check for existing token and user data
@@ -34,26 +33,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const fetchUserData = async () => {
-    try {
-      const response = await authService.getProfile();
-      const userData = response.data;
-      localStorage.setItem('user', JSON.stringify({
-        id: userData.id,
-        name: userData.name,
-        email: userData.email,
-        role: userData.role
-      }));
-      setUser({
-        ...userData,
-        token: localStorage.getItem('token')
-      });
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      setLoading(false);
-    }
-  };
+
 
   const updateProfile = async (data) => {
     try {
@@ -79,13 +59,6 @@ export const AuthProvider = ({ children }) => {
       throw error;
     }
   };
-
-//   id: 'test-user-123',
-//   name: 'Dance Master',
-//   email: 'admin@example.com',
-//   role: 'admin',
-//   token: 'test-token'
-// };
 
   const login = async (credentials) => {
     try {
@@ -144,18 +117,6 @@ export const AuthProvider = ({ children }) => {
       throw error;
     }
   };
-
-  // Remove the updateUser function since we're using updateProfile
-  // const updateUser = async (updates) => {
-  //   try {
-  //     const updatedUser = { ...user, ...updates };
-  //     localStorage.setItem('user', JSON.stringify(updatedUser));
-  //     setUser(updatedUser);
-  //     return updatedUser;
-  //   } catch (error) {
-  //     throw new Error('Failed to update profile.');
-  //   }
-  // };
 
   const logout = () => {
     localStorage.removeItem('user');
