@@ -18,24 +18,23 @@ import { debugRoutes } from './routes/debug.js';
 import { userRoutes } from './routes/users.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: join(__dirname, '..', '.env') });
+
+// Load environment variables from .env file
+dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
 const io = initializeSocket(httpServer);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB Atlas'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Middleware
 const corsOptions = {
-  origin: 'http://localhost:5173', // Your frontend URL
-  credentials: true, // Allow credentials
+  origin: 'http://localhost:5173',
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
