@@ -17,13 +17,12 @@ import { enrollmentRoutes } from './routes/enrollments.js';
 import { debugRoutes } from './routes/debug.js';
 import { userRoutes } from './routes/users.js';
 
-dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env') });
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(__dirname, '..', '.env') });
 
 const app = express();
 const httpServer = createServer(app);
 const io = initializeSocket(httpServer);
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
