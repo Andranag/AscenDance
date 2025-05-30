@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Pencil, Trash2, Loader, X } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Loader } from 'lucide-react';
 import { courseService } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
+import CourseModal from '../../components/modals/CourseModal';
 
 const getLevelColor = (level) => {
   switch (level) {
@@ -42,21 +43,9 @@ const CourseManagement = () => {
   const handleCreateNew = () => {
     setIsModalOpen(true);
     setEditingCourse(null);
-    setFormData({
-      title: '',
-      description: '',
-      style: 'Lindy Hop',
-      level: 'Beginner'
-    });
   };
   const [sortField, setSortField] = useState('title');
   const [sortDirection, setSortDirection] = useState('asc');
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    style: 'Lindy Hop',
-    level: 'All Levels'
-  });
 
   const danceStyles = ['Lindy Hop', 'Balboa', 'Solo Jazz', 'Blues', 'Boogie Woogie', 'Shag', 'Rhythm and Blues'];
   const levels = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
@@ -95,7 +84,6 @@ const CourseManagement = () => {
 
   const handleEdit = (course) => {
     setEditingCourse(course);
-    setFormData(course);
     setIsModalOpen(true);
   };
 
@@ -111,50 +99,36 @@ const CourseManagement = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const validateFormData = () => {
+    const errors = [];
+    
+    if (!formData.title.trim()) errors.push('Title is required');
+    if (!formData.description.trim()) errors.push('Description is required');
+    if (!formData.style) errors.push('Style is required');
+    if (!formData.level) errors.push('Level is required');
+    if (!formData.image?.trim()) errors.push('Image URL is required');
+    if (!formData.duration?.trim()) errors.push('Duration is required');
+    if (formData.rating < 0 || formData.rating > 5) errors.push('Rating must be between 0 and 5');
+    if (formData.studentsCount < 0) errors.push('Students count must be non-negative');
 
+    return errors;
+  };
+
+  const handleSubmit = async (data) => {
     try {
-      const normalizedData = {
-        ...formData,
-        level: formData.level.trim(),
-        style: formData.style.trim()
-      };
-
-      // Normalize level to match backend expectations
-      const normalizedLevel = formData.level.trim().toLowerCase();
-      const levelMap = {
-        'beginner': 'Beginner',
-        'intermediate': 'Intermediate',
-        'advanced': 'Advanced',
-        'all levels': 'All Levels'
-      };
-      normalizedData.level = levelMap[normalizedLevel] || normalizedLevel.charAt(0).toUpperCase() + normalizedLevel.slice(1);
-
       if (editingCourse) {
-        const updated = await courseService.updateCourse(editingCourse._id, normalizedData);
+        const updated = await courseService.updateCourse(editingCourse._id, data);
         setCourses(courses.map(c => (c._id === editingCourse._id ? { ...c, ...updated } : c)));
-        toastSuccess('Course updated successfully');
       } else {
-        const created = await courseService.createCourse(normalizedData);
+        const created = await courseService.createCourse(data);
         if (created) {
           setCourses([...courses, created]);
-          toastSuccess('Course created successfully');
         } else {
           throw new Error('Failed to create course');
         }
       }
-
-      setIsModalOpen(false);
-      setEditingCourse(null);
-      setFormData({
-        title: '',
-        description: '',
-        style: 'Lindy Hop',
-        level: 'Beginner'
-      });
     } catch (error) {
-      toastError(error.message || 'Failed to save course');
+      throw error;
     }
   };
 
@@ -221,78 +195,15 @@ const CourseManagement = () => {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {editingCourse ? 'Edit Course' : 'Add New Course'}
-              </h2>
-              <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setEditingCourse(null);
-                  setFormData({
-                    title: '',
-                    description: '',
-                    style: 'Lindy Hop',
-                    level: 'Beginner'
-                  });
-                }}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
-                <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} className="input-field mt-1" required />
-              </div>
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows="3" className="input-field mt-1" required />
-              </div>
-              <div>
-                <label htmlFor="style" className="block text-sm font-medium text-gray-700">Dance Style</label>
-                <select id="style" name="style" value={formData.style} onChange={handleChange} className="input-field mt-1" required>
-                  {danceStyles.map(style => <option key={style} value={style}>{style}</option>)}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="level" className="block text-sm font-medium text-gray-700">Level</label>
-                <select id="level" name="level" value={formData.level} onChange={handleChange} className="input-field mt-1" required>
-                  {levels.map(level => (
-                    <option key={level} value={level}>{level}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setEditingCourse(null);
-                    setFormData({
-                      title: '',
-                      description: '',
-                      style: 'Lindy Hop',
-                      level: 'Beginner'
-                    });
-                  }}
-                  className="bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 px-4 py-2 rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {editingCourse ? 'Update' : 'Create'} Course
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <CourseModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingCourse(null);
+          }}
+          onSubmit={handleSubmit}
+          course={editingCourse}
+        />
       )}
     </div>
   );

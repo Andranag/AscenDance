@@ -12,6 +12,7 @@ export const API_ENDPOINTS = {
     create: `${API_BASE_URL}/api/courses`,
     update: (id) => `${API_BASE_URL}/api/courses/${id}`,
     delete: (id) => `${API_BASE_URL}/api/courses/${id}`,
+    featured: `${API_BASE_URL}/api/courses/featured`
   },
   users: {
     list: `${API_BASE_URL}/api/users`,

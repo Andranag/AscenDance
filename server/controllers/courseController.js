@@ -118,30 +118,59 @@ const deleteCourse = async (req, res) => {
 
 const getFeaturedCourses = async (req, res) => {
   try {
-    // Get 4 random courses
-    const featuredCourses = await Course.aggregate([
-      { $sample: { size: 3 } }, // Changed from 4 to 3 courses for a cleaner display
-      {
-        $project: {
-          title: 1,
-          description: 1,
-          style: 1,
-          level: 1,
-          instructor: 1,
-          price: 1,
-          duration: 1,
-          rating: 1,
-          enrolled: 1,
-          image: 1
-        }
-      }
-    ]);
+    // Disable caching
+    res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.header('Pragma', 'no-cache');
+    res.header('Expires', '0');
+
+    // Get all courses with detailed logging
+    console.log('Starting course fetch...');
+    const allCourses = await Course.find({});
+    console.log('Found total courses:', allCourses.length);
+    
+    // If we have less than 4 courses, duplicate them until we have 4
+    let selectedCourses = allCourses;
+    while (selectedCourses.length < 4) {
+      selectedCourses = [...selectedCourses, ...selectedCourses];
+    }
+    
+    // Randomly select 4 courses from the expanded list
+    const shuffled = selectedCourses.sort(() => Math.random() - 0.5);
+    const finalCourses = shuffled.slice(0, 4);
+    
+    console.log('Final selected courses:', finalCourses.length);
+    finalCourses.forEach((course, index) => {
+      console.log(`Selected course ${index + 1}:`);
+      console.log('  ID:', course._id);
+      console.log('  Title:', course.title);
+      console.log('  Style:', course.style);
+      console.log('  Level:', course.level);
+      console.log('---');
+    });
+
+    // Format the courses
+    const formattedCourses = finalCourses.map(course => ({
+      title: course.title,
+      description: course.description,
+      style: course.style,
+      level: course.level,
+      instructor: course.instructor,
+      price: course.price,
+      duration: course.duration,
+      rating: course.rating,
+      enrolled: course.enrolled,
+      image: course.image
+    }));
+
+    console.log('Final formatted courses:', formattedCourses.length);
+    console.log('First formatted course:', formattedCourses[0]);
 
     res.status(200).json({
       success: true,
-      data: featuredCourses
+      data: formattedCourses
     });
   } catch (error) {
+    console.error('Error fetching featured courses:', error);
     res.status(500).json({
       success: false,
       message: error.message

@@ -13,8 +13,31 @@ const CourseCard = ({ course }) => {
 
   if (!course || !course._id || !course.title || !course.style || !course.level) {
     console.error('Invalid course data:', course);
-    return null;
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+        <h3 className="text-red-600 font-semibold mb-2">Invalid Course Data</h3>
+        <p className="text-gray-600">This course is missing required information.</p>
+      </div>
+    );
   }
+
+  // Validate and normalize data
+  const normalizedCourse = {
+    ...course,
+    duration: course.duration || '2 hours',
+    studentsCount: course.studentsCount || 0,
+    rating: course.rating || 0.0,
+    style: course.style || 'Unknown Style',
+    level: course.level || 'Unknown Level'
+  };
+
+  // Check for missing optional fields
+  const missingFields = [];
+  if (!course.image) missingFields.push('Image');
+  if (!course.instructor) missingFields.push('Instructor');
+  if (!course.lessons?.length) missingFields.push('Lessons');
+
+  const hasMissingFields = missingFields.length > 0;
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -72,17 +95,31 @@ const CourseCard = ({ course }) => {
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
                 <Clock className="w-4 h-4 text-primary mb-1" />
-                <span className="text-xs text-gray-600">{course.duration || '2 hours'}</span>
+                <span className="text-xs text-gray-600">{normalizedCourse.duration}</span>
               </div>
               <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
                 <Users className="w-4 h-4 text-primary mb-1" />
-                <span className="text-xs text-gray-600">{course.studentsCount || '0'} students</span>
+                <span className="text-xs text-gray-600">{normalizedCourse.studentsCount} students</span>
               </div>
               <div className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
                 <Star className="w-4 h-4 text-yellow-400 fill-current mb-1" />
-                <span className="text-xs text-gray-600">{course.rating || '0.0'}/5.0</span>
+                <span className="text-xs text-gray-600">{normalizedCourse.rating}/5.0</span>
               </div>
             </div>
+
+            {/* Missing Fields Warning */}
+            {hasMissingFields && (
+              <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p className="text-sm text-yellow-700">
+                  This course is missing some information:
+                  <ul className="mt-1 list-disc list-inside text-yellow-600">
+                    {missingFields.map((field, index) => (
+                      <li key={index}>{field}</li>
+                    ))}
+                  </ul>
+                </p>
+              </div>
+            )}
             
             {/* Course Style */}
             <div className="mt-4">

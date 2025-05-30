@@ -22,23 +22,30 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchFeaturedCourses = async () => {
       try {
-        const response = await fetch('/api/courses/featured', {
-          credentials: 'include'
-        });
+        // Use hardcoded API URL for development
+        const response = await fetch('http://localhost:5000/api/courses/featured');
         
         if (!response.ok) {
           throw new Error('Failed to fetch featured courses');
         }
         
         const data = await response.json();
-        console.log('API Response:', data); // Add this line to debug
+        console.log('API Response:', data);
         
-        if (data.success) {
-          setCourses(data.data);
+        if (data.success && data.data && Array.isArray(data.data)) {
+          console.log('Setting courses:', data.data);
+          console.log('Courses length:', data.data.length);
+          console.log('First course:', data.data[0]);
+          setCourses(prevCourses => {
+            console.log('Previous courses:', prevCourses);
+            console.log('New courses:', data.data);
+            return data.data;
+          });
         } else {
-          throw new Error(data.message || 'Failed to fetch featured courses');
+          throw new Error(data.message || 'Invalid response format');
         }
       } catch (err) {
+        console.error('Error fetching featured courses:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -47,6 +54,12 @@ const LandingPage = () => {
 
     fetchFeaturedCourses();
   }, []);
+
+  // Debug log when courses state changes
+  useEffect(() => {
+    console.log('Courses state updated:', courses);
+    console.log('Number of courses:', courses.length);
+  }, [courses]);
 
   const { toastSuccess } = useToast();
 

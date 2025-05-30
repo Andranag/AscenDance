@@ -110,13 +110,12 @@ export const authService = {
 };
 
 export const courseService = {
-  getAllCourses: async () => {
+  getFeaturedCourses: async () => {
     try {
-      const response = await api.get(API_ENDPOINTS.courses.list);
+      const response = await api.get(API_ENDPOINTS.courses.featured);
       return response.data;
     } catch (error) {
-      console.error('Get courses error:', error);
-      throw error;
+      throw handleApiError(error);
     }
   },
   getCourse: async (id) => {
@@ -124,8 +123,7 @@ export const courseService = {
       const response = await api.get(API_ENDPOINTS.courses.detail(id));
       return response.data;
     } catch (error) {
-      console.error('Get course error:', error);
-      throw error;
+      throw handleApiError(error);
     }
   },
   createCourse: async (data) => {
@@ -133,8 +131,7 @@ export const courseService = {
       const response = await api.post(API_ENDPOINTS.courses.create, data);
       return response.data;
     } catch (error) {
-      console.error('Create course error:', error);
-      throw error;
+      throw handleApiError(error);
     }
   },
   updateCourse: async (id, data) => {
@@ -142,8 +139,7 @@ export const courseService = {
       const response = await api.put(API_ENDPOINTS.courses.update(id), data);
       return response.data;
     } catch (error) {
-      console.error('Update course error:', error);
-      throw error;
+      throw handleApiError(error);
     }
   },
   deleteCourse: async (id) => {
@@ -151,10 +147,9 @@ export const courseService = {
       const response = await api.delete(API_ENDPOINTS.courses.delete(id));
       return response.data;
     } catch (error) {
-      console.error('Delete course error:', error);
-      throw error;
+      throw handleApiError(error);
     }
-  },
+  }
 };
 
 export const userService = {
