@@ -46,8 +46,6 @@ if (!MONGO_URI) {
 console.log('🔄 Connecting to MongoDB...');
 
 mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
   serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 45000,
   connectTimeoutMS: 30000,
