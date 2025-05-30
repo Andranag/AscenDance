@@ -1,8 +1,10 @@
 import React from 'react';
 import { LinkButton } from '../Button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Play, User } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const HeroSection = () => {
+  const { user } = useAuth();
   return (
     <section
       id="hero"
@@ -19,20 +21,43 @@ const HeroSection = () => {
           achieve your dance goals.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <LinkButton
-            to="/login"
-            variant="primary"
-            className="text-white bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out px-8 py-4 rounded-lg text-lg font-semibold"
-          >
-            Sign In
-          </LinkButton>
-          <LinkButton
-            to="/register"
-            variant="secondary"
-            className="text-primary bg-primary/5 hover:bg-primary/10 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out px-8 py-4 rounded-lg text-lg font-semibold"
-          >
-            Sign Up
-          </LinkButton>
+          {user ? (
+            <>
+              <LinkButton
+                to="/courses"
+                variant="primary"
+                className="text-white bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out px-8 py-4 rounded-lg text-lg font-semibold flex items-center gap-2"
+              >
+                <Play className="w-5 h-5" />
+                Start Learning
+              </LinkButton>
+              <LinkButton
+                to="/profile"
+                variant="secondary"
+                className="text-primary bg-primary/5 hover:bg-primary/10 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out px-8 py-4 rounded-lg text-lg font-semibold flex items-center gap-2"
+              >
+                <User className="w-5 h-5" />
+                My Profile
+              </LinkButton>
+            </>
+          ) : (
+            <>
+              <LinkButton
+                to="/login"
+                variant="primary"
+                className="text-white bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out px-8 py-4 rounded-lg text-lg font-semibold"
+              >
+                Sign In
+              </LinkButton>
+              <LinkButton
+                to="/register"
+                variant="secondary"
+                className="text-primary bg-primary/5 hover:bg-primary/10 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out px-8 py-4 rounded-lg text-lg font-semibold"
+              >
+                Sign Up
+              </LinkButton>
+            </>
+          )}
         </div>
       </div>
     </section>

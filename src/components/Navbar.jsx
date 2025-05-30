@@ -13,7 +13,8 @@ import {
   Headphones,
   MessageCircle,
   Menu,
-  X
+  X,
+  ChevronDown
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -182,6 +183,15 @@ const Navbar = () => {
                 </>
               )}
               <div className="pt-6">
+                <div className="px-4 py-3 text-white">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="w-4 h-4 text-white/60" />
+                    <span className="text-sm font-medium">{user?.name}</span>
+                  </div>
+                  <div className="text-xs text-white/40">
+                    {user?.email}
+                  </div>
+                </div>
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-300 text-white hover:bg-red-500/10 hover:translate-x-2 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2"
