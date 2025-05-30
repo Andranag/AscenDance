@@ -37,7 +37,8 @@ app.use(cors({
 app.use(express.json());
 
 // MongoDB Connection
-const MONGO_URI = process.env.MONGODB_URI;
+const MONGO_URI = process.env.MONGO_URI;
+
 if (!MONGO_URI) {
   console.error('❌ MONGODB_URI is not defined in environment variables');
   process.exit(1);
@@ -45,20 +46,10 @@ if (!MONGO_URI) {
 
 console.log('🔄 Connecting to MongoDB...');
 
-mongoose.connect(MONGO_URI, {
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-  connectTimeoutMS: 30000,
-  family: 4,
-  maxPoolSize: 10,
-  minPoolSize: 2,
-  maxIdleTimeMS: 30000
-})
-.then(() => console.log("✅ Connected to MongoDB"))
-.catch((err) => {
-  console.error("❌ MongoDB connection error:", err);
-  process.exit(1);
-});
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
+
 
 // Handle MongoDB connection events
 mongoose.connection.on('error', err => {
