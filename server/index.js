@@ -50,7 +50,6 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-
 // Handle MongoDB connection events
 mongoose.connection.on('error', err => {
   console.error('MongoDB connection error:', err);
@@ -62,6 +61,16 @@ mongoose.connection.on('disconnected', () => {
 
 mongoose.connection.on('reconnected', () => {
   console.log('MongoDB reconnected');
+});
+
+// MongoDB Debug Route
+app.get('/api/debug/ping', async (req, res) => {
+  try {
+    const admin = await mongoose.connection.db.admin().ping();
+    res.json({ status: '✅ MongoDB connected' });
+  } catch (err) {
+    res.status(500).json({ error: '❌ MongoDB not connected', details: err.message });
+  }
 });
 
 // Rate limiting
