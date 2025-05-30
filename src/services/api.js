@@ -25,6 +25,44 @@ api.interceptors.response.use(
   (error) => Promise.reject(new Error(handleApiError(error)))
 );
 
+export const authService = {
+  login: async (credentials) => {
+    try {
+      const response = await api.post(API_ENDPOINTS.auth.login, credentials);
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
+
+  register: async (userData) => {
+    try {
+      const response = await api.post(API_ENDPOINTS.auth.register, userData);
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
+
+  updateProfile: async (data) => {
+    try {
+      const response = await api.put(API_ENDPOINTS.auth.profile, data);
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
+
+  getProfile: async () => {
+    try {
+      const response = await api.get(API_ENDPOINTS.auth.profile);
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+};
+
 export const courseService = {
   getAllCourses: async () => {
     try {
