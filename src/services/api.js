@@ -9,8 +9,6 @@ const api = axios.create({
   baseURL: ''
 });
 
-
-
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
@@ -18,13 +16,13 @@ api.interceptors.request.use(
     config.headers = { ...config.headers, ...headers };
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(new Error(handleApiError(error)))
 );
 
 // Response interceptor
 api.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(handleApiError(error))
+  (error) => Promise.reject(new Error(handleApiError(error)))
 );
 
 export const authService = {
@@ -33,7 +31,7 @@ export const authService = {
       const response = await api.post(API_ENDPOINTS.auth.login, credentials);
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   register: async (userData) => {
@@ -44,7 +42,7 @@ export const authService = {
       }
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   updateProfile: async (data) => {
@@ -118,7 +116,7 @@ export const courseService = {
       }
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   getFeaturedCourses: async () => {
@@ -129,7 +127,7 @@ export const courseService = {
       }
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   getCourse: async (id) => {
@@ -140,7 +138,7 @@ export const courseService = {
       }
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   createCourse: async (data) => {
@@ -155,7 +153,7 @@ export const courseService = {
       return response.data.data;
     } catch (error) {
       console.error('Create course error:', error.response?.data || error);
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   updateCourse: async (id, data) => {
@@ -170,7 +168,7 @@ export const courseService = {
       return response.data.data;
     } catch (error) {
       console.error('Update course error:', error.response?.data || error);
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   deleteCourse: async (id) => {
@@ -181,7 +179,7 @@ export const courseService = {
       }
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   }
 };
@@ -214,7 +212,7 @@ export const userService = {
       return response.data.data;
     } catch (error) {
       console.error('Toggle role error:', error);
-      throw error;
+      throw new Error(handleApiError(error));
     }
   },
   getAllUsers: async () => {
@@ -223,7 +221,7 @@ export const userService = {
       return response.data;
     } catch (error) {
       console.error('Get users error:', error);
-      throw error;
+      throw new Error(handleApiError(error));
     }
   },
   getUser: async (id) => {
@@ -257,7 +255,7 @@ export const userService = {
       };
     } catch (error) {
       console.error('Update user error:', error);
-      throw error;
+      throw new Error(handleApiError(error));
     }
   },
   deleteUser: async (id) => {
