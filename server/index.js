@@ -63,13 +63,29 @@ mongoose.connection.on('reconnected', () => {
   console.log('MongoDB reconnected');
 });
 
-// MongoDB Debug Route
+// MongoDB Debug Routes
 app.get('/api/debug/ping', async (req, res) => {
   try {
     const admin = await mongoose.connection.db.admin().ping();
     res.json({ status: '✅ MongoDB connected' });
   } catch (err) {
     res.status(500).json({ error: '❌ MongoDB not connected', details: err.message });
+  }
+});
+
+app.get('/api/debug/collections', async (req, res) => {
+  try {
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    const collectionNames = collections.map(col => col.name);
+    res.json({ 
+      status: '✅ Collections retrieved',
+      collections: collectionNames
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      error: '❌ Failed to retrieve collections', 
+      details: err.message 
+    });
   }
 });
 
