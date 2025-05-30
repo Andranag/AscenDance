@@ -397,7 +397,11 @@ const CourseManagement = () => {
                     </td>
                     <td className="py-4">
                       <div className="flex justify-center">
-                        <span className="text-sm text-gray-600">{course.duration}</span>
+                        <span className="text-sm text-gray-600">
+                          {course.duration ? 
+                            course.duration 
+                            : 'N/A'}
+                        </span>
                       </div>
                     </td>
                     <td className="py-4">

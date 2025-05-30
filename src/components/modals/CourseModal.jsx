@@ -22,41 +22,28 @@ const CourseModal = ({ isOpen, onClose, onSubmit, course = null, isSubmitting = 
     studentsCount: 0,
   });
 
-  // Reset form data when component mounts
-  useEffect(() => {
-    setFormData({
-      title: '',
-      description: '',
-      style: '',
-      level: '',
-      image: DEFAULT_IMAGE,
-      duration: '',
-      durationUnit: 'Hours',
-      rating: 0,
-      studentsCount: 0,
-    });
-  }, []);
-
   const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     setIsLoading(isSubmitting);
   }, [isSubmitting]);
   const [formErrors, setFormErrors] = useState({});
 
-  // Handle course data updates
+  // Handle course data updates and form reset
   useEffect(() => {
-    // Reset form data when modal opens
+    // Reset form data and clear errors when modal opens
     if (isOpen) {
+      setFormErrors({}); // Clear any existing errors
       if (course) {
         // For editing, use course data
+        const [durationValue, durationUnit] = course.duration ? course.duration.split(' ') : ['', 'Hours'];
         setFormData({
-          title: course.title,
-          description: course.description,
-          style: course.style,
-          level: course.level,
-          image: course.image,
-          duration: course.duration ? course.duration.split(' ')[0] : '',
-          durationUnit: course.duration ? course.duration.split(' ')[1] : 'Hours',
+          title: course.title || '',
+          description: course.description || '',
+          style: course.style || '',
+          level: course.level || '',
+          image: course.image || DEFAULT_IMAGE,
+          duration: durationValue || '',
+          durationUnit: durationUnit || 'Hours',
           rating: course.rating || 0,
           studentsCount: course.studentsCount || 0
         });
@@ -86,20 +73,31 @@ const CourseModal = ({ isOpen, onClose, onSubmit, course = null, isSubmitting = 
     }
   }, [formData.style, course]);
 
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
+
   const validateFormData = () => {
     const errors = {};
-    if (!formData.title.trim()) errors.title = 'Title is required';
-    if (!formData.description.trim()) errors.description = 'Description is required';
-    if (!formData.style) errors.style = 'Style is required';
-    if (!formData.level) errors.level = 'Level is required';
-    if (!formData.image.trim()) errors.image = 'Image URL is required';
-    if (!formData.duration.trim()) errors.duration = 'Duration is required';
-    else if (!/^[0-9]+$/.test(formData.duration)) errors.duration = 'Duration must be a number';
+    if (isFormSubmitted) {
+      // Check for undefined values and convert to empty string
+      const title = formData.title || '';
+      const description = formData.description || '';
+      const image = formData.image || '';
+      const duration = formData.duration || '';
+
+      if (!title.trim()) errors.title = 'Title is required';
+      if (!description.trim()) errors.description = 'Description is required';
+      if (!formData.style) errors.style = 'Style is required';
+      if (!formData.level) errors.level = 'Level is required';
+      if (!image.trim()) errors.image = 'Image URL is required';
+      if (!duration.trim()) errors.duration = 'Duration is required';
+      else if (!/^[0-9]+(\.[0-9]+)?$/.test(duration)) errors.duration = 'Duration must be a number (e.g., 5 or 1.5)';
+    }
     return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsFormSubmitted(true);
     const errors = validateFormData();
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -116,8 +114,7 @@ const CourseModal = ({ isOpen, onClose, onSubmit, course = null, isSubmitting = 
         style: formData.style.trim(),
         level: formData.level.trim(),
         image: formData.image.trim(),
-        duration: formData.duration,
-        durationUnit: formData.durationUnit,
+        duration: `${formData.duration} ${formData.durationUnit}`,
         rating: formData.rating,
         studentsCount: formData.studentsCount
       };
@@ -125,8 +122,7 @@ const CourseModal = ({ isOpen, onClose, onSubmit, course = null, isSubmitting = 
       // Call the parent's onSubmit handler with the data
       await onSubmit(normalizedData);
       
-      // Show success message and close modal
-      toastSuccess(course ? 'Course updated successfully' : 'Course created successfully');
+      // Close modal without showing success message - let parent component handle it
       onClose();
     } catch (error) {
       console.error('Course save error:', error);
@@ -269,7 +265,7 @@ const CourseModal = ({ isOpen, onClose, onSubmit, course = null, isSubmitting = 
               <label className="block text-sm font-medium text-gray-700">Duration *</label>
               <div className="flex gap-2">
                 <input
-                  type="number"
+                  type="text"
                   id="duration"
                   name="duration"
                   value={formData.duration}
@@ -280,7 +276,7 @@ const CourseModal = ({ isOpen, onClose, onSubmit, course = null, isSubmitting = 
                   required
                   aria-invalid={formErrors.duration ? 'true' : 'false'}
                   aria-errormessage={formErrors.duration ? 'duration-error' : undefined}
-                  placeholder="Enter duration"
+                  placeholder="Enter duration (e.g., 5 or 1.5)"
                 />
                 <select
                   id="durationUnit"
