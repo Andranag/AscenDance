@@ -20,7 +20,7 @@ import { userRoutes } from './routes/users.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Load environment variables from .env file
-dotenv.config();
+dotenv.config({ path: join(__dirname, '.env') });
 
 const app = express();
 const httpServer = createServer(app);
