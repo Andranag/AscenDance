@@ -1,30 +1,30 @@
-const API_BASE_URL = '/api';
+const API_BASE_URL = '';
 
 export const API_ENDPOINTS = {
   auth: {
-    login: `${API_BASE_URL}/auth/login`,
-    register: `${API_BASE_URL}/auth/register`,
-    profile: `${API_BASE_URL}/auth/profile`,
+    login: `${API_BASE_URL}/api/auth/login`,
+    register: `${API_BASE_URL}/api/auth/register`,
+    profile: `${API_BASE_URL}/api/auth/profile`,
   },
   courses: {
-    list: `${API_BASE_URL}/courses`,
-    detail: (id) => `${API_BASE_URL}/courses/${id}`,
-    create: `${API_BASE_URL}/courses`,
-    update: (id) => `${API_BASE_URL}/courses/${id}`,
-    delete: (id) => `${API_BASE_URL}/courses/${id}`,
-    featured: `${API_BASE_URL}/courses/featured`
+    list: `${API_BASE_URL}/api/courses`,
+    detail: (id) => `${API_BASE_URL}/api/courses/${id}`,
+    create: `${API_BASE_URL}/api/courses`,
+    update: (id) => `${API_BASE_URL}/api/courses/${id}`,
+    delete: (id) => `${API_BASE_URL}/api/courses/${id}`,
+    featured: `${API_BASE_URL}/api/courses/featured`
   },
   users: {
-    list: `${API_BASE_URL}/users`,
-    detail: (id) => `${API_BASE_URL}/users/${id}`,
-    update: (id) => `${API_BASE_URL}/users/${id}`,
-    delete: (id) => `${API_BASE_URL}/users/${id}`,
-    toggleRole: (id) => `${API_BASE_URL}/users/${id}/toggle-role`,
+    list: `${API_BASE_URL}/api/users`,
+    detail: (id) => `${API_BASE_URL}/api/users/${id}`,
+    update: (id) => `${API_BASE_URL}/api/users/${id}`,
+    delete: (id) => `${API_BASE_URL}/api/users/${id}`,
+    toggleRole: (id) => `${API_BASE_URL}/api/users/${id}/toggle-role`,
   },
   analytics: {
-    overview: `${API_BASE_URL}/analytics/overview`,
-    courseStats: `${API_BASE_URL}/analytics/courses`,
-    userStats: `${API_BASE_URL}/analytics/users`,
+    overview: `${API_BASE_URL}/api/analytics/overview`,
+    courseStats: `${API_BASE_URL}/api/analytics/courses`,
+    userStats: `${API_BASE_URL}/api/analytics/users`,
   }
 };
 
