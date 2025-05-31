@@ -11,17 +11,18 @@ const enrollmentSchema = new mongoose.Schema({
     ref: 'Course',
     required: true
   },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'completed', 'failed', 'refunded'],
-    default: 'pending'
-  },
-  paymentId: String,
-  amount: Number,
-  currency: {
-    type: String,
-    default: 'USD'
-  },
+  // Payment fields removed temporarily - can be restored when needed
+  // paymentStatus: {
+  //   type: String,
+  //   enum: ['pending', 'completed', 'failed', 'refunded'],
+  //   default: 'pending'
+  // },
+  // paymentId: String,
+  // amount: Number,
+  // currency: {
+  //   type: String,
+  //   default: 'USD'
+  // },
   startDate: {
     type: Date,
     default: Date.now
