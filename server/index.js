@@ -40,27 +40,39 @@ app.use(express.json());
 const MONGO_URI = process.env.MONGO_URI;
 
 if (!MONGO_URI) {
-  console.error(' MONGO_URI is not defined in environment variables');
+  console.error('❌ MONGO_URI is not defined in environment variables');
   process.exit(1);
 }
 
-console.log(' Connecting to MongoDB...');
+console.log('🔄 Connecting to MongoDB...');
 
 mongoose.connect(MONGO_URI)
-  .then(() => console.log(' MongoDB connected'))
-  .catch(err => console.error(' MongoDB connection error:', err));
+  .then(() => {
+    console.log('✅ MongoDB connected');
+    // Start server after successful connection
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log('');
+      console.log('🚀 Server started successfully!');
+      console.log(`✅ Listening on port ${PORT}`);
+      console.log('');
+    });
+  })
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
+  });
 
 // Handle MongoDB connection events
 mongoose.connection.on('error', err => {
-  console.error('MongoDB connection error:', err);
+  console.error('❌ MongoDB connection error:', err);
 });
 
 mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected');
+  console.log('❌ MongoDB disconnected');
 });
 
 mongoose.connection.on('reconnected', () => {
-  console.log('MongoDB reconnected');
+  console.log('✅ MongoDB reconnected');
 });
 
 // Rate limiting
@@ -90,7 +102,4 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-// Start server
-httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+// Server will start automatically after MongoDB connection
