@@ -13,8 +13,7 @@ const certificateSchema = new mongoose.Schema({
   },
   certificateId: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   issuedAt: {
     type: Date,
@@ -40,8 +39,8 @@ const generateCertificateId = () => {
   return `CERT-${timestamp}-${random}`;
 };
 
-// Create index for certificateId
-certificateSchema.index({ certificateId: 1 }, { unique: true });
+// Create a single index for certificateId
+certificateSchema.index({ certificateId: 1 });
 
 // Add static method to generate certificate ID
 certificateSchema.statics.generateCertificateId = generateCertificateId;

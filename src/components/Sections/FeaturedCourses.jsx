@@ -3,71 +3,56 @@ import { Link } from 'react-router-dom';
 import { Loader, ChevronRight, Clock, Star } from 'lucide-react';
 import CourseCard from '../cards/CourseCard';
 
-const getLevelColor = (level) => {
-  const levelColors = {
-    'Beginner': 'bg-emerald-500',
-    'Intermediate': 'bg-amber-500',
-    'Advanced': 'bg-rose-500',
-    'Expert': 'bg-indigo-500'
-  };
-  return levelColors[level] || 'bg-gray-500';
-};
-
-const getStyleColor = (style) => {
-  const styleColors = {
-    'Lindy Hop': 'bg-purple-500',
-    'Swing': 'bg-blue-500',
-    'Boogie Woogie': 'bg-pink-500',
-    'Bachata': 'bg-orange-500',
-    'Salsa': 'bg-yellow-500',
-    'Kizomba': 'bg-green-500'
-  };
-  return styleColors[style] || 'bg-gray-500';
-};
-
-const FeaturedCoursesSection = ({ courses, loading, error }) => {
-  // Helper function to select random courses
-  const selectRandomCourses = (courses, count) => {
-    const shuffled = [...courses].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-  };
-
-  const [detailedCourses, setDetailedCourses] = useState([]);
-  const [fetchingDetails, setFetchingDetails] = useState(false);
+const FeaturedCourses = ({ courses, loading, error }) => {
+  const [displayCourses, setDisplayCourses] = useState([]);
 
   useEffect(() => {
-    if (courses.length > 0 && !fetchingDetails) {
-      setFetchingDetails(true);
-      const fetchDetails = async () => {
-        try {
-          // Fetch all courses
-          const response = await fetch('http://localhost:5000/api/courses');
-          const allCourses = await response.json();
-          
-          if (!allCourses?.success) {
-            console.error('Failed to fetch courses:', allCourses?.message);
-            return;
-          }
-
-          const courses = allCourses.data || [];
-          
-          if (courses.length === 0) {
-            console.error('No courses found');
-            return;
-          }
-
-          // Select 4 random courses
-          const featuredCourses = selectRandomCourses(courses, 4);
-          setDetailedCourses(featuredCourses);
-        } catch (err) {
-          console.error('Error fetching courses:', err);
-        } finally {
-          setFetchingDetails(false);
-        }
-      };
-      fetchDetails();
+    if (courses && Array.isArray(courses)) {
+      // Take up to 4 courses
+      const validCourses = courses
+        .filter(course => course && course._id && course.title)
+        .slice(0, 4);
+      
+      // If we have less than 4 courses, duplicate them
+      let finalCourses = [...validCourses];
+      while (finalCourses.length < 4) {
+        finalCourses = [...finalCourses, ...validCourses];
+      }
+      
+      setDisplayCourses(finalCourses.slice(0, 4));
     }
   }, [courses]);
+
+  if (loading) {
+    return (
+      <section id="featured-courses\" className="py-24 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="flex items-center justify-center">
+            <Loader className="w-8 h-8 animate-spin text-white" />
+            <span className="ml-3 text-white">Loading featured courses...</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="featured-courses" className="py-24 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="bg-red-50/10 backdrop-blur-sm rounded-lg p-6">
+            <p className="text-red-400">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="featured-courses" className="py-24 px-4">
@@ -81,22 +66,24 @@ const FeaturedCoursesSection = ({ courses, loading, error }) => {
           </p>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center">
-            <Loader className="w-8 h-8 animate-spin text-white" />
-          </div>
-        ) : error ? (
-          <div className="text-center text-red-500">{error}</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {detailedCourses.map((course) => (
-              <CourseCard key={course._id} course={course} />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {displayCourses.map((course) => (
+            <CourseCard key={course._id} course={course} />
+          ))}
+        </div>
+
+        <div className="text-center mt-12">
+          <Link
+            to="/courses"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary rounded-lg hover:bg-white/90 transition-all duration-300"
+          >
+            View All Courses
+            <ChevronRight className="w-5 h-5" />
+          </Link>
+        </div>
       </div>
     </section>
   );
 };
 
-export default FeaturedCoursesSection;
+export default FeaturedCourses;
