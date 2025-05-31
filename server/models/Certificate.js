@@ -39,9 +39,6 @@ const generateCertificateId = () => {
   return `CERT-${timestamp}-${random}`;
 };
 
-// Create a single index for certificateId
-certificateSchema.index({ certificateId: 1 });
-
 // Add static method to generate certificate ID
 certificateSchema.statics.generateCertificateId = generateCertificateId;
 

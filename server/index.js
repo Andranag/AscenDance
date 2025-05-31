@@ -40,15 +40,15 @@ app.use(express.json());
 const MONGO_URI = process.env.MONGO_URI;
 
 if (!MONGO_URI) {
-  console.error('❌ MONGO_URI is not defined in environment variables');
+  console.error(' MONGO_URI is not defined in environment variables');
   process.exit(1);
 }
 
-console.log('🔄 Connecting to MongoDB...');
+console.log(' Connecting to MongoDB...');
 
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+  .then(() => console.log(' MongoDB connected'))
+  .catch(err => console.error(' MongoDB connection error:', err));
 
 // Handle MongoDB connection events
 mongoose.connection.on('error', err => {
@@ -61,32 +61,6 @@ mongoose.connection.on('disconnected', () => {
 
 mongoose.connection.on('reconnected', () => {
   console.log('MongoDB reconnected');
-});
-
-// MongoDB Debug Routes
-app.get('/api/debug/ping', async (req, res) => {
-  try {
-    const admin = await mongoose.connection.db.admin().ping();
-    res.json({ status: '✅ MongoDB connected' });
-  } catch (err) {
-    res.status(500).json({ error: '❌ MongoDB not connected', details: err.message });
-  }
-});
-
-app.get('/api/debug/collections', async (req, res) => {
-  try {
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    const collectionNames = collections.map(col => col.name);
-    res.json({ 
-      status: '✅ Collections retrieved',
-      collections: collectionNames
-    });
-  } catch (err) {
-    res.status(500).json({ 
-      error: '❌ Failed to retrieve collections', 
-      details: err.message 
-    });
-  }
 });
 
 // Rate limiting
