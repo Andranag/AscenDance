@@ -4,8 +4,6 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { createServer } from 'http';
 import { initializeSocket } from './services/socketService.js';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authRoutes } from './routes/auth.js';
@@ -16,22 +14,55 @@ import { lessonRoutes } from './routes/lessons.js';
 import { enrollmentRoutes } from './routes/enrollments.js';
 import { debugRoutes } from './routes/debug.js';
 import { userRoutes } from './routes/users.js';
+dotenv.config();
 
-dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env') });
+// Add chalk for colored output
+import chalk from 'chalk';
+
+// Console helper functions
+const consoleLog = {
+  success: (msg) => console.log(chalk.greenBright(`✅ ${msg}`)),
+  info: (msg) => console.log(chalk.blueBright(`ℹ️ ${msg}`)),
+  warning: (msg) => console.log(chalk.yellow(`⚠️ ${msg}`)),
+  error: (msg) => console.error(chalk.red(`❌ ${msg}`)),
+  start: (msg) => console.log(chalk.cyan(`🚀 ${msg}`)),
+  connect: (msg) => console.log(chalk.magenta(`🔌 ${msg}`))
+};
+
+// Add process exit handler
+process.on('exit', () => {
+  consoleLog.info('Server shutting down...');
+});
+
+// Get MongoDB URI
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  consoleLog.error('MONGODB_URI is not set in .env file');
+  process.exit(1);
+}
 
 const app = express();
 const httpServer = createServer(app);
-const io = initializeSocket(httpServer);
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+initializeSocket(httpServer);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => console.log('Connected to MongoDB Atlas'))
-  .catch(err => console.error('MongoDB connection error:', err));
+consoleLog.connect('Connecting to MongoDB Atlas...');
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    consoleLog.success('Connected to MongoDB Atlas');
+    mongoose.connection.on('error', err => {
+      consoleLog.error('MongoDB connection error:', err);
+    });
+    mongoose.connection.on('disconnected', () => {
+      consoleLog.warning('MongoDB disconnected');
+    });
+  })
+  .catch(err => {
+    consoleLog.error('MongoDB connection error:', err);
+    consoleLog.error('MONGODB_URI:', MONGODB_URI);
+    process.exit(1); // Exit process if connection fails
+  });
 
 // Middleware
 const corsOptions = {
@@ -58,18 +89,10 @@ app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/debug', debugRoutes);
 app.use('/api/users', userRoutes);
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(join(__dirname, '../dist')));
-  app.get('*', (req, res) => {
-    res.sendFile(join(__dirname, '../dist/index.html'));
-  });
-}
-
 // Error handling
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  consoleLog.start(`Server running on port ${PORT}`);
 });
