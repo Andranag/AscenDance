@@ -1,24 +1,43 @@
 import { calculateScore } from './quizScoring.js';
+import { validationError } from './responseUtils.js';
+import { showInfoToast, showErrorToast } from './toastUtils.js';
+import { z } from 'zod';
+
+// Define validation schemas
+const quizSubmissionSchema = z.object({
+  answers: z.array(z.number(), {
+    errorMap: () => ({ message: 'Answers must be an array of numbers' })
+  })
+});
+
+const quizSchema = z.object({
+  questions: z.array(z.object({
+    _id: z.string(),
+    correctAnswer: z.number(),
+    passingScore: z.number().min(0).max(100)
+  }))
+});
 
 /**
  * Validates a quiz submission and calculates the score
  * @param {Object} submission - The quiz submission data
  * @param {Object} quiz - The quiz object containing questions and answers
- * @returns {Object} - Result object containing score and feedback
+ * @param {Object} io - Socket.io instance
+ * @param {string} roomId - Room ID for notifications
+ * @returns {Promise<Object>} - Result object containing score and feedback
  */
-export const validateQuizSubmission = async (submission, quiz) => {
+export const validateQuizSubmission = async (submission, quiz, io, roomId) => {
   try {
-    // Validate submission format
-    if (!submission || !Array.isArray(submission.answers)) {
-      throw new Error('Invalid submission format');
-    }
+    // Validate quiz submission
+    const validatedSubmission = quizSubmissionSchema.parse(submission);
+    const validatedQuiz = quizSchema.parse(quiz);
 
     // Calculate score
-    const score = await calculateScore(submission.answers, quiz.questions);
+    const score = await calculateScore(validatedSubmission.answers, validatedQuiz.questions);
 
     // Generate feedback
-    const feedback = quiz.questions.map((question, index) => {
-      const userAnswer = submission.answers[index];
+    const feedback = validatedQuiz.questions.map((question, index) => {
+      const userAnswer = validatedSubmission.answers[index];
       const isCorrect = userAnswer === question.correctAnswer;
       return {
         questionId: question._id,
@@ -31,14 +50,18 @@ export const validateQuizSubmission = async (submission, quiz) => {
       };
     });
 
+    // Send success notification
+    showInfoToast(io, roomId, 'Quiz submitted successfully');
+
     return {
       score,
       feedback,
-      passed: score >= quiz.passingScore,
-      totalQuestions: quiz.questions.length
+      passed: score >= validatedQuiz.passingScore,
+      totalQuestions: validatedQuiz.questions.length
     };
   } catch (error) {
-    console.error('Error validating quiz submission:', error);
-    throw error;
+    // Send error notification
+    showErrorToast(io, roomId, error.message);
+    throw validationError(error);
   }
 };
