@@ -1,6 +1,6 @@
 import CourseProgress from '../models/CourseProgress.js';
-import Certificate from '../models/Certificate.js';
 import { generateCertificateId, createCertificatePDF } from '../utils/certificateUtils.js';
+import { NotFoundError, successResponse, errorResponse } from '../utils/errorUtils.js';
 
 const updateLessonProgress = async (req, res) => {
   try {
@@ -30,15 +30,16 @@ const updateLessonProgress = async (req, res) => {
     progress.lastAccessedAt = new Date();
 
     // Check if course is completed
-    if (progress.isCompleted() && !progress.completedAt) {
+    if (progress.completedLessons.length === progress.course.lessons.length && !progress.completedAt) {
       progress.completedAt = new Date();
       await issueCertificate(userId, courseId);
     }
 
     await progress.save();
-    res.json(progress);
+    return successResponse(res, progress);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error('Error updating lesson progress', error); // Log error
+    return errorResponse(res, error);
   }
 };
 
@@ -50,10 +51,10 @@ const getProgress = async (req, res) => {
       .populate('completedLessons.lesson', 'title');
 
     if (!progress) {
-      return res.status(404).json({ message: 'Progress not found' });
+      throw new NotFoundError('Progress not found');
     }
 
-    res.json({
+    return successResponse(res, {
       progress: progress.getProgressPercentage(),
       completedLessons: progress.completedLessons,
       startedAt: progress.startedAt,
@@ -62,7 +63,8 @@ const getProgress = async (req, res) => {
       certificate: progress.certificate
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error('Error getting progress', error); // Log error
+    return errorResponse(res, error);
   }
 };
 
@@ -70,7 +72,7 @@ const issueCertificate = async (userId, courseId) => {
   try {
     const progress = await CourseProgress.findOne({ user: userId, course: courseId });
     
-    if (!progress || !progress.isCompleted() || progress.certificate.issued) {
+    if (!progress || progress.completedLessons.length !== progress.course.lessons.length || progress.certificate.issued) {
       return null;
     }
 
@@ -86,8 +88,7 @@ const issueCertificate = async (userId, courseId) => {
     await progress.save();
     return certificateId;
   } catch (error) {
-    console.error('Error issuing certificate:', error);
-    return null;
+    return errorResponse(res, error);
   }
 };
 
@@ -97,8 +98,14 @@ const getCertificate = async (req, res) => {
     const progress = await CourseProgress.findOne({ user: userId, course: courseId });
 
     if (!progress || !progress.certificate.issued) {
-      return res.status(404).json({ message: 'Certificate not found' });
+      throw new NotFoundError('Certificate not found');
     }
+
+    logger.info('Certificate requested', {
+      userId,
+      courseId,
+      certificateId: progress.certificate.certificateId
+    });
 
     const certificatePDF = await createCertificatePDF(userId, courseId, progress.certificate.certificateId);
     
@@ -106,7 +113,7 @@ const getCertificate = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=certificate-${progress.certificate.certificateId}.pdf`);
     res.send(certificatePDF);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, error);
   }
 };
 

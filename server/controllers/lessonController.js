@@ -1,14 +1,16 @@
 import Lesson from '../models/Lesson.js';
 import CourseProgress from '../models/CourseProgress.js';
 import { validateQuizSubmission } from '../utils/quizUtils.js';
+import { NotFoundError, successResponse, errorResponse } from '../utils/errorUtils.js';
+import { logger } from '../utils/logger.js';
 
 const createLesson = async (req, res) => {
   try {
     const lesson = new Lesson(req.body);
     await lesson.save();
-    res.status(201).json(lesson);
+    return successResponse(res, lesson, 'Lesson created successfully', 201);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, error);
   }
 };
 
@@ -16,11 +18,11 @@ const getLesson = async (req, res) => {
   try {
     const lesson = await Lesson.findById(req.params.id);
     if (!lesson) {
-      return res.status(404).json({ message: 'Lesson not found' });
+      throw new NotFoundError('Lesson not found');
     }
-    res.json(lesson);
+    return successResponse(res, lesson);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, error);
   }
 };
 
@@ -32,7 +34,7 @@ const submitQuiz = async (req, res) => {
 
     const lesson = await Lesson.findById(lessonId);
     if (!lesson || !lesson.quiz) {
-      return res.status(404).json({ message: 'Quiz not found' });
+      throw new NotFoundError('Quiz not found');
     }
 
     const { score, feedback } = validateQuizSubmission(lesson.quiz, answers);
@@ -52,9 +54,11 @@ const submitQuiz = async (req, res) => {
       );
     }
 
-    res.json({ score, passed, feedback });
+    logger.info('Quiz submitted successfully', { lessonId, userId });
+    return successResponse(res, { score, passed, feedback });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error('Error submitting quiz', error);
+    return errorResponse(res, error);
   }
 };
 
@@ -66,11 +70,13 @@ const updateLesson = async (req, res) => {
       { new: true }
     );
     if (!lesson) {
-      return res.status(404).json({ message: 'Lesson not found' });
+      throw new NotFoundError('Lesson not found');
     }
-    res.json(lesson);
+    logger.info('Lesson updated successfully', { lessonId: req.params.id });
+    return successResponse(res, lesson, 'Lesson updated successfully');
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error('Error updating lesson', error);
+    return errorResponse(res, error);
   }
 };
 
@@ -78,11 +84,13 @@ const deleteLesson = async (req, res) => {
   try {
     const lesson = await Lesson.findByIdAndDelete(req.params.id);
     if (!lesson) {
-      return res.status(404).json({ message: 'Lesson not found' });
+      throw new NotFoundError('Lesson not found');
     }
-    res.json({ message: 'Lesson deleted successfully' });
+    logger.info('Lesson deleted successfully', { lessonId: req.params.id });
+    return successResponse(res, null, 'Lesson deleted successfully');
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error('Error deleting lesson', error);
+    return errorResponse(res, error);
   }
 };
 

@@ -1,6 +1,13 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { 
+  ValidationError, 
+  AuthenticationError,
+  successResponse,
+  errorResponse
+} from '../utils/errorUtils.js';
+import { USER_ROLES, JWT_CONFIG } from '../utils/constants.js';
 
 const login = async (req, res) => {
   try {
@@ -8,32 +15,29 @@ const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      throw new AuthenticationError('Invalid credentials');
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      throw new AuthenticationError('Invalid credentials');
     }
 
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      JWT_CONFIG.SECRET,
+      { expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN }
     );
 
-    res.status(200).json({
-      success: true,
-      data: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token
-      }
-    });
+    return successResponse(res, {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token
+    }, 'Login successful');
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, error);
   }
 };
 
@@ -41,9 +45,17 @@ const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     
+    if (!name || !email || !password) {
+      throw new ValidationError('Required fields are missing', [
+        'Name is required',
+        'Email is required',
+        'Password is required'
+      ]);
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      throw new ConflictError('User already exists');
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -53,29 +65,26 @@ const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: 'user'
+      role: USER_ROLES.USER
     });
 
     await user.save();
 
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      JWT_CONFIG.SECRET,
+      { expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN }
     );
 
-    res.status(201).json({
-      success: true,
-      data: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token
-      }
-    });
+    return successResponse(res, {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token
+    }, 'Registration successful', 201);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, error);
   }
 };
 
@@ -89,14 +98,14 @@ const updateProfile = async (req, res) => {
     
     // Only allow admins to update role
     if (req.user.role !== 'admin' && updates.role) {
-      return res.status(403).json({ message: 'Only admins can update user roles' });
+      throw new AuthenticationError('Only admins can update user roles');
     }
     delete updates.role;
 
     // Find and update user
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      throw new NotFoundError('User not found');
     }
 
     // Update specific fields
@@ -105,31 +114,29 @@ const updateProfile = async (req, res) => {
       // Check if email is already taken
       const existingUser = await User.findOne({ email: updates.email });
       if (existingUser && existingUser._id.toString() !== userId) {
-        return res.status(400).json({ message: 'Email already in use' });
+        throw new ConflictError('Email already in use');
       }
       user.email = updates.email;
     }
 
     // Save changes
     await user.save();
+    logger.info('User profile updated successfully', { userId });
 
     // Return updated user without password
     const updatedUser = await User.findById(userId).select('-password');
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
+      throw new NotFoundError('User not found');
     }
 
-    res.status(200).json({
-      success: true,
-      data: {
-        id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role
-      }
-    });
+    return successResponse(res, {
+      id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role
+    }, 'User profile updated successfully');
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, error);
   }
 };
 
@@ -139,20 +146,17 @@ const getProfile = async (req, res) => {
     const user = await User.findById(userId).select('-password');
     
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      throw new NotFoundError('User not found');
     }
 
-    res.status(200).json({
-      success: true,
-      data: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+    return successResponse(res, {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, error);
   }
 };
 

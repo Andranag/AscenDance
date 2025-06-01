@@ -1,14 +1,20 @@
 import Course from '../models/Course.js';
+import { 
+  ValidationError, 
+  NotFoundError,
+  successResponse,
+  errorResponse
+} from '../utils/errorUtils.js';
+import { COURSE_LEVELS, COURSE_STYLES } from '../utils/constants.js';
+import { logger } from '../utils/logger.js';
 
 const getAllCourses = async (req, res) => {
   try {
     const courses = await Course.find();
-    res.status(200).json({
-      success: true,
-      data: courses
-    });
+    return successResponse(res, courses, 'Courses retrieved successfully');
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error('Error fetching courses', error);
+    return errorResponse(res, error);
   }
 };
 
@@ -16,103 +22,114 @@ const getCourseById = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: 'Course not found'
-      });
+      throw new NotFoundError('Course not found');
     }
     
-    // Ensure we have all required fields
-    if (!course.title || !course.description || !course.level || !course.style) {
-      return res.status(400).json({
-        success: false,
-        message: 'Course is missing required fields'
-      });
+    // Validate course data
+    const requiredFields = ['title', 'description', 'level', 'style'];
+    const missingFields = requiredFields.filter(field => !course[field]);
+    
+    if (missingFields.length > 0) {
+      throw new ValidationError('Course is missing required fields', missingFields);
+    }
+
+    if (!Object.values(COURSE_LEVELS).includes(course.level)) {
+      throw new ValidationError('Invalid course level');
+    }
+
+    if (!Object.values(COURSE_STYLES).includes(course.style)) {
+      throw new ValidationError('Invalid course style');
     }
     
-    res.status(200).json({
-      success: true,
-      data: course
-    });
+    return successResponse(res, course);
   } catch (error) {
-    console.error('Error getting course:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Internal server error'
-    });
+    logger.error('Error getting course', error);
+    return errorResponse(res, error);
   }
 };
 
 const createCourse = async (req, res) => {
   try {
-    console.log('Received course data:', req.body);
-    const course = new Course(req.body);
-    console.log('Created course object:', course);
+    const courseData = req.body;
+
+    // Validate course data
+    if (!courseData.title || !courseData.description || !courseData.level || !courseData.style) {
+      throw new ValidationError('Missing required fields', ['title', 'description', 'level', 'style']);
+    }
+
+    if (!Object.values(COURSE_LEVELS).includes(courseData.level)) {
+      throw new ValidationError('Invalid course level');
+    }
+
+    if (!Object.values(COURSE_STYLES).includes(courseData.style)) {
+      throw new ValidationError('Invalid course style');
+    }
+
+    const course = new Course(courseData);
     await course.save();
-    res.status(201).json(course);
+    
+    logger.info('Course created successfully', { courseId: course._id });
+    return successResponse(res, course, 'Course created successfully', 201);
   } catch (error) {
-    console.error('Course creation error:', error);
-    res.status(500).json({ message: error.message });
+    logger.error('Course creation error', error);
+    return errorResponse(res, error);
   }
 };
 
 const updateCourse = async (req, res) => {
   try {
+    const courseId = req.params.id;
+    const updates = req.body;
+
     // Validate required fields
     const requiredFields = ['title', 'description', 'level', 'style'];
-    const missingFields = requiredFields.filter(field => !req.body[field]);
+    const missingFields = requiredFields.filter(field => !updates[field]);
     
     if (missingFields.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: `Missing required fields: ${missingFields.join(', ')}`
-      });
+      throw new ValidationError('Missing required fields', missingFields);
+    }
+
+    // Validate level and style
+    if (!Object.values(COURSE_LEVELS).includes(updates.level)) {
+      throw new ValidationError('Invalid course level');
+    }
+
+    if (!Object.values(COURSE_STYLES).includes(updates.style)) {
+      throw new ValidationError('Invalid course style');
     }
 
     const course = await Course.findByIdAndUpdate(
-      req.params.id,
-      req.body,
+      courseId,
+      updates,
       { new: true }
     );
     
     if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: 'Course not found'
-      });
+      throw new NotFoundError('Course not found');
     }
 
-    res.status(200).json({
-      success: true,
-      data: course
-    });
+    logger.info('Course updated successfully', { courseId });
+    return successResponse(res, course, 'Course updated successfully');
   } catch (error) {
-    console.error('Error updating course:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Internal server error'
-    });
+    logger.error('Error updating course', error);
+    return errorResponse(res, error);
   }
 };
 
 const deleteCourse = async (req, res) => {
   try {
-    const course = await Course.findByIdAndDelete(req.params.id);
+    const courseId = req.params.id;
+    const course = await Course.findByIdAndDelete(courseId);
+    
     if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: 'Course not found'
-      });
+      throw new NotFoundError('Course not found');
     }
-    res.status(200).json({
-      success: true,
-      message: 'Course deleted successfully'
-    });
+
+    logger.info('Course deleted successfully', { courseId });
+    return successResponse(res, null, 'Course deleted successfully');
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    logger.error('Error deleting course', error);
+    return errorResponse(res, error);
   }
 };
 
@@ -123,10 +140,9 @@ const getFeaturedCourses = async (req, res) => {
     res.header('Pragma', 'no-cache');
     res.header('Expires', '0');
 
-    // Get all courses with detailed logging
-    console.log('Starting course fetch...');
+    // Get all courses
     const allCourses = await Course.find({});
-    console.log('Found total courses:', allCourses.length);
+    logger.info('Courses fetched for featured courses', { totalCourses: allCourses.length });
     
     // If we have less than 4 courses, duplicate them until we have 4
     let selectedCourses = allCourses;
@@ -138,16 +154,6 @@ const getFeaturedCourses = async (req, res) => {
     const shuffled = selectedCourses.sort(() => Math.random() - 0.5);
     const finalCourses = shuffled.slice(0, 4);
     
-    console.log('Final selected courses:', finalCourses.length);
-    finalCourses.forEach((course, index) => {
-      console.log(`Selected course ${index + 1}:`);
-      console.log('  ID:', course._id);
-      console.log('  Title:', course.title);
-      console.log('  Style:', course.style);
-      console.log('  Level:', course.level);
-      console.log('---');
-    });
-
     // Format the courses
     const formattedCourses = finalCourses.map(course => ({
       _id: course._id.toString(),
@@ -163,19 +169,15 @@ const getFeaturedCourses = async (req, res) => {
       image: course.image
     }));
 
-    console.log('Final formatted courses:', formattedCourses.length);
-    console.log('First formatted course:', formattedCourses[0]);
+    logger.info('Featured courses generated successfully', { 
+      totalFeatured: formattedCourses.length,
+      firstCourseId: formattedCourses[0]?._id
+    });
 
-    res.status(200).json({
-      success: true,
-      data: formattedCourses
-    });
+    return successResponse(res, formattedCourses, 'Featured courses retrieved successfully');
   } catch (error) {
-    console.error('Error fetching featured courses:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    logger.error('Error fetching featured courses', error);
+    return errorResponse(res, error);
   }
 };
 

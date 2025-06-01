@@ -1,5 +1,7 @@
 import User from '../models/User.js';
+import { NotFoundError, ValidationError, AuthenticationError, successResponse, errorResponse } from '../utils/errorUtils.js';
 import bcrypt from 'bcryptjs';
+import { logger } from '../utils/logger.js';
 
 export const createUser = async (req, res) => {
   try {
@@ -7,19 +9,13 @@ export const createUser = async (req, res) => {
     
     // Validate required fields
     if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name, email, and password are required'
-      });
+      throw new ValidationError('Name, email, and password are required');
     }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'This email is already registered. Please use a different email address.'
-      });
+      throw new ValidationError('This email is already registered. Please use a different email address.');
     }
 
     // Hash password
@@ -35,37 +31,20 @@ export const createUser = async (req, res) => {
     });
 
     await user.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'User created successfully',
-      data: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
+    logger.info('User created successfully', { userId: user._id });
+    return successResponse(res, user, 'User created successfully', 201);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    logger.error('Error creating user', error);
+    return errorResponse(res, error);
   }
 };
 
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
-    res.status(200).json({
-      success: true,
-      data: users
-    });
+    return successResponse(res, users);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch users'
-    });
+    return errorResponse(res, error);
   }
 };
 
@@ -73,20 +52,13 @@ export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      throw new NotFoundError('User not found');
     }
-    res.status(200).json({
-      success: true,
-      data: user
-    });
+    logger.info('User retrieved successfully', { userId: req.params.id });
+    return successResponse(res, user);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch user'
-    });
+    logger.error('Error getting user', error);
+    return errorResponse(res, error);
   }
 };
 
@@ -101,10 +73,7 @@ export const updateUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      throw new NotFoundError('User not found');
     }
 
     // If password is provided, hash it
@@ -116,10 +85,7 @@ export const updateUser = async (req, res) => {
         updateData.password = hashedPassword;
       } catch (hashError) {
         console.error('Password hashing error:', hashError);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to hash password'
-        });
+        return errorResponse(res, new Error('Failed to hash password'));
       }
     }
 
@@ -131,17 +97,13 @@ export const updateUser = async (req, res) => {
         userId: user._id,
         updatedFields: Object.keys(updateData)
       });
-      res.status(200).json({
-        success: true,
-        message: 'User updated successfully',
-        data: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          updatedFields: Object.keys(updateData)
-        }
-      });
+      return successResponse(res, {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        updatedFields: Object.keys(updateData)
+      }, 'User updated successfully');
     } catch (saveError) {
       console.error('Error saving user:', {
         userId: req.params.id,
@@ -154,10 +116,7 @@ export const updateUser = async (req, res) => {
       userId: req.params.id,
       error: error
     });
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    return errorResponse(res, error);
   }
 };
 
@@ -165,20 +124,13 @@ export const deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      throw new NotFoundError('User not found');
     }
-    res.status(200).json({
-      success: true,
-      message: 'User deleted successfully'
-    });
+    logger.info('User deleted successfully', { userId: req.params.id });
+    return successResponse(res, user, 'User deleted successfully');
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete user'
-    });
+    logger.error('Error deleting user', error);
+    return errorResponse(res, error);
   }
 };
 
@@ -186,23 +138,15 @@ export const toggleUserRole = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      throw new NotFoundError('User not found');
     }
-    
+
     user.role = user.role === 'user' ? 'admin' : 'user';
     await user.save();
-    
-    res.status(200).json({
-      success: true,
-      data: user
-    });
+    logger.info('User role toggled successfully', { userId: req.params.id, newRole: user.role });
+    return successResponse(res, user, 'User role toggled successfully');
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to toggle user role'
-    });
+    logger.error('Error toggling user role', error);
+    return errorResponse(res, error);
   }
 };

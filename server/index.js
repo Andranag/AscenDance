@@ -6,6 +6,7 @@ import { createServer } from 'http';
 import { initializeSocket } from './services/socketService.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { requestLogger, logger } from './utils/logger.js';
 import { authRoutes } from './routes/auth.js';
 import { courseRoutes } from './routes/courses.js';
 import { analyticsRoutes } from './routes/analytics.js';
@@ -74,6 +75,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(requestLogger);
 
 // Rate limiting
 app.use('/api/', apiLimiter);

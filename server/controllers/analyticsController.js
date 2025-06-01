@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Course from '../models/Course.js';
+import { successResponse, errorResponse } from '../utils/errorUtils.js';
 
 const getOverview = async (req, res) => {
   try {
@@ -37,14 +38,21 @@ const getOverview = async (req, res) => {
       }
     ]);
 
-    res.json({
+    logger.info('Overview retrieved successfully', {
+      totalUsers,
+      totalCourses,
+      activeUsers,
+      completionRate: completionRate[0]?.rate || 0
+    });
+    return successResponse(res, {
       totalUsers,
       totalCourses,
       activeUsers,
       completionRate: completionRate[0]?.rate || 0
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    logger.error('Error fetching overview', error);
+    return errorResponse(res, error);
   }
 };
 
@@ -88,9 +96,9 @@ const getCourseStats = async (req, res) => {
       }
     ]);
 
-    res.json(courseStats);
+    return successResponse(res, courseStats);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, error);
   }
 };
 
@@ -114,9 +122,9 @@ const getUserStats = async (req, res) => {
       }
     ]);
 
-    res.json(userStats);
+    return successResponse(res, userStats);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, error);
   }
 };
 

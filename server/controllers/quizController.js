@@ -1,7 +1,9 @@
 import express from 'express';
 import { validateQuizSubmission } from '../utils/quizUtils.js';
-import { successResponse, errorResponse } from '../utils/responseUtils.js';
-import { showSuccessToast, showErrorToast } from '../utils/toastUtils.js';
+import { logger } from '../utils/logger.js';
+import { NotFoundError, successResponse, errorResponse } from '../utils/errorUtils.js';
+import Lesson from '../models/Lesson.js';
+import LessonProgress from '../models/LessonProgress.js';
 
 const router = express.Router();
 
@@ -13,7 +15,7 @@ router.post('/:lessonId/submit', async (req, res) => {
     // Get the quiz from the database
     const lesson = await Lesson.findById(lessonId);
     if (!lesson || !lesson.quiz) {
-      return errorResponse(res, null, 'Quiz not found');
+      throw new NotFoundError('Quiz not found');
     }
 
     // Validate and submit quiz
@@ -25,9 +27,10 @@ router.post('/:lessonId/submit', async (req, res) => {
       { $set: { quizScore: result.score, quizPassed: result.passed } }
     );
 
-    // Send success response
+    logger.info('Quiz submitted successfully', { lessonId, userId: req.user.id, score: result.score });
     return successResponse(res, result, 'Quiz submitted successfully');
   } catch (error) {
+    logger.error('Error submitting quiz', error);
     return errorResponse(res, error);
   }
 });
