@@ -1,10 +1,11 @@
 import { Course } from '../models/index.js';
 import { BaseController } from '../utils/baseController.js';
 import { validateCourse } from '../utils/schemas.js';
+import { logger } from '../utils/logger.js';
 
 export class CourseController extends BaseController {
   constructor() {
-    super(Course);
+    super(Course, {}, logger);
   }
 
   getFeaturedCourses = async (req, res) => {
@@ -14,7 +15,7 @@ export class CourseController extends BaseController {
       res.header('Expires', '0');
 
       const allCourses = await this.Model.find({});
-      this.logger.info('Courses fetched for featured courses', { totalCourses: allCourses.length });
+      this.logger?.info('Courses fetched for featured courses', { totalCourses: allCourses.length });
       
       let selectedCourses = allCourses;
       while (selectedCourses.length < 4) {
@@ -38,15 +39,15 @@ export class CourseController extends BaseController {
         image: course.image
       }));
 
-      this.logger.info('Featured courses generated successfully', { 
+      this.logger?.info('Featured courses generated successfully', { 
         totalFeatured: formattedCourses.length,
         firstCourseId: formattedCourses[0]?._id
       });
 
       return this.successResponse(res, formattedCourses, 'Featured courses retrieved successfully');
     } catch (error) {
-      this.logger.error('Error fetching featured courses', error);
-      return this.errorResponse(res, error);
+      this.logger?.error('Error fetching featured courses', error);
+      return this.errorResponse(res, error, 'Failed to fetch featured courses', 500);
     }
   };
 
@@ -80,10 +81,10 @@ export class CourseController extends BaseController {
       const data = this.validators.create(req.body);
       const course = new this.Model(data);
       await course.save();
-      this.logger.info('Course created successfully', { courseId: course._id });
+      this.logger?.info('Course created successfully', { courseId: course._id });
       return this.successResponse(res, course, 'Course created successfully', 201);
     } catch (error) {
-      this.logger.error('Error creating course', error);
+      this.logger?.error('Error creating course', error);
       return this.errorResponse(res, error);
     }
   };
@@ -103,7 +104,7 @@ export class CourseController extends BaseController {
       this.logger.info('Course updated successfully', { courseId: id });
       return this.successResponse(res, course, 'Course updated successfully');
     } catch (error) {
-      this.logger.error('Error updating course', error);
+      this.logger?.error('Error updating course', error);
       return this.errorResponse(res, error);
     }
   };
@@ -118,7 +119,7 @@ export class CourseController extends BaseController {
       this.logger.info('Course deleted successfully', { courseId: id });
       return this.successResponse(res, null, 'Course deleted successfully');
     } catch (error) {
-      this.logger.error('Error deleting course', error);
+      this.logger?.error('Error deleting course', error);
       return this.errorResponse(res, error);
     }
   };

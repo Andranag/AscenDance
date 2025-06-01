@@ -1,284 +1,280 @@
 import axios from 'axios';
 import { API_ENDPOINTS, getAuthHeaders, handleApiError } from '../config/api';
 
+// Create a reusable API client with common configurations
 const api = axios.create({
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json'
   },
-  baseURL: ''
+  baseURL: '',
+  withCredentials: true,
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN'
 });
 
+// Add request interceptor to handle proxy
+api.interceptors.request.use(
+  (config) => {
+    // Ensure URL is a relative path starting with /api/
+    if (config.url) {
+      // Remove any protocol or domain from the URL
+      config.url = config.url.replace(/^[a-zA-Z]+:\/\//, '');
+      // Remove any leading slashes
+      config.url = config.url.replace(/^\/+/, '');
+      // Add /api/ prefix if not present
+      if (!config.url.startsWith('api/')) {
+        config.url = 'api/' + config.url;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
 
-
-// Request interceptor
+// Add request interceptor for authentication
 api.interceptors.request.use(
   (config) => {
     const headers = getAuthHeaders();
     config.headers = { ...config.headers, ...headers };
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Request failed:', error);
+    return Promise.reject(error);
+  }
 );
 
-// Response interceptor
+// Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(handleApiError(error))
+  (error) => {
+    console.error('API Error:', error.response?.data || error);
+    const errorData = error.response?.data || {
+      message: error.message || 'Failed to connect to server',
+      code: 'SERVER_ERROR',
+      status: error.response?.status || 500
+    };
+    
+    return Promise.reject({
+      message: errorData.message,
+      code: errorData.code,
+      status: errorData.status
+    });
+  }
 );
 
-export const authService = {
-  login: async (credentials) => {
-    try {
-      const response = await api.post(API_ENDPOINTS.auth.login, credentials);
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  },
-  register: async (userData) => {
-    try {
-      const response = await api.post(API_ENDPOINTS.auth.register, userData);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Registration failed');
-      }
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  },
-  updateProfile: async (data) => {
-    try {
-      const response = await api.put(API_ENDPOINTS.auth.profile, data);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to update profile');
-      }
-      return response.data.data;
-    } catch (error) {
-      console.error('Update profile error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to update profile');
-    }
-  },
-  getProfile: async () => {
-    try {
-      const response = await api.get(API_ENDPOINTS.auth.profile);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to get profile');
-      }
-      return response.data.data;
-    } catch (error) {
-      console.error('Get profile error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to get profile');
-    }
-  },
-  getAllUsers: async () => {
-    try {
-      const response = await api.get(API_ENDPOINTS.users.list);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to fetch users');
-      }
-      return response.data;
-    } catch (error) {
-      console.error('Get users error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch users');
-    }
-  },
-  deleteUser: async (userId) => {
-    try {
-      const response = await api.delete(API_ENDPOINTS.users.delete(userId));
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to delete user');
-      }
-      return response.data;
-    } catch (error) {
-      console.error('Delete user error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to delete user');
-    }
-  },
-  toggleUserRole: async (userId) => {
-    try {
-      const response = await api.patch(API_ENDPOINTS.users.toggleRole(userId));
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to toggle user role');
-      }
-      return response.data;
-    } catch (error) {
-      console.error('Toggle role error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to toggle user role');
-    }
-  } 
-};
+// Base service class for common functionality
+class BaseService {
+  constructor() {
+    this.api = api;
+  }
 
-export const courseService = {
-  getAllCourses: async () => {
+  // Helper method to ensure API URLs are properly formatted
+  formatUrl(endpoint) {
+    if (!endpoint.startsWith('/')) {
+      return '/' + endpoint;
+    }
+    return endpoint;
+  }
+
+  async request(config) {
     try {
-      const response = await api.get(API_ENDPOINTS.courses.list);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to fetch courses');
+      // Ensure URL is a relative path starting with /api/
+      if (config.url) {
+        // Remove any protocol or domain from the URL
+        config.url = config.url.replace(/^[a-zA-Z]+:\/\//, '');
+        // Remove any leading slashes
+        config.url = config.url.replace(/^\/+/, '');
+        // Add /api/ prefix if not present
+        if (!config.url.startsWith('api/')) {
+          config.url = 'api/' + config.url;
+        }
       }
+      const response = await this.api.request(config);
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
-    }
-  },
-  getFeaturedCourses: async () => {
-    try {
-      const response = await api.get(API_ENDPOINTS.courses.featured);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to fetch featured courses');
-      }
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  },
-  getCourse: async (id) => {
-    try {
-      const response = await api.get(API_ENDPOINTS.courses.detail(id));
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to fetch course');
-      }
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  },
-  createCourse: async (data) => {
-    try {
-      console.log('Creating course with data:', data);
-      const response = await api.post(API_ENDPOINTS.courses.create, data);
-      console.log('Create course response:', response.data);
-      // If response doesn't have success property, assume it's the course data
-      if (!response.data?.success) {
-        return response.data;
-      }
-      return response.data.data;
-    } catch (error) {
-      console.error('Create course error:', error.response?.data || error);
-      throw handleApiError(error);
-    }
-  },
-  updateCourse: async (id, data) => {
-    try {
-      console.log('Updating course with id:', id, 'and data:', data);
-      const response = await api.put(API_ENDPOINTS.courses.update(id), data);
-      console.log('Update course response:', response.data);
-      // If response doesn't have success property, assume it's the course data
-      if (!response.data?.success) {
-        return response.data;
-      }
-      return response.data.data;
-    } catch (error) {
-      console.error('Update course error:', error.response?.data || error);
-      throw handleApiError(error);
-    }
-  },
-  deleteCourse: async (id) => {
-    try {
-      const response = await api.delete(API_ENDPOINTS.courses.delete(id));
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to delete course');
-      }
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
+      console.error('API Request Error:', {
+        url: config.url,
+        method: config.method,
+        error: error.response?.data || error.message
+      });
+      throw error;
     }
   }
-};
+}
 
-export const userService = {
-  createUser: async (data) => {
-    try {
-      const response = await api.post(API_ENDPOINTS.users.list, data);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to create user');
-      }
-      const userData = response.data.data;
-      if (!userData || !userData.id) {
-        throw new Error('Invalid user data received from server');
-      }
-      return {
-        id: userData.id,
-        name: userData.name,
-        email: userData.email,
-        role: userData.role
-      };
-    } catch (error) {
-      console.error('Create user error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to create user');
-    }
-  },
-  toggleRole: async (id) => {
-    try {
-      const response = await api.patch(API_ENDPOINTS.users.toggleRole(id));
-      return response.data.data;
-    } catch (error) {
-      console.error('Toggle role error:', error);
-      throw error;
-    }
-  },
-  getAllUsers: async () => {
-    try {
-      const response = await api.get(API_ENDPOINTS.users.list);
-      return response.data;
-    } catch (error) {
-      console.error('Get users error:', error);
-      throw error;
-    }
-  },
-  getUser: async (id) => {
-    try {
-      const response = await api.get(API_ENDPOINTS.users.detail(id));
-      if (!response.data?.success) {
-        throw new Error(response.data.message || 'Failed to fetch user');
-      }
-      return response.data.data;
-    } catch (error) {
-      console.error('Get user error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch user');
-    }
-  },
-  updateUser: async (id, data) => {
-    try {
-      if (!id) {
-        throw new Error('Invalid user ID');
-      }
-      const response = await api.put(API_ENDPOINTS.users.update(id), data);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to update user');
-      }
-      const userData = response.data.data;
-      return {
-        _id: userData._id,
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        courseProgress: userData.courseProgress
-      };
-    } catch (error) {
-      console.error('Update user error:', error);
-      throw error;
-    }
-  },
-  deleteUser: async (id) => {
-    try {
-      if (!id) {
-        throw new Error('Invalid user ID');
-      }
-      const response = await api.delete(API_ENDPOINTS.users.delete(id));
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to delete user');
-      }
-      return response.data.data;
-    } catch (error) {
-      console.error('Delete user error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to delete user');
-    }
+// Auth service
+class AuthService extends BaseService {
+  async login(credentials) {
+    return this.request({
+      method: 'POST',
+      url: API_ENDPOINTS.auth.login,
+      data: credentials
+    });
   }
-};
 
-export const analyticsService = {
-  getOverview: () => api.get(API_ENDPOINTS.analytics.overview),
-  getCourseStats: () => api.get(API_ENDPOINTS.analytics.courseStats),
-  getUserStats: () => api.get(API_ENDPOINTS.analytics.userStats),
-};
+  async register(userData) {
+    return this.request({
+      method: 'POST',
+      url: API_ENDPOINTS.auth.register,
+      data: userData
+    });
+  }
+
+  async updateProfile(data) {
+    return this.request({
+      method: 'PUT',
+      url: API_ENDPOINTS.auth.profile,
+      data
+    });
+  }
+
+  async getProfile() {
+    return this.request({
+      method: 'GET',
+      url: API_ENDPOINTS.auth.profile
+    });
+  }
+
+  async getAllUsers() {
+    return this.request({
+      method: 'GET',
+      url: API_ENDPOINTS.users.list
+    });
+  }
+
+  async deleteUser(userId) {
+    return this.request({
+      method: 'DELETE',
+      url: API_ENDPOINTS.users.delete(userId)
+    });
+  }
+
+  async toggleUserRole(userId) {
+    return this.request({
+      method: 'POST',
+      url: API_ENDPOINTS.users.toggleRole(userId)
+    });
+  }
+}
+
+// Course service
+class CourseService extends BaseService {
+  async getAllCourses() {
+    return this.request({
+      method: 'GET',
+      url: API_ENDPOINTS.courses.list
+    });
+  }
+
+  async getFeaturedCourses() {
+    return this.request({
+      method: 'GET',
+      url: API_ENDPOINTS.courses.featured
+    });
+  }
+
+  async getCourse(id) {
+    return this.request({
+      method: 'GET',
+      url: API_ENDPOINTS.courses.detail(id)
+    });
+  }
+
+  async createCourse(data) {
+    return this.request({
+      method: 'POST',
+      url: API_ENDPOINTS.courses.create,
+      data
+    });
+  }
+
+  async updateCourse(id, data) {
+    return this.request({
+      method: 'PUT',
+      url: API_ENDPOINTS.courses.update(id),
+      data
+    });
+  }
+
+  async deleteCourse(id) {
+    return this.request({
+      method: 'DELETE',
+      url: API_ENDPOINTS.courses.delete(id)
+    });
+  }
+}
+
+// Analytics service
+class AnalyticsService extends BaseService {
+  async getOverview() {
+    return this.request({
+      method: 'GET',
+      url: API_ENDPOINTS.analytics.overview
+    });
+  }
+
+  async getCourseStats() {
+    return this.request({
+      method: 'GET',
+      url: API_ENDPOINTS.analytics.courseStats
+    });
+  }
+
+  async getUserStats() {
+    return this.request({
+      method: 'GET',
+      url: API_ENDPOINTS.analytics.userStats
+    });
+  }
+}
+
+// User service
+class UserService extends BaseService {
+  async getAllUsers() {
+    return this.request({
+      method: 'GET',
+      url: API_ENDPOINTS.users.list
+    });
+  }
+
+  async getUser(userId) {
+    return this.request({
+      method: 'GET',
+      url: API_ENDPOINTS.users.detail(userId)
+    });
+  }
+
+  async updateUser(userId, data) {
+    return this.request({
+      method: 'PUT',
+      url: API_ENDPOINTS.users.update(userId),
+      data
+    });
+  }
+
+  async deleteUser(userId) {
+    return this.request({
+      method: 'DELETE',
+      url: API_ENDPOINTS.users.delete(userId)
+    });
+  }
+
+  async toggleUserRole(userId) {
+    return this.request({
+      method: 'POST',
+      url: API_ENDPOINTS.users.toggleRole(userId)
+    });
+  }
+}
+
+// Export instances of services
+export const authService = new AuthService();
+export const courseService = new CourseService();
+export const analyticsService = new AnalyticsService();
+export const userService = new UserService();

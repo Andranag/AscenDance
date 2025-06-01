@@ -1,30 +1,29 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+// Remove API_BASE_URL since we're using Vite proxy
 export const API_ENDPOINTS = {
   auth: {
-    login: `${API_BASE_URL}/api/auth/login`,
-    register: `${API_BASE_URL}/api/auth/register`,
-    profile: `${API_BASE_URL}/api/auth/profile`,
+    login: '/api/auth/login',
+    register: '/api/auth/register',
+    profile: '/api/auth/profile',
   },
   courses: {
-    list: `${API_BASE_URL}/api/courses`,
-    detail: (id) => `${API_BASE_URL}/api/courses/${id}`,
-    create: `${API_BASE_URL}/api/courses`,
-    update: (id) => `${API_BASE_URL}/api/courses/${id}`,
-    delete: (id) => `${API_BASE_URL}/api/courses/${id}`,
-    featured: `${API_BASE_URL}/api/courses/featured`
+    list: '/api/courses',
+    detail: (id) => `/api/courses/${id}`,
+    create: '/api/courses',
+    update: (id) => `/api/courses/${id}`,
+    delete: (id) => `/api/courses/${id}`,
+    featured: '/api/courses/featured'
   },
   users: {
-    list: `${API_BASE_URL}/api/users`,
-    detail: (id) => `${API_BASE_URL}/api/users/${id}`,
-    update: (id) => `${API_BASE_URL}/api/users/${id}`,
-    delete: (id) => `${API_BASE_URL}/api/users/${id}`,
-    toggleRole: (id) => `${API_BASE_URL}/api/users/${id}/toggle-role`,
+    list: '/api/users',
+    detail: (id) => `/api/users/${id}`,
+    update: (id) => `/api/users/${id}`,
+    delete: (id) => `/api/users/${id}`,
+    toggleRole: (id) => `/api/users/${id}/toggle-role`,
   },
   analytics: {
-    overview: `${API_BASE_URL}/analytics/overview`,
-    courseStats: `${API_BASE_URL}/analytics/courses`,
-    userStats: `${API_BASE_URL}/analytics/users`,
+    overview: '/api/analytics/overview',
+    courseStats: '/api/analytics/courses',
+    userStats: '/api/analytics/users',
   }
 };
 
@@ -37,14 +36,35 @@ export const getAuthHeaders = () => {
 };
 
 export const handleApiError = (error) => {
+  console.error('API Error:', error);
   if (error.response) {
     // Server responded with error
-    return error.response.data.message || 'An error occurred';
+    const responseData = error.response.data;
+    if (responseData) {
+      return {
+        message: responseData.message || responseData.error || 'An error occurred',
+        code: responseData.code || 'UNKNOWN_ERROR',
+        statusCode: error.response.status || 500
+      };
+    }
+    return {
+      message: 'An error occurred',
+      code: 'UNKNOWN_ERROR',
+      statusCode: error.response.status || 500
+    };
   } else if (error.request) {
     // Request made but no response
-    return 'Network error. Please check your connection.';
+    return {
+      message: 'Network error. Please check your connection.',
+      code: 'NETWORK_ERROR',
+      statusCode: 504
+    };
   } else {
     // Error setting up request
-    return 'An unexpected error occurred.';
+    return {
+      message: 'An unexpected error occurred.',
+      code: 'CLIENT_ERROR',
+      statusCode: 500
+    };
   }
 };

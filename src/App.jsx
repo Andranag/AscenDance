@@ -16,7 +16,9 @@ import { ToastProvider } from './contexts/ToastContext';
 import Toast from './components/Toast';
 
 function App() {
-  const { user } = useAuth();
+  console.log('App component rendering');
+  const { user, loading } = useAuth();
+  console.log('User:', user);
   const isAdmin = user?.role === 'admin';
 
   const AdminRoute = ({ children }) => {
@@ -28,19 +30,47 @@ function App() {
 
   const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-neutral-900 to-neutral-800 flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-gradient-custom flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-neutral-900 to-neutral-800 flex flex-col">
         {!isAuthPage && user && <Navbar />}
         <div className="flex-1">
           <main className="min-h-screen">
             <Routes>
               {/* Public Routes */}
-              <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-              <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/courses" element={<Courses />} />
-              <Route path="/course/:courseId" element={<CoursePage />} />
+              <Route path="/login" element={
+                !user ? (
+                  <Login />
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              } />
+              <Route path="/register" element={
+                !user ? (
+                  <Register />
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              } />
+              <Route path="/" element={
+                <LandingPage />
+              } />
+              <Route path="/courses" element={
+                <Courses />
+              } />
+              <Route path="/course/:courseId" element={
+                <CoursePage />
+              } />
 
               {/* Protected Routes */}
               <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />

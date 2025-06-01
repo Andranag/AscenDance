@@ -19,6 +19,15 @@
 }
 
 @layer components {
+  /* Gradient Background */
+  .bg-gradient-custom {
+    background: linear-gradient(135deg, 
+      rgba(var(--color-primary), 0.1),
+      rgba(var(--color-secondary), 0.1)
+    );
+  }
+
+  /* Text Link Styles */
   /* Text Link Styles */
   .text-primary-link {
     color: rgb(var(--color-primary));

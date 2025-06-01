@@ -17,23 +17,18 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing token and user data
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      const parsedUser = JSON.parse(userData);
+    const token = import.meta.env.VITE_API_TOKEN || localStorage.getItem('token');
+    if (token) {
       setUser({
-        ...parsedUser,
-        token
+        token,
+        id: 'anonymous',
+        name: 'Anonymous',
+        email: 'anonymous@example.com',
+        role: 'user'
       });
-      setLoading(false);
-    } else {
-      setLoading(false);
     }
+    setLoading(false);
   }, []);
-
-
 
   const updateProfile = async (data) => {
     try {
@@ -64,10 +59,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = await authService.login(credentials);
       
-      // Store the token
+      // Store the token and user data
       localStorage.setItem('token', data.data.token);
-      
-      // Store user data
       localStorage.setItem('user', JSON.stringify({
         id: data.data.id,
         name: data.data.name,
@@ -84,6 +77,7 @@ export const AuthProvider = ({ children }) => {
       });
       return data;
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };

@@ -3,21 +3,40 @@ import { logger } from './logger.js';
 import { validateCourse, validatePartialCourse } from './schemas.js';
 
 export class BaseController {
-  constructor(Model, validators = {}) {
+  constructor(Model, validators = {}, logger) {
     this.Model = Model;
     this.validators = {
       create: validators.create || validateCourse,
       update: validators.update || validatePartialCourse,
       delete: validators.delete || validateCourse
     };
+    this.logger = logger;
   }
+
+  // Import response utilities
+  successResponse = (res, data, message = 'Success', statusCode = 200) => {
+    return res.status(statusCode).json({
+      success: true,
+      message,
+      data
+    });
+  };
+
+  errorResponse = (res, error, message = 'Error', statusCode = 500) => {
+    const errorData = error?.response?.data || {
+      message: error?.message || message,
+      code: error?.code || 'UNKNOWN_ERROR',
+      status: statusCode
+    };
+    return res.status(statusCode).json(errorData);
+  };
 
   getAll = async (req, res) => {
     try {
       const items = await this.Model.find();
       return successResponse(res, items);
     } catch (error) {
-      logger.error(`Error fetching ${this.Model.modelName.toLowerCase()}s`, error);
+      this.logger?.error(`Error fetching ${this.Model.modelName.toLowerCase()}s`, error);
       return errorResponse(res, error);
     }
   };
@@ -31,7 +50,7 @@ export class BaseController {
       }
       return successResponse(res, item);
     } catch (error) {
-      logger.error(`Error getting ${this.Model.modelName.toLowerCase()}`, error);
+      this.logger?.error(`Error getting ${this.Model.modelName.toLowerCase()}`, error);
       return errorResponse(res, error);
     }
   };
@@ -44,7 +63,7 @@ export class BaseController {
       logger.info(`${this.Model.modelName} created successfully`, { id: item._id });
       return successResponse(res, item, `${this.Model.modelName} created successfully`, 201);
     } catch (error) {
-      logger.error(`Error creating ${this.Model.modelName.toLowerCase()}`, error);
+      this.logger?.error(`Error creating ${this.Model.modelName.toLowerCase()}`, error);
       return errorResponse(res, error);
     }
   };

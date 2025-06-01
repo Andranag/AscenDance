@@ -27,7 +27,7 @@ const LandingPage = () => {
         const response = await courseService.getFeaturedCourses();
         console.log('API Response:', response);
         
-        if (response?.success && response?.data && Array.isArray(response.data)) {
+        if (response?.data && Array.isArray(response.data)) {
           console.log('Setting courses:', response.data);
           console.log('Courses length:', response.data.length);
           console.log('First course:', response.data[0]);
@@ -37,7 +37,7 @@ const LandingPage = () => {
             return response.data;
           });
         } else {
-          throw new Error(response?.message || 'Failed to fetch featured courses');
+          throw new Error(error?.message || 'Failed to fetch featured courses');
         }
       } catch (err) {
         console.error('Error fetching featured courses:', err);
@@ -75,8 +75,18 @@ const LandingPage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-neutral-900 to-neutral-800 flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-custom">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-900 to-neutral-800 flex flex-col">
       <Hero />
       <Heritage />
       <FeaturedCourses
