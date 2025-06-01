@@ -1,13 +1,13 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
 import { 
-  ValidationError, 
+  successResponse, 
+  errorResponse,
   AuthenticationError,
-  successResponse,
-  errorResponse
+  ConflictError,
+  generateToken,
 } from '../utils/errorUtils.js';
-import { USER_ROLES, JWT_CONFIG } from '../utils/constants.js';
+import { logger } from '../utils/logger.js';
+import bcrypt from 'bcryptjs';
+import User from '../models/User.js';
 
 const login = async (req, res) => {
   try {
@@ -23,20 +23,11 @@ const login = async (req, res) => {
       throw new AuthenticationError('Invalid credentials');
     }
 
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      JWT_CONFIG.SECRET,
-      { expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN }
-    );
-
-    return successResponse(res, {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token
-    }, 'Login successful');
+    logger.info('User logged in successfully', { userId: user._id });
+    const token = generateToken(user);
+    return successResponse(res, { token, user: { id: user._id, email: user.email, role: user.role } }, 'Login successful');
   } catch (error) {
+    logger.error('Error logging in', error);
     return errorResponse(res, error);
   }
 };
@@ -70,20 +61,19 @@ const register = async (req, res) => {
 
     await user.save();
 
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      JWT_CONFIG.SECRET,
-      { expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN }
-    );
+    const token = generateToken(user);
 
     return successResponse(res, {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     }, 'Registration successful', 201);
   } catch (error) {
+    logger.error('Error registering user', error);
     return errorResponse(res, error);
   }
 };
@@ -136,26 +126,21 @@ const updateProfile = async (req, res) => {
       role: updatedUser.role
     }, 'User profile updated successfully');
   } catch (error) {
+    logger.error('Error updating profile', error);
     return errorResponse(res, error);
   }
 };
 
 const getProfile = async (req, res) => {
   try {
-    const { userId } = req.user;
-    const user = await User.findById(userId).select('-password');
-    
+    const user = await User.findById(req.user.id).select('-password');
     if (!user) {
       throw new NotFoundError('User not found');
     }
 
-    return successResponse(res, {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    });
+    return successResponse(res, user);
   } catch (error) {
+    logger.error('Error getting profile', error);
     return errorResponse(res, error);
   }
 };

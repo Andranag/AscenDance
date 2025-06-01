@@ -1,5 +1,4 @@
-import Lesson from '../models/Lesson.js';
-import CourseProgress from '../models/CourseProgress.js';
+import { Lesson, CourseProgress } from '../models/index.js';
 import { validateQuizSubmission } from '../utils/quizUtils.js';
 import { NotFoundError, successResponse, errorResponse } from '../utils/errorUtils.js';
 import { logger } from '../utils/logger.js';
@@ -10,6 +9,7 @@ const createLesson = async (req, res) => {
     await lesson.save();
     return successResponse(res, lesson, 'Lesson created successfully', 201);
   } catch (error) {
+    logger.error('Error creating lesson', error);
     return errorResponse(res, error);
   }
 };
@@ -22,6 +22,7 @@ const getLesson = async (req, res) => {
     }
     return successResponse(res, lesson);
   } catch (error) {
+    logger.error('Error getting lesson', error);
     return errorResponse(res, error);
   }
 };

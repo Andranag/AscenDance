@@ -3,7 +3,7 @@ import { NotFoundError, ValidationError, AuthenticationError, successResponse, e
 import bcrypt from 'bcryptjs';
 import { logger } from '../utils/logger.js';
 
-export const createUser = async (req, res) => {
+const createUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
     
@@ -39,7 +39,7 @@ export const createUser = async (req, res) => {
   }
 };
 
-export const getAllUsers = async (req, res) => {
+const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
     return successResponse(res, users);
@@ -48,7 +48,7 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-export const getUserById = async (req, res) => {
+const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
@@ -62,7 +62,7 @@ export const getUserById = async (req, res) => {
   }
 };
 
-export const updateUser = async (req, res) => {
+const updateUser = async (req, res) => {
   try {
     console.log('Update user request:', {
       userId: req.params.id,
@@ -120,7 +120,7 @@ export const updateUser = async (req, res) => {
   }
 };
 
-export const deleteUser = async (req, res) => {
+const deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
@@ -134,7 +134,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-export const toggleUserRole = async (req, res) => {
+const toggleUserRole = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -149,4 +149,13 @@ export const toggleUserRole = async (req, res) => {
     logger.error('Error toggling user role', error);
     return errorResponse(res, error);
   }
+};
+
+export {
+  createUser,
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  toggleUserRole
 };

@@ -1,5 +1,4 @@
-import Enrollment from '../models/Enrollment.js';
-import Course from '../models/Course.js';
+import { Enrollment, Course } from '../models/index.js';
 import { ValidationError, NotFoundError, successResponse, errorResponse } from '../utils/errorUtils.js';
 import { logger } from '../utils/logger.js';
 import { ENROLLMENT_STATUS } from '../utils/constants.js';

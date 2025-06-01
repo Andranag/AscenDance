@@ -1,6 +1,7 @@
-import CourseProgress from '../models/CourseProgress.js';
+import { CourseProgress } from '../models/index.js';
 import { generateCertificateId, createCertificatePDF } from '../utils/certificateUtils.js';
 import { NotFoundError, successResponse, errorResponse } from '../utils/errorUtils.js';
+import { logger } from '../utils/logger.js';
 
 const updateLessonProgress = async (req, res) => {
   try {
@@ -88,6 +89,7 @@ const issueCertificate = async (userId, courseId) => {
     await progress.save();
     return certificateId;
   } catch (error) {
+    logger.error('Error issuing certificate', error); // Log error
     return errorResponse(res, error);
   }
 };
@@ -113,6 +115,7 @@ const getCertificate = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=certificate-${progress.certificate.certificateId}.pdf`);
     res.send(certificatePDF);
   } catch (error) {
+    logger.error('Error getting certificate', error); // Log error
     return errorResponse(res, error);
   }
 };
