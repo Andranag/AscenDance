@@ -6,10 +6,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  baseURL: ''
+  baseURL: '/api'
 });
-
-
 
 // Request interceptor
 api.interceptors.request.use(
@@ -18,13 +16,13 @@ api.interceptors.request.use(
     config.headers = { ...config.headers, ...headers };
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(new Error(handleApiError(error)))
 );
 
 // Response interceptor
 api.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(handleApiError(error))
+  (error) => Promise.reject(new Error(handleApiError(error)))
 );
 
 export const authService = {
@@ -33,80 +31,36 @@ export const authService = {
       const response = await api.post(API_ENDPOINTS.auth.login, credentials);
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
+
   register: async (userData) => {
     try {
       const response = await api.post(API_ENDPOINTS.auth.register, userData);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Registration failed');
-      }
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
+
   updateProfile: async (data) => {
     try {
       const response = await api.put(API_ENDPOINTS.auth.profile, data);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to update profile');
-      }
-      return response.data.data;
+      return response.data;
     } catch (error) {
-      console.error('Update profile error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to update profile');
+      throw new Error(handleApiError(error));
     }
   },
+
   getProfile: async () => {
     try {
       const response = await api.get(API_ENDPOINTS.auth.profile);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to get profile');
-      }
-      return response.data.data;
-    } catch (error) {
-      console.error('Get profile error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to get profile');
-    }
-  },
-  getAllUsers: async () => {
-    try {
-      const response = await api.get(API_ENDPOINTS.users.list);
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to fetch users');
-      }
       return response.data;
     } catch (error) {
-      console.error('Get users error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to fetch users');
+      throw new Error(handleApiError(error));
     }
-  },
-  deleteUser: async (userId) => {
-    try {
-      const response = await api.delete(API_ENDPOINTS.users.delete(userId));
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to delete user');
-      }
-      return response.data;
-    } catch (error) {
-      console.error('Delete user error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to delete user');
-    }
-  },
-  toggleUserRole: async (userId) => {
-    try {
-      const response = await api.patch(API_ENDPOINTS.users.toggleRole(userId));
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Failed to toggle user role');
-      }
-      return response.data;
-    } catch (error) {
-      console.error('Toggle role error:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to toggle user role');
-    }
-  } 
+  }
 };
 
 export const courseService = {
@@ -118,18 +72,46 @@ export const courseService = {
       }
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   getFeaturedCourses: async () => {
     try {
+      console.log('Fetching featured courses...');
       const response = await api.get(API_ENDPOINTS.courses.featured);
+      console.log('Featured courses response:', response.data);
+      
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Failed to fetch featured courses');
       }
-      return response.data;
+
+      // Validate and normalize course data
+      const courses = response.data.data;
+      if (!Array.isArray(courses)) {
+        throw new Error('Invalid courses data received');
+      }
+
+      // Ensure each course has required fields
+      const validCourses = courses.map(course => ({
+        _id: course._id,
+        title: course.title || 'Untitled Course',
+        description: course.description || 'No description available',
+        style: course.style || 'General',
+        level: course.level || 'All Levels',
+        image: course.image || "https://images.pexels.com/photos/2188012/pexels-photo-2188012.jpeg",
+        duration: course.duration || '2 hours',
+        studentsCount: course.studentsCount || 0,
+        rating: course.rating || 0,
+        lessons: Array.isArray(course.lessons) ? course.lessons : []
+      }));
+
+      return {
+        success: true,
+        data: validCourses
+      };
     } catch (error) {
-      throw handleApiError(error);
+      console.error('Error in getFeaturedCourses:', error);
+      throw new Error(handleApiError(error));
     }
   },
   getCourse: async (id) => {
@@ -140,7 +122,7 @@ export const courseService = {
       }
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   createCourse: async (data) => {
@@ -155,7 +137,7 @@ export const courseService = {
       return response.data.data;
     } catch (error) {
       console.error('Create course error:', error.response?.data || error);
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   updateCourse: async (id, data) => {
@@ -170,7 +152,7 @@ export const courseService = {
       return response.data.data;
     } catch (error) {
       console.error('Update course error:', error.response?.data || error);
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   },
   deleteCourse: async (id) => {
@@ -181,7 +163,7 @@ export const courseService = {
       }
       return response.data;
     } catch (error) {
-      throw handleApiError(error);
+      throw new Error(handleApiError(error));
     }
   }
 };
@@ -214,7 +196,7 @@ export const userService = {
       return response.data.data;
     } catch (error) {
       console.error('Toggle role error:', error);
-      throw error;
+      throw new Error(handleApiError(error));
     }
   },
   getAllUsers: async () => {
@@ -223,7 +205,7 @@ export const userService = {
       return response.data;
     } catch (error) {
       console.error('Get users error:', error);
-      throw error;
+      throw new Error(handleApiError(error));
     }
   },
   getUser: async (id) => {
@@ -257,7 +239,7 @@ export const userService = {
       };
     } catch (error) {
       console.error('Update user error:', error);
-      throw error;
+      throw new Error(handleApiError(error));
     }
   },
   deleteUser: async (id) => {
