@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../contexts/ToastContext';
-import { useAuth } from '../contexts/AuthContext';
-import { courseService } from '../services/api';
+import { api } from '../services/api';
+import BaseService from '../services/BaseService';
+import { API_ENDPOINTS } from '../config/api';
 import Hero from "../components/Sections/Hero";
 import Heritage from "../components/Sections/Heritage";
 import FeaturedCourses from "../components/Sections/FeaturedCourses";
@@ -13,42 +14,29 @@ import PricingSection from "../components/Sections/Pricing";
 import PrivateCoaching from "../components/Sections/PrivateCoaching";
 
 const LandingPage = () => {
-  const { user } = useAuth();
   const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [email, setEmail] = useState('');
   const [showCoachingForm, setShowCoachingForm] = useState(false);
+  const { toastError } = useToast();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchFeaturedCourses = async () => {
       try {
-        setLoading(true);
-        const response = await courseService.getFeaturedCourses();
-        console.log('API Response:', response);
-        
-        if (response?.data && Array.isArray(response.data)) {
-          console.log('Setting courses:', response.data);
-          console.log('Courses length:', response.data.length);
-          console.log('First course:', response.data[0]);
-          setCourses(prevCourses => {
-            console.log('Previous courses:', prevCourses);
-            console.log('New courses:', response.data);
-            return response.data;
-          });
+        const courseService = new BaseService(api, '');
+        const response = await courseService.get(API_ENDPOINTS.courses.featured);
+        if (response.data) {
+          setCourses(response.data);
         } else {
-          throw new Error(error?.message || 'Failed to fetch featured courses');
+          throw new Error('Failed to fetch featured courses');
         }
-      } catch (err) {
-        console.error('Error fetching featured courses:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error('Course fetch error:', error);
+        toastError('Failed to fetch featured courses');
       }
     };
 
     fetchFeaturedCourses();
-  }, []);
+  }, [toastError]);
 
   // Debug log when courses state changes
   useEffect(() => {
@@ -56,60 +44,50 @@ const LandingPage = () => {
     console.log('Number of courses:', courses.length);
   }, [courses]);
 
-  const { toastSuccess } = useToast();
-
-  const handleNewsletterSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleNewsletterSubmit = async (formData) => {
     try {
-      // Simulate successful subscription
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setLoading(true);
+      const newsletterService = new BaseService(api, '');
+      const response = await newsletterService.post(API_ENDPOINTS.newsletter, formData);
       
-      // Clear the form
-      setEmail('');
-      toastSuccess('Thank you for subscribing to our newsletter!');
-    } catch (err) {
-      console.error('Newsletter subscription error:', err);
+      if (response.data) {
+        toastSuccess('Successfully subscribed to newsletter');
+        return { success: true, message: 'Successfully subscribed to newsletter' };
+      } else {
+        throw new Error('Failed to subscribe');
+      }
+    } catch (error) {
+      console.error('Newsletter API error:', error);
+      const errorObj = {
+        url: API_ENDPOINTS.newsletter,
+        method: 'POST',
+        status: error?.response?.status || 500,
+        message: error?.response?.data?.message || error?.message || 'Failed to subscribe to newsletter',
+        data: error?.response?.data
+      };
+      
+      const errorResponse = apiErrorUtils.handleApiError(errorObj);
+      toastError(errorResponse.message);
+      return { success: false, message: errorResponse.message };
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-neutral-900 to-neutral-800 flex flex-col">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-900 to-neutral-800 flex flex-col">
+    <main>
       <Hero />
       <Heritage />
-      <FeaturedCourses
-        courses={courses}
-        loading={loading}
-        error={error}
-      />
+      <FeaturedCourses courses={courses} loading={loading} />
       <About />
       <Extras />
       <Testimonials />
       <NewsletterSection
-        email={email}
-        setEmail={setEmail}
-        loading={loading}
-        error={error}
-        user={user}
+        onNewsletterSubmit={handleNewsletterSubmit}
       />
       <PricingSection />
-      <PrivateCoaching
-        showCoachingForm={showCoachingForm}
-        setShowCoachingForm={setShowCoachingForm}
-      />
-    </div>
+      <PrivateCoaching showCoachingForm={showCoachingForm} setShowCoachingForm={setShowCoachingForm} />
+    </main>
   );
 };
 

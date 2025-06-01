@@ -2,9 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import CourseCard from "../components/cards/CourseCard";
-import { Loader, Music2 } from "lucide-react";
+import { Loader } from "lucide-react";
 import { courseService } from "../services/api";
 import SearchBar from "../components/SearchBar";
+import { showToast } from '../utils/toast';
+import { responseUtils } from '../utils/response';
+import { apiErrorUtils } from '../utils/apiError';
 
 const Courses = () => {
   console.log("Courses component mounted");
@@ -74,45 +77,22 @@ const Courses = () => {
       try {
         console.log("Fetching courses from API");
         const response = await courseService.getAllCourses();
-        console.log("API Response:", response);
-
-        if (!response?.success) {
-          throw new Error(response?.message || "Failed to fetch courses");
+        if (responseUtils.isSuccess(response)) {
+          const courses = response.data;
+          const validCourses = courses.filter(
+            (course) =>
+              course && course._id && course.title && course.style && course.level
+          );
+          setCourses(validCourses);
+          setFilteredCourses(validCourses);
+        } else {
+          const errorResponse = apiErrorUtils.handleApiError(response);
+          showToast.fromResponse(errorResponse);
         }
-
-        const courses = response.data;
-        console.log("Received courses:", JSON.stringify(courses, null, 2));
-        console.log("Number of courses:", courses.length);
-
-        // Validate courses data
-        if (!Array.isArray(courses)) {
-          throw new Error("Courses data is not an array");
-        }
-
-        if (courses.length > 0) {
-          console.log("First course details:", {
-            id: courses[0]._id,
-            title: courses[0].title,
-            style: courses[0].style,
-            level: courses[0].level,
-          });
-        }
-
-        // Ensure we have valid course objects
-        const validCourses = courses.filter(
-          (course) =>
-            course && course._id && course.title && course.style && course.level
-        );
-
-        console.log("Valid courses:", validCourses);
-
-        // Update state with valid courses
-        setCourses(validCourses);
-        console.log("Courses state after set:", validCourses);
         setLoading(false);
-      } catch (err) {
-        console.error("Error fetching courses:", err);
-        setError(err.message || "Failed to fetch courses");
+      } catch (error) {
+        const errorResponse = apiErrorUtils.handleApiError(error);
+        showToast.fromResponse(errorResponse);
         setCourses([]);
         setLoading(false);
       }

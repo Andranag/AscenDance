@@ -1,8 +1,10 @@
 import axios from 'axios';
-import { API_ENDPOINTS, getAuthHeaders, handleApiError } from '../config/api';
+import { getAuthHeaders } from '../config/api';
+import BaseService from './BaseService';
+import { apiErrorUtils } from '../utils/apiError';
 
 // Create a reusable API client with common configurations
-const api = axios.create({
+export const api = axios.create({
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -13,6 +15,19 @@ const api = axios.create({
   xsrfCookieName: 'XSRF-TOKEN',
   xsrfHeaderName: 'X-XSRF-TOKEN'
 });
+
+// Add request interceptor for authentication
+api.interceptors.request.use(
+  (config) => {
+    const headers = getAuthHeaders();
+    config.headers = { ...config.headers, ...headers };
+    return config;
+  },
+  (error) => {
+    const errorResponse = apiErrorUtils.handleNetworkError(error);
+    return Promise.reject(errorResponse);
+  }
+);
 
 // Add request interceptor to handle proxy
 api.interceptors.request.use(
@@ -68,208 +83,115 @@ api.interceptors.response.use(
   }
 );
 
-// Base service class for common functionality
-class BaseService {
-  constructor() {
-    this.api = api;
-  }
-
-  // Helper method to ensure API URLs are properly formatted
-  formatUrl(endpoint) {
-    if (!endpoint.startsWith('/')) {
-      return '/' + endpoint;
-    }
-    return endpoint;
-  }
-
-  async request(config) {
-    try {
-      // Ensure URL is a relative path starting with /api/
-      if (config.url) {
-        // Remove any protocol or domain from the URL
-        config.url = config.url.replace(/^[a-zA-Z]+:\/\//, '');
-        // Remove any leading slashes
-        config.url = config.url.replace(/^\/+/, '');
-        // Add /api/ prefix if not present
-        if (!config.url.startsWith('api/')) {
-          config.url = 'api/' + config.url;
-        }
-      }
-      const response = await this.api.request(config);
-      return response.data;
-    } catch (error) {
-      console.error('API Request Error:', {
-        url: config.url,
-        method: config.method,
-        error: error.response?.data || error.message
-      });
-      throw error;
-    }
-  }
-}
-
 // Auth service
 class AuthService extends BaseService {
+  constructor() {
+    super(api, '/api/auth');
+  }
+
   async login(credentials) {
-    return this.request({
-      method: 'POST',
-      url: API_ENDPOINTS.auth.login,
-      data: credentials
-    });
+    return this.post('login', credentials);
   }
 
   async register(userData) {
-    return this.request({
-      method: 'POST',
-      url: API_ENDPOINTS.auth.register,
-      data: userData
-    });
+    return this.post('register', userData);
   }
 
   async updateProfile(data) {
-    return this.request({
-      method: 'PUT',
-      url: API_ENDPOINTS.auth.profile,
-      data
-    });
+    return this.put('profile', data);
   }
 
   async getProfile() {
-    return this.request({
-      method: 'GET',
-      url: API_ENDPOINTS.auth.profile
-    });
+    return this.get('profile');
   }
 
   async getAllUsers() {
-    return this.request({
-      method: 'GET',
-      url: API_ENDPOINTS.users.list
-    });
+    return this.get('/users');
   }
 
   async deleteUser(userId) {
-    return this.request({
-      method: 'DELETE',
-      url: API_ENDPOINTS.users.delete(userId)
-    });
+    return this.delete(`/users/${userId}`);
   }
 
   async toggleUserRole(userId) {
-    return this.request({
-      method: 'POST',
-      url: API_ENDPOINTS.users.toggleRole(userId)
-    });
+    return this.post(`/users/${userId}/toggle-role`);
   }
 }
 
 // Course service
 class CourseService extends BaseService {
+  constructor() {
+    super(api, '/api/courses');
+  }
+
   async getAllCourses() {
-    return this.request({
-      method: 'GET',
-      url: API_ENDPOINTS.courses.list
-    });
+    return this.get('');
   }
 
   async getFeaturedCourses() {
-    return this.request({
-      method: 'GET',
-      url: API_ENDPOINTS.courses.featured
-    });
+    return this.get('featured');
   }
 
   async getCourse(id) {
-    return this.request({
-      method: 'GET',
-      url: API_ENDPOINTS.courses.detail(id)
-    });
+    return this.get(id);
   }
 
   async createCourse(data) {
-    return this.request({
-      method: 'POST',
-      url: API_ENDPOINTS.courses.create,
-      data
-    });
+    return this.post('', data);
   }
 
   async updateCourse(id, data) {
-    return this.request({
-      method: 'PUT',
-      url: API_ENDPOINTS.courses.update(id),
-      data
-    });
+    return this.put(id, data);
   }
 
   async deleteCourse(id) {
-    return this.request({
-      method: 'DELETE',
-      url: API_ENDPOINTS.courses.delete(id)
-    });
+    return this.delete(id);
   }
 }
 
 // Analytics service
 class AnalyticsService extends BaseService {
+  constructor() {
+    super(api, '/api/analytics');
+  }
+
   async getOverview() {
-    return this.request({
-      method: 'GET',
-      url: API_ENDPOINTS.analytics.overview
-    });
+    return this.get('overview');
   }
 
   async getCourseStats() {
-    return this.request({
-      method: 'GET',
-      url: API_ENDPOINTS.analytics.courseStats
-    });
+    return this.get('courses');
   }
 
   async getUserStats() {
-    return this.request({
-      method: 'GET',
-      url: API_ENDPOINTS.analytics.userStats
-    });
+    return this.get('users');
   }
 }
 
 // User service
 class UserService extends BaseService {
+  constructor() {
+    super(api, '/api/users');
+  }
+
   async getAllUsers() {
-    return this.request({
-      method: 'GET',
-      url: API_ENDPOINTS.users.list
-    });
+    return this.get('');
   }
 
   async getUser(userId) {
-    return this.request({
-      method: 'GET',
-      url: API_ENDPOINTS.users.detail(userId)
-    });
+    return this.get(userId);
   }
 
   async updateUser(userId, data) {
-    return this.request({
-      method: 'PUT',
-      url: API_ENDPOINTS.users.update(userId),
-      data
-    });
+    return this.put(userId, data);
   }
 
   async deleteUser(userId) {
-    return this.request({
-      method: 'DELETE',
-      url: API_ENDPOINTS.users.delete(userId)
-    });
+    return this.delete(userId);
   }
 
   async toggleUserRole(userId) {
-    return this.request({
-      method: 'POST',
-      url: API_ENDPOINTS.users.toggleRole(userId)
-    });
+    return this.post(`${userId}/toggle-role`);
   }
 }
 

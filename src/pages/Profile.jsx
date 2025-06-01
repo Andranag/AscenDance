@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { User, Mail, Award, Clock, Music2, Star, Calendar, BookOpen, ArrowRight } from 'lucide-react';
+import { User, Mail, Award, Clock, Star, BookOpen, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { showToast } from '../utils/toast';
+import { validationUtils } from '../utils/validation';
+import { responseUtils } from '../utils/response';
+import { apiErrorUtils } from '../utils/apiError';
 
 const Profile = () => {
   const { user, updateProfile } = useAuth();
@@ -43,16 +47,30 @@ const Profile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    const validation = validationUtils.validateProfile(formData);
+    if (!validation.isValid) {
+      showToast.fromResponse(validation.toResponse());
+      return;
+    }
+
     try {
-      const result = await updateProfile(formData);
-      toastSuccess('Profile updated successfully!');
-      setIsEditing(false);
-      setFormData({
-        name: result?.name || '',
-        email: result?.email || ''
-      });
+      const response = await updateProfile(formData);
+      if (responseUtils.isSuccess(response)) {
+        showToast.success('Profile updated successfully!');
+        setIsEditing(false);
+        setFormData({
+          name: response.data.name || '',
+          email: response.data.email || ''
+        });
+      } else {
+        const errorResponse = apiErrorUtils.handleApiError(response);
+        showToast.fromResponse(errorResponse);
+      }
     } catch (error) {
-      toastError(error.message || 'Failed to update profile');
+      const errorResponse = apiErrorUtils.handleApiError(error);
+      showToast.fromResponse(errorResponse);
     }
   };
 

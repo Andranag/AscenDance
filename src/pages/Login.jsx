@@ -3,6 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { showToast } from '../utils/toast';
+import { validationUtils } from '../utils/validation';
+import { responseUtils } from '../utils/response';
+import { apiErrorUtils } from '../utils/apiError';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -28,21 +32,26 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
+    // Validate form
+    const validation = validationUtils.validateLogin(formData);
+    if (!validation.isValid) {
+      showToast.fromResponse(validation.toResponse());
+      setLoading(false);
+      return;
+    }
+
     try {
-      const result = await login(formData);
-      const userName = result?.data?.name || formData.email.split('@')[0] || 'User';
-      toastSuccess(`Welcome back, ${userName}!`);
-      navigate('/');
-    } catch (err) {
-      console.error('Login error:', err);
-      let errorMessage = err.message || 'Login failed. Please check your credentials.';
-      
-      // Check if it's a rate limit error
-      if (err.status === 429) {
-        errorMessage = 'Too many login attempts. Please wait a few minutes and try again.';
+      const response = await login(formData);
+      if (responseUtils.isSuccess(response)) {
+        const userName = response.data.name || formData.email.split('@')[0] || 'User';
+        showToast.success(`Welcome back, ${userName}!`);
+        navigate('/');
+      } else {
+        showToast.fromResponse(response);
       }
-      
-      toastError(errorMessage);
+    } catch (error) {
+      const errorResponse = apiErrorUtils.handleAuthError(error);
+      showToast.fromResponse(errorResponse);
     } finally {
       setLoading(false);
     }

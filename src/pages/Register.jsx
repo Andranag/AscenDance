@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Eye, EyeOff, Mail, Lock, User, Shield, X, Check, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, X, Check } from 'lucide-react';
+import { showToast } from '../utils/toast';
+import { validationUtils } from '../utils/validation';
+import { responseUtils } from '../utils/response';
+import { apiErrorUtils } from '../utils/apiError';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,7 +22,7 @@ const Register = () => {
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setsLoading] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
 
@@ -44,35 +48,30 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!passwordsMatch) {
-      toastError('Passwords do not match');
+    setsLoading(true);
+
+    // Validate form
+    const validation = validationUtils.validateRegister(formData);
+    if (!validation.isValid) {
+      showToast.fromResponse(validation.toResponse());
+      setsLoading(false);
       return;
     }
-    
-    if (passwordStrength < 3) {
-      toastError('Password is too weak');
-      return;
-    }
-    
-    setLoading(true);
 
     try {
-      const result = await register(formData);
-      if (!result || !result.success) {
-        throw new Error(result?.message || 'Registration failed');
+      const response = await register(formData);
+      if (responseUtils.isSuccess(response)) {
+        const userName = response.data.name || formData.name || 'User';
+        showToast.success(`Welcome to Ascendance, ${userName}! Let's start your dance journey!`);
+        navigate('/');
+      } else {
+        showToast.fromResponse(response);
       }
-      
-      const userName = result.data.name || formData.name || 'User';
-      toastSuccess(`Welcome to Ascendance, ${userName}! Let's start your dance journey!`);
-      
-      // Since we're already logged in after registration, redirect to home instead of login
-      navigate('/');
-    } catch (err) {
-      console.error('Registration error:', err);
-      toastError(err.message || 'Registration failed. Try again.');
+    } catch (error) {
+      const errorResponse = apiErrorUtils.handleAuthError(error);
+      showToast.fromResponse(errorResponse);
     } finally {
-      setLoading(false);
+      setsLoading(false);
     }
   };
 

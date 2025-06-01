@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { courseService } from '../services/api';
-import { Music2, CheckCircle, Clock, ChevronRight, Loader, Play, Video, FileText, Award } from 'lucide-react';
+import { Clock, Loader, Award } from 'lucide-react';
+import { showToast } from '../utils/toast';
+import { responseUtils } from '../utils/response';
+import { apiErrorUtils } from '../utils/apiError';
 import LessonCard from '../components/course/LessonCard';
 import ProgressBar from '../components/course/ProgressBar';
 import QuizCard from '../components/course/QuizCard';
@@ -76,29 +79,22 @@ const CoursePage = () => {
 
         console.log('Fetching course with ID:', courseId);
         const response = await courseService.getCourse(courseId);
-        
-        if (!response?.success) {
-          throw new Error(response?.message || 'Failed to fetch course');
+        if (responseUtils.isSuccess(response)) {
+          const courseData = response.data;
+          setCourse(courseData);
+          setActiveLesson(courseData.lessons[0]);
+          
+          // Calculate initial progress
+          const totalLessons = courseData.lessons?.length || 0;
+          const completedLessons = courseData.lessons?.filter(l => l.completed)?.length || 0;
+          setProgress(totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0);
+        } else {
+          const errorResponse = apiErrorUtils.handleApiError(response);
+          showToast.fromResponse(errorResponse);
         }
-        
-        const courseData = response.data;
-        console.log('Fetched course data:', courseData);
-        
-        if (!courseData) {
-          throw new Error('No course data received from server');
-        }
-
-        setCourse(courseData);
-        setActiveLesson(courseData.lessons[0]);
-        
-        // Calculate initial progress
-        const totalLessons = courseData.lessons?.length || 0;
-        const completedLessons = courseData.lessons?.filter(l => l.completed)?.length || 0;
-        setProgress(totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching course:', err);
-        setError(err.message || 'Failed to fetch course data');
+      } catch (error) {
+        const errorResponse = apiErrorUtils.handleApiError(error);
+        showToast.fromResponse(errorResponse);
       } finally {
         setLoading(false);
       }

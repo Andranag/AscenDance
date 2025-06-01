@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,7 +12,11 @@ import {
   ArcElement,
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
-import { Users, Clock, Award, TrendingUp, Calendar, Music2, Target, Heart, Star, BookOpen, GraduationCap, MessageCircle, Quote } from 'lucide-react';
+import { Users, TrendingUp, Star, BookOpen, GraduationCap } from 'lucide-react';
+import { analyticsService } from "../../services/analyticsService";
+import { showToast } from "../../utils/toast";
+import { responseUtils } from "../../utils/response";
+import { apiErrorUtils } from "../../utils/apiError";
 
 ChartJS.register(
   CategoryScale,
@@ -29,52 +33,61 @@ ChartJS.register(
 const Analytics = () => {
   const [timeRange, setTimeRange] = useState('month');
 
-  // Course Ratings Distribution
-  const courseRatingsData = {
-    labels: ['5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star'],
-    datasets: [{
-      label: 'Number of Ratings',
-      data: [150, 80, 30, 10, 5],
-      backgroundColor: [
-        'rgba(var(--color-primary), 0.8)',
-        'rgba(var(--color-secondary), 0.8)',
-        'rgba(var(--color-accent), 0.8)',
-        'rgba(239, 68, 68, 0.8)',
-        'rgba(156, 163, 175, 0.8)',
-      ],
-    }],
-  };
+  const [courseRatingsData, setCourseRatingsData] = useState(null);
+  const [enrollmentData, setEnrollmentData] = useState(null);
 
-  // Student Enrollment Trends
-  const enrollmentData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'New Enrollments',
-        data: [45, 52, 68, 75, 92, 108],
-        borderColor: 'rgb(var(--color-primary))',
-        backgroundColor: 'rgba(var(--color-primary), 0.1)',
-        tension: 0.4,
-      },
-      {
-        label: 'Active Students',
-        data: [120, 135, 150, 165, 180, 200],
-        borderColor: 'rgb(var(--color-accent))',
-        backgroundColor: 'rgba(var(--color-accent), 0.1)',
-        tension: 0.4,
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        // Fetch course ratings
+        const ratingsResponse = await analyticsService.getCourseRatings(timeRange);
+        if (responseUtils.isSuccess(ratingsResponse)) {
+          setCourseRatingsData({
+            labels: ['5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star'],
+            datasets: [{
+              label: 'Number of Ratings',
+              data: ratingsResponse.data,
+              backgroundColor: [
+                'rgba(var(--color-primary), 0.8)',
+                'rgba(var(--color-secondary), 0.8)',
+                'rgba(var(--color-accent), 0.8)',
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(156, 163, 175, 0.8)',
+              ],
+            }],
+          });
+        }
+
+        // Fetch enrollment data
+        const enrollmentResponse = await analyticsService.getEnrollmentTrends(timeRange);
+        if (responseUtils.isSuccess(enrollmentResponse)) {
+          setEnrollmentData({
+            labels: enrollmentResponse.data.labels,
+            datasets: [
+              {
+                label: 'New Enrollments',
+                data: enrollmentResponse.data.newEnrollments,
+                borderColor: 'rgb(var(--color-primary))',
+                backgroundColor: 'rgba(var(--color-primary), 0.1)',
+                tension: 0.4,
+              },
+              {
+                label: 'Active Students',
+                data: enrollmentResponse.data.activeStudents,
+                borderColor: 'rgb(var(--color-accent))',
+                backgroundColor: 'rgba(var(--color-accent), 0.1)',
+                tension: 0.4,
+              }
+            ],
+          });
+        }
+      } catch (error) {
+        const errorResponse = apiErrorUtils.handleApiError(error);
+        showToast.fromResponse(errorResponse);
       }
-    ],
-  };
-
-  // Most Popular Courses
-  const popularCoursesData = {
-    labels: ['Lindy Hop Basics', 'Jazz Steps', 'Blues Fundamentals', 'Charleston', 'Balboa'],
-    datasets: [{
-      label: 'Student Enrollment',
-      data: [250, 180, 150, 120, 90],
-      backgroundColor: 'rgba(var(--color-secondary), 0.8)',
-    }],
-  };
+    };
+    fetchAnalytics();
+  }, [timeRange]);
 
   return (
     <div className="space-y-8 animate-fade-in">

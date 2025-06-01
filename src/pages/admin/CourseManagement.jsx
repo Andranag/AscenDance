@@ -4,6 +4,9 @@ import { courseService } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
 import CourseModal from '../../components/modals/CourseModal';
 import ConfirmationModal from '../../components/modals/ConfirmationModal';
+import { showToast } from '../../utils/toast';
+import { responseUtils } from '../../utils/response';
+import { apiErrorUtils } from '../../utils/apiError';
 
 const getStyleColor = (style) => {
   switch (style.toLowerCase()) {
@@ -106,10 +109,15 @@ const CourseManagement = () => {
       try {
         setLoading(true);
         const response = await courseService.getAllCourses();
-        if (!response?.success) throw new Error(response?.message || 'Failed to fetch courses');
-        setCourses(response.data);
+        if (responseUtils.isSuccess(response)) {
+          setCourses(response.data);
+        } else {
+          const errorResponse = apiErrorUtils.handleApiError(response);
+          showToast.fromResponse(errorResponse);
+        }
       } catch (error) {
-        toastError(error.message || 'Failed to fetch courses');
+        const errorResponse = apiErrorUtils.handleApiError(error);
+        showToast.fromResponse(errorResponse);
       } finally {
         setLoading(false);
       }
@@ -117,8 +125,6 @@ const CourseManagement = () => {
 
     fetchCourses();
   }, []);
-
-
 
   const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -156,23 +162,6 @@ const CourseManagement = () => {
 
   const danceStyles = ['Lindy Hop', 'Balboa', 'Solo Jazz', 'Blues', 'Boogie Woogie', 'Shag', 'Rhythm and Blues'];
   const levels = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
-
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setLoading(true);
-        const response = await courseService.getAllCourses();
-        if (!response?.success) throw new Error(response?.message || 'Failed to fetch courses');
-        setCourses(response.data);
-      } catch (error) {
-        toastError(error.message || 'Failed to fetch courses');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCourses();
-  }, []);
 
   const handleSort = (field) => {
     if (field === sortField) {

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Pencil, Trash2, User } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { userService } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
 import UserModal from '../../components/modals/UserModal';
 import ConfirmationModal from '../../components/modals/ConfirmationModal';
+import { showToast } from '../../utils/toast';
+import { responseUtils } from '../../utils/response';
+import { apiErrorUtils } from '../../utils/apiError';
 
 const UsersManagement = () => {
   const [users, setUsers] = useState([]);
@@ -21,13 +24,15 @@ const UsersManagement = () => {
       try {
         setLoading(true);
         const response = await userService.getAllUsers();
-        if (!response?.success) {
-          throw new Error(response?.message || 'Failed to fetch users');
+        if (responseUtils.isSuccess(response)) {
+          setUsers(response.data);
+        } else {
+          const errorResponse = apiErrorUtils.handleApiError(response);
+          showToast.fromResponse(errorResponse);
         }
-        setUsers(response.data);
       } catch (error) {
-        console.error('Error fetching users:', error);
-        toastError(error.message || 'Failed to fetch users');
+        const errorResponse = apiErrorUtils.handleApiError(error);
+        showToast.fromResponse(errorResponse);
       } finally {
         setLoading(false);
       }
@@ -71,14 +76,16 @@ const UsersManagement = () => {
       await userService.deleteUser(selectedUserId);
       // Refetch users to ensure we have the latest data
       const response = await userService.getAllUsers();
-      if (!response?.success) {
-        throw new Error(response?.message || 'Failed to fetch users');
+      if (responseUtils.isSuccess(response)) {
+        setUsers(response.data);
+        showToast.success('User deleted successfully');
+      } else {
+        const errorResponse = apiErrorUtils.handleApiError(response);
+        showToast.fromResponse(errorResponse);
       }
-      setUsers(response.data);
-      toastSuccess('User deleted successfully');
     } catch (error) {
-      console.error('Error deleting user:', error);
-      toastError(error.message || 'Failed to delete user');
+      const errorResponse = apiErrorUtils.handleApiError(error);
+      showToast.fromResponse(errorResponse);
     } finally {
       setShowDeleteModal(false);
       setSelectedUserId(null);
@@ -86,19 +93,28 @@ const UsersManagement = () => {
   };
 
   const handleUserSaved = async (user) => {
-    // Refetch users to ensure we have the latest data
-    const response = await userService.getAllUsers();
-    if (!response?.success) {
-      throw new Error(response?.message || 'Failed to fetch users');
+    try {
+      // Refetch users to ensure we have the latest data
+      const response = await userService.getAllUsers();
+      if (responseUtils.isSuccess(response)) {
+        setUsers(response.data);
+      } else {
+        const errorResponse = apiErrorUtils.handleApiError(response);
+        showToast.fromResponse(errorResponse);
+      }
+    } catch (error) {
+      const errorResponse = apiErrorUtils.handleApiError(error);
+      showToast.fromResponse(errorResponse);
     }
-    setUsers(response.data);
   };
 
   const toggleRole = async (userId) => {
+    if (!userId) {
+      showToast.error('Invalid user ID');
+      return;
+    }
+
     try {
-      if (!userId) {
-        throw new Error('Invalid user ID');
-      }
 
       // Make API call first to get the updated user data
       const updatedUserData = await userService.toggleRole(userId);
