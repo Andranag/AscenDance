@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../../contexts/AuthContext";
 import { ChevronRight, Clock, Users, Star, BookOpen } from 'lucide-react';
@@ -18,16 +18,30 @@ const CourseCard = ({ course }) => {
     return styleColors[style?.toLowerCase()] || 'bg-gray-500 text-white';
   };
 
+  // Log course data for debugging
+  useEffect(() => {
+    console.log('Rendering CourseCard with course:', {
+      id: course?._id,
+      title: course?.title,
+      style: course?.style,
+      level: course?.level
+    });
+  }, [course]);
 
-  console.log('Rendering CourseCard with course:', {
-    id: course?._id,
-    title: course?.title,
-    style: course?.style,
-    level: course?.level
-  });
+  // Handle undefined or invalid data
+  if (!course) {
+    return (
+      <div className="bg-gray-100 p-4 rounded-lg animate-pulse">
+        <div className="h-40 bg-gray-200 rounded mb-4"></div>
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+    );
+  }
 
-  if (!course || !course._id || !course.title || !course.style || !course.level) {
-    console.error('Invalid course data:', course);
+  if (!course._id || !course.title || !course.style || !course.level) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
         <h3 className="text-red-600 font-semibold mb-2">Invalid Course Data</h3>

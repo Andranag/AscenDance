@@ -25,7 +25,16 @@ const getStyleColor = (style) => {
   return styleColors[style] || 'bg-gray-500';
 };
 
-const FeaturedCoursesSection = ({ courses, loading, error }) => {
+const FeaturedCourses = ({ courses = [], loading = false }) => {
+  // Ensure we have an array of courses
+  const validCourses = Array.isArray(courses) ? courses : [];
+  
+  // Log courses for debugging
+  useEffect(() => {
+    console.log('Received courses:', courses);
+    console.log('Valid courses:', validCourses);
+  }, [courses]);
+
   // Helper function to select random courses
   const selectRandomCourses = (courses, count) => {
     const shuffled = [...courses].sort(() => 0.5 - Math.random());
@@ -34,63 +43,57 @@ const FeaturedCoursesSection = ({ courses, loading, error }) => {
 
   const [detailedCourses, setDetailedCourses] = useState([]);
   const [fetchingDetails, setFetchingDetails] = useState(false);
+  const [courseError, setCourseError] = useState('');
 
   useEffect(() => {
-    if (courses.length > 0 && !fetchingDetails) {
+    if (validCourses.length > 0 && !fetchingDetails) {
       setFetchingDetails(true);
       const fetchDetails = async () => {
         try {
-          // Fetch all courses
-          const response = await fetch('http://localhost:5000/api/courses');
-          const allCourses = await response.json();
-          
-          if (!allCourses?.success) {
-            console.error('Failed to fetch courses:', allCourses?.message);
-            return;
-          }
-
-          const courses = allCourses.data || [];
-          
-          if (courses.length === 0) {
-            console.error('No courses found');
-            return;
-          }
-
-          // Select 4 random courses
-          const featuredCourses = selectRandomCourses(courses, 4);
+          // Use the courses already provided
+          const featuredCourses = selectRandomCourses(validCourses, 4);
           setDetailedCourses(featuredCourses);
         } catch (err) {
-          console.error('Error fetching courses:', err);
+          console.error('Error processing courses:', err);
+          setCourseError('Failed to load course details');
         } finally {
           setFetchingDetails(false);
         }
       };
       fetchDetails();
     }
-  }, [courses]);
+  }, [validCourses]);
 
   return (
-    <section id="featured-courses" className="py-24 px-4">
+    <section id="featured-courses" className="py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold text-white mb-6">
-            Featured Courses
-          </h2>
-          <p className="text-xl text-white/90 mb-6 max-w-2xl mx-auto">
-            Start your dance journey with our most popular courses
-          </p>
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Featured Courses</h2>
+          <p className="text-gray-600">Explore our most popular dance courses</p>
         </div>
-
         {loading ? (
-          <div className="flex items-center justify-center">
-            <Loader className="w-8 h-8 animate-spin text-white" />
+          <div className="flex justify-center">
+            <Loader className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : error ? (
-          <div className="text-center text-red-500">{error}</div>
+        ) : validCourses.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array(4).fill().map((_, index) => (
+              <div key={index} className="bg-gray-100 p-4 rounded-lg animate-pulse">
+                <div className="h-40 bg-gray-200 rounded mb-4"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {detailedCourses.map((course) => (
-              <CourseCard key={course._id} course={course} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {validCourses.map((course, index) => (
+              <CourseCard
+                key={index}
+                course={course}
+              />
             ))}
           </div>
         )}
@@ -99,4 +102,4 @@ const FeaturedCoursesSection = ({ courses, loading, error }) => {
   );
 };
 
-export default FeaturedCoursesSection;
+export default FeaturedCourses;

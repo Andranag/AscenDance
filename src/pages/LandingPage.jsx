@@ -3,6 +3,7 @@ import { useToast } from '../contexts/ToastContext';
 import { api } from '../services/api';
 import BaseService from '../services/BaseService';
 import { API_ENDPOINTS } from '../config/api';
+import { showToast } from '../utils/toast';
 import Hero from "../components/Sections/Hero";
 import Heritage from "../components/Sections/Heritage";
 import FeaturedCourses from "../components/Sections/FeaturedCourses";
@@ -24,10 +25,25 @@ const LandingPage = () => {
       try {
         const courseService = new BaseService(api, '');
         const response = await courseService.get(API_ENDPOINTS.courses.featured);
+        console.log('Featured Courses Response:', response);
+        
+        // Handle different response formats
+        let coursesData = [];
         if (response.data) {
-          setCourses(response.data);
-        } else {
-          throw new Error('Failed to fetch featured courses');
+          if (Array.isArray(response.data)) {
+            coursesData = response.data;
+          } else if (response.data.courses) {
+            coursesData = response.data.courses;
+          } else if (response.data.data) {
+            coursesData = response.data.data;
+          }
+        }
+        
+        setCourses(coursesData);
+        
+        if (coursesData.length === 0) {
+          console.log('No courses found in response:', response);
+          throw new Error('No featured courses found');
         }
       } catch (error) {
         console.error('Course fetch error:', error);
@@ -51,7 +67,7 @@ const LandingPage = () => {
       const response = await newsletterService.post(API_ENDPOINTS.newsletter, formData);
       
       if (response.data) {
-        toastSuccess('Successfully subscribed to newsletter');
+        showToast.success('Successfully subscribed to newsletter'); // updated toast call
         return { success: true, message: 'Successfully subscribed to newsletter' };
       } else {
         throw new Error('Failed to subscribe');
