@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
-import { userService } from '../../services/api';
+import { api, API_ENDPOINTS, responseUtils, handleApiError } from '../../utils/api';
 import { useToast } from '../../contexts/ToastContext';
 import UserModal from '../../components/modals/UserModal';
 import ConfirmationModal from '../../components/modals/ConfirmationModal';
 import { showToast } from '../../utils/toast';
-import { responseUtils } from '../../utils/response';
-import { apiErrorUtils } from '../../utils/apiError';
 
 const UsersManagement = () => {
   const [users, setUsers] = useState([]);
@@ -27,11 +25,11 @@ const UsersManagement = () => {
         if (responseUtils.isSuccess(response)) {
           setUsers(response.data);
         } else {
-          const errorResponse = apiErrorUtils.handleApiError(response);
+          const errorResponse = handleApiError(response);
           showToast.fromResponse(errorResponse);
         }
       } catch (error) {
-        const errorResponse = apiErrorUtils.handleApiError(error);
+        const errorResponse = handleApiError(error, 'Failed to fetch users');
         showToast.fromResponse(errorResponse);
       } finally {
         setLoading(false);
@@ -73,9 +71,9 @@ const UsersManagement = () => {
 
   const confirmDelete = async () => {
     try {
-      await userService.deleteUser(selectedUserId);
+      await api.delete(API_ENDPOINTS.users.delete(selectedUserId));
       // Refetch users to ensure we have the latest data
-      const response = await userService.getAllUsers();
+      const response = await api.get(API_ENDPOINTS.users.list);
       if (responseUtils.isSuccess(response)) {
         setUsers(response.data);
         showToast.success('User deleted successfully');
@@ -95,7 +93,7 @@ const UsersManagement = () => {
   const handleUserSaved = async (user) => {
     try {
       // Refetch users to ensure we have the latest data
-      const response = await userService.getAllUsers();
+      const response = await api.get(API_ENDPOINTS.users.list); 
       if (responseUtils.isSuccess(response)) {
         setUsers(response.data);
       } else {
@@ -117,7 +115,7 @@ const UsersManagement = () => {
     try {
 
       // Make API call first to get the updated user data
-      const updatedUserData = await userService.toggleRole(userId);
+      const updatedUserData = await api.put(API_ENDPOINTS.users.toggleRole(userId));
 
       // Update local state with the backend response
       setUsers(users.map(user =>
@@ -151,7 +149,7 @@ const UsersManagement = () => {
 
       if (!editingUser) {
         // Create new user
-        const createdUser = await userService.createUser(formData);
+        const createdUser = await api.post(API_ENDPOINTS.users.create, formData);
         setUsers([...users, createdUser]);
         toastSuccess('User created successfully');
       } else {
@@ -170,7 +168,7 @@ const UsersManagement = () => {
           data: updatedData
         });
 
-        const updatedUserData = await userService.updateUser(editingUser._id, updatedData);
+        const updatedUserData = await api.put(API_ENDPOINTS.users.update(editingUser._id), updatedData);
         setUsers(users.map(user =>
           user._id === editingUser._id
             ? { ...user, ...updatedUserData }

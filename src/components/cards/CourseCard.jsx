@@ -2,20 +2,17 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../../contexts/AuthContext";
 import { ChevronRight, Clock, Users, Star, BookOpen } from 'lucide-react';
+import { COURSE_LEVEL_COLORS, DANCE_STYLE_COLORS, ERROR_MESSAGES, UI_CONFIG } from '../../utils/constants';
 
 const CourseCard = ({ course }) => {
   // Get appropriate color for dance style
   const getStyleColor = (style) => {
-    const styleColors = {
-      'Lindy Hop': 'bg-purple-500 text-white',
-      'Swing': 'bg-blue-500 text-white',
-      'Boogie Woogie': 'bg-pink-500 text-white',
-      'Bachata': 'bg-orange-500 text-white',
-      'Salsa': 'bg-yellow-500 text-gray-900',
-      'Kizomba': 'bg-green-500 text-white',
-      'Solo Jazz': 'bg-gray-500 text-white'
-    };
-    return styleColors[style?.toLowerCase()] || 'bg-gray-500 text-white';
+    return DANCE_STYLE_COLORS[style?.toLowerCase()] || 'bg-gray-500 text-white';
+  };
+
+  // Get appropriate color for course level
+  const getLevelColor = (level) => {
+    return COURSE_LEVEL_COLORS[level?.toLowerCase()] || 'bg-gray-100 text-gray-800 ring-1 ring-gray-200';
   };
 
   // Log course data for debugging
@@ -31,7 +28,7 @@ const CourseCard = ({ course }) => {
   // Handle undefined or invalid data
   if (!course) {
     return (
-      <div className="bg-gray-100 p-4 rounded-lg animate-pulse">
+      <div className={`bg-gray-100 p-4 rounded-lg ${UI_CONFIG.SKELETON_ANIMATION}`}>
         <div className="h-40 bg-gray-200 rounded mb-4"></div>
         <div className="space-y-2">
           <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -44,13 +41,13 @@ const CourseCard = ({ course }) => {
   if (!course._id || !course.title || !course.style || !course.level) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
-        <h3 className="text-red-600 font-semibold mb-2">Invalid Course Data</h3>
-        <p className="text-gray-600">This course is missing required information.</p>
+        <h3 className="text-red-600 font-semibold mb-2">{ERROR_MESSAGES.INVALID_CREDENTIALS}</h3>
+        <p className="text-gray-600">{ERROR_MESSAGES.REQUIRED_FIELD}</p>
       </div>
     );
   }
 
-  // Validate and normalize data
+  // Validate and normalize data with constants
   const normalizedCourse = {
     ...course,
     duration: course.duration || '2 hours',
@@ -63,7 +60,7 @@ const CourseCard = ({ course }) => {
   // Handle missing optional fields with default values
   const courseWithDefaults = {
     ...course,
-    image: course.image || 'https://images.pexels.com/photos/2188012/pexels-photo-2188012.jpeg',
+    image: course.image || '/images/default-course.jpg',
     instructor: course.instructor || {
       name: 'Unknown Instructor',
       avatar: '/images/default-avatar.png'
@@ -94,21 +91,8 @@ const CourseCard = ({ course }) => {
     }
   };
 
-  const getLevelColor = (level) => {
-    switch (level?.toLowerCase()) {
-      case 'beginner':
-        return 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200';
-      case 'intermediate':
-        return 'bg-amber-100 text-amber-800 ring-1 ring-amber-200';
-      case 'advanced':
-        return 'bg-rose-100 text-rose-800 ring-1 ring-rose-200';
-      default:
-        return 'bg-gray-100 text-gray-800 ring-1 ring-gray-200';
-    }
-  };
-
   return (
-    <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+    <div className={`group relative bg-white rounded-2xl ${UI_CONFIG.SHADOW} hover:${UI_CONFIG.SHADOW} transition-all ${UI_CONFIG.TRANSITION_DURATION} overflow-hidden`}>
       {/* Course Image */}
       <div className="relative h-48">
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-10" />
@@ -128,7 +112,7 @@ const CourseCard = ({ course }) => {
       </div>
 
       {/* Course Content */}
-      <div className="p-6 flex flex-col h-[300px]">
+      <div className="p-6 flex flex-col h-[300px] overflow-hidden">
         <div className="flex-1">
           <div className="space-y-2">
             {/* Course Title */}
@@ -160,7 +144,7 @@ const CourseCard = ({ course }) => {
         {/* Action Button */}
         <button
           onClick={handleNavigate}
-          className="relative w-full h-12 bg-secondary text-white rounded-lg shadow-md hover:bg-secondary-dark transition-all duration-200 flex items-center justify-center gap-2 px-6"
+          className={`relative w-full h-12 bg-secondary text-white rounded-lg ${UI_CONFIG.SHADOW} hover:bg-secondary-dark transition-all ${UI_CONFIG.TRANSITION_DURATION} flex items-center justify-center gap-2 px-6`}
         >
           <span className="flex items-center">
             {user ? (

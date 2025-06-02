@@ -4,9 +4,8 @@ import { useToast } from '../contexts/ToastContext';
 import { User, Mail, Award, Clock, Star, BookOpen, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { showToast } from '../utils/toast';
-import { validationUtils } from '../utils/validation';
-import { responseUtils } from '../utils/response';
-import { apiErrorUtils } from '../utils/apiError';
+import { formUtils } from '../utils/formUtils';
+import { api, API_ENDPOINTS, responseUtils } from '../utils/api';
 
 const Profile = () => {
   const { user, updateProfile } = useAuth();
@@ -49,7 +48,7 @@ const Profile = () => {
     e.preventDefault();
     
     // Validate form
-    const validation = validationUtils.validateProfile(formData);
+    const validation = formUtils.validateFieldProfile(formData);
     if (!validation.isValid) {
       showToast.fromResponse(validation.toResponse());
       return;
@@ -65,11 +64,11 @@ const Profile = () => {
           email: response.data.email || ''
         });
       } else {
-        const errorResponse = apiErrorUtils.handleApiError(response);
+        const errorResponse = handleApiError(response);
         showToast.fromResponse(errorResponse);
       }
     } catch (error) {
-      const errorResponse = apiErrorUtils.handleApiError(error);
+      const errorResponse = handleApiError(error);
       showToast.fromResponse(errorResponse);
     }
   };

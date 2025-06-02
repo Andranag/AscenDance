@@ -1,61 +1,35 @@
-import BaseService from './BaseService';
+import { api, API_ENDPOINTS } from '../utils/api';
 
-export class AnalyticsService extends BaseService {
+export const analyticsService = {
   async getCourseRatings(timeRange = 'month') {
-    return this.request({
-      method: 'GET',
-      url: `/api/analytics/course-ratings?range=${timeRange}`
-    });
-  }
+    return api.get(API_ENDPOINTS.analytics.courseRatings(timeRange));
+  },
 
   async getEnrollmentTrends(timeRange = 'month') {
-    return this.request({
-      method: 'GET',
-      url: `/api/analytics/enrollment-trends?range=${timeRange}`
-    });
-  }
+    return api.get(API_ENDPOINTS.analytics.enrollmentTrends(timeRange));
+  },
 
   async getPopularCourses(timeRange = 'month') {
-    return this.request({
-      method: 'GET',
-      url: `/api/analytics/popular-courses?range=${timeRange}`
-    });
-  }
+    return api.get(API_ENDPOINTS.analytics.popularCourses(timeRange));
+  },
 
   async getStudentProgress(studentId) {
-    return this.request({
-      method: 'GET',
-      url: `/api/analytics/student-progress/${studentId}`
-    });
-  }
+    return api.get(API_ENDPOINTS.analytics.studentProgress(studentId));
+  },
 
   async getCoursePerformance(courseId) {
-    return this.request({
-      method: 'GET',
-      url: `/api/analytics/course-performance/${courseId}`
-    });
-  }
+    return api.get(API_ENDPOINTS.analytics.coursePerformance(courseId));
+  },
 
   async getCompletionRates() {
-    return this.request({
-      method: 'GET',
-      url: '/api/analytics/completion-rates'
-    });
-  }
+    return api.get(API_ENDPOINTS.analytics.completionRates());
+  },
 
   async getRevenueTrends(timeRange = 'month') {
-    return this.request({
-      method: 'GET',
-      url: `/api/analytics/revenue-trends?range=${timeRange}`
-    });
-  }
+    return api.get(API_ENDPOINTS.analytics.revenueTrends(timeRange));
+  },
 
   async getStudentRetention() {
-    return this.request({
-      method: 'GET',
-      url: '/api/analytics/student-retention'
-    });
+    return api.get(API_ENDPOINTS.analytics.studentRetention());
   }
-}
-
-export const analyticsService = new AnalyticsService();
+};

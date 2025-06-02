@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, X } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
-import { userService } from '../../services/api';
+import { api, API_ENDPOINTS } from '../../utils/api';
 
 const UserModal = ({ isOpen, onClose, user, onSubmit }) => {
   const { toastSuccess, toastError } = useToast();
@@ -28,8 +28,8 @@ const UserModal = ({ isOpen, onClose, user, onSubmit }) => {
 
     try {
       const response = user 
-        ? await userService.updateUser(user._id, formData)
-        : await userService.createUser(formData);
+        ? await api.put(API_ENDPOINTS.users.update(user._id), formData)
+        : await api.post(API_ENDPOINTS.users.create, formData);
 
       onSubmit(response);
       toastSuccess(user ? 'User updated successfully' : 'User created successfully');

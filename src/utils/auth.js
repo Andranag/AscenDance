@@ -1,52 +1,46 @@
-import { authService } from '../services/api';
-import { showToast } from './toast';
-import { responseUtils } from './response';
-import { apiErrorUtils } from './apiError';
+import { api, API_ENDPOINTS, handleApiError } from './api';
 
 export const authUtils = {
   // Authentication flows
   async login(email, password) {
     try {
-      const response = await authService.login({ email, password });
-      if (responseUtils.isSuccess(response)) {
+      const response = await api.post(API_ENDPOINTS.LOGIN, { email, password });
+      if (response.data.success) {
         localStorage.setItem('token', response.data.token);
         showToast.success('Successfully logged in');
         return response;
       }
       throw response;
     } catch (error) {
-      const errorResponse = apiErrorUtils.handleAuthError(error);
-      showToast.error(errorResponse.message);
+      const errorResponse = handleApiError(error, 'Login failed');
       throw errorResponse;
     }
   },
 
   async register(userData) {
     try {
-      const response = await authService.register(userData);
-      if (responseUtils.isSuccess(response)) {
+      const response = await api.post(API_ENDPOINTS.REGISTER, userData);
+      if (response.data.success) {
         showToast.success('Successfully registered');
         return response;
       }
       throw response;
     } catch (error) {
-      const errorResponse = apiErrorUtils.handleApiError(error);
-      showToast.error(errorResponse.message);
+      const errorResponse = handleApiError(error, 'Registration failed');
       throw errorResponse;
     }
   },
 
   async updateProfile(data) {
     try {
-      const response = await authService.updateProfile(data);
-      if (responseUtils.isSuccess(response)) {
+      const response = await api.put(API_ENDPOINTS.PROFILE, data);
+      if (response.data.success) {
         showToast.success('Profile updated successfully');
         return response;
       }
       throw response;
     } catch (error) {
-      const errorResponse = apiErrorUtils.handleApiError(error);
-      showToast.error(errorResponse.message);
+      const errorResponse = handleApiError(error, 'Profile update failed');
       throw errorResponse;
     }
   },

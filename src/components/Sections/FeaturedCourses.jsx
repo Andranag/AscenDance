@@ -1,29 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader, ChevronRight, Clock, Star } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import CourseCard from '../cards/CourseCard';
+import { COURSE_LEVEL_COLORS, DANCE_STYLE_COLORS } from '../../utils/constants';
 
-const getLevelColor = (level) => {
-  const levelColors = {
-    'Beginner': 'bg-emerald-500',
-    'Intermediate': 'bg-amber-500',
-    'Advanced': 'bg-rose-500',
-    'Expert': 'bg-indigo-500'
-  };
-  return levelColors[level] || 'bg-gray-500';
-};
 
-const getStyleColor = (style) => {
-  const styleColors = {
-    'Lindy Hop': 'bg-purple-500',
-    'Swing': 'bg-blue-500',
-    'Boogie Woogie': 'bg-pink-500',
-    'Bachata': 'bg-orange-500',
-    'Salsa': 'bg-yellow-500',
-    'Kizomba': 'bg-green-500'
-  };
-  return styleColors[style] || 'bg-gray-500';
-};
 
 const FeaturedCourses = ({ courses = [], loading = false }) => {
   // Ensure we have an array of courses
@@ -34,35 +14,6 @@ const FeaturedCourses = ({ courses = [], loading = false }) => {
     console.log('Received courses:', courses);
     console.log('Valid courses:', validCourses);
   }, [courses]);
-
-  // Helper function to select random courses
-  const selectRandomCourses = (courses, count) => {
-    const shuffled = [...courses].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-  };
-
-  const [detailedCourses, setDetailedCourses] = useState([]);
-  const [fetchingDetails, setFetchingDetails] = useState(false);
-  const [courseError, setCourseError] = useState('');
-
-  useEffect(() => {
-    if (validCourses.length > 0 && !fetchingDetails) {
-      setFetchingDetails(true);
-      const fetchDetails = async () => {
-        try {
-          // Use the courses already provided
-          const featuredCourses = selectRandomCourses(validCourses, 4);
-          setDetailedCourses(featuredCourses);
-        } catch (err) {
-          console.error('Error processing courses:', err);
-          setCourseError('Failed to load course details');
-        } finally {
-          setFetchingDetails(false);
-        }
-      };
-      fetchDetails();
-    }
-  }, [validCourses]);
 
   return (
     <section id="featured-courses" className="py-12 px-4">

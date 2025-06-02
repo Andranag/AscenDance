@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../contexts/ToastContext';
-import { api } from '../services/api';
-import BaseService from '../services/BaseService';
-import { API_ENDPOINTS } from '../config/api';
+import { api, API_ENDPOINTS, handleApiError } from '../utils/api';
 import { showToast } from '../utils/toast';
 import Hero from "../components/Sections/Hero";
 import Heritage from "../components/Sections/Heritage";
@@ -23,8 +21,7 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchFeaturedCourses = async () => {
       try {
-        const courseService = new BaseService(api, '');
-        const response = await courseService.get(API_ENDPOINTS.courses.featured);
+        const response = await api.get(API_ENDPOINTS.courses.featured);
         console.log('Featured Courses Response:', response);
         
         // Handle different response formats
@@ -63,8 +60,7 @@ const LandingPage = () => {
   const handleNewsletterSubmit = async (formData) => {
     try {
       setLoading(true);
-      const newsletterService = new BaseService(api, '');
-      const response = await newsletterService.post(API_ENDPOINTS.newsletter, formData);
+      const response = await api.post(API_ENDPOINTS.newsletter, formData);
       
       if (response.data) {
         showToast.success('Successfully subscribed to newsletter'); // updated toast call
@@ -82,7 +78,7 @@ const LandingPage = () => {
         data: error?.response?.data
       };
       
-      const errorResponse = apiErrorUtils.handleApiError(errorObj);
+      const errorResponse = handleApiError(errorObj);
       toastError(errorResponse.message);
       return { success: false, message: errorResponse.message };
     } finally {

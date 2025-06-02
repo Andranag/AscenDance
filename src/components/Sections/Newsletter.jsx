@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail } from 'lucide-react';
-import { apiErrorUtils } from '../../utils/apiError';
+import { api, API_ENDPOINTS } from '../../utils/api';
 
 const NewsletterSection = ({
   onNewsletterSubmit,
@@ -53,7 +53,7 @@ const NewsletterSection = ({
           data: result
         };
         
-        const errorResponse = apiErrorUtils.handleApiError(errorObj);
+        const errorResponse = handleApiError(errorObj);
         setError(errorResponse.message);
       }
     } catch (error) {
@@ -66,7 +66,7 @@ const NewsletterSection = ({
         data: error?.response?.data
       };
       
-      const errorResponse = apiErrorUtils.handleApiError(errorObj);
+      const errorResponse = handleApiError(errorObj);
       setError(errorResponse.message);
     }
   };

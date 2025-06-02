@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Pencil, Trash2, Loader, AlertTriangle, ArrowUp, ArrowDown } from 'lucide-react';
-import { courseService } from '../../services/api';
+import { api, API_ENDPOINTS, responseUtils, handleApiError } from '../../utils/api';
 import { useToast } from '../../contexts/ToastContext';
 import CourseModal from '../../components/modals/CourseModal';
 import ConfirmationModal from '../../components/modals/ConfirmationModal';
 import { showToast } from '../../utils/toast';
-import { responseUtils } from '../../utils/response';
-import { apiErrorUtils } from '../../utils/apiError';
 
 const getStyleColor = (style) => {
   switch (style.toLowerCase()) {
@@ -108,15 +106,15 @@ const CourseManagement = () => {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        const response = await courseService.getAllCourses();
+        const response = await api.get(API_ENDPOINTS.courses.list);
         if (responseUtils.isSuccess(response)) {
           setCourses(response.data);
         } else {
-          const errorResponse = apiErrorUtils.handleApiError(response);
+          const errorResponse = handleApiError(response, 'Failed to fetch courses');
           showToast.fromResponse(errorResponse);
         }
       } catch (error) {
-        const errorResponse = apiErrorUtils.handleApiError(error);
+        const errorResponse = handleApiError(error, 'Failed to fetch courses');
         showToast.fromResponse(errorResponse);
       } finally {
         setLoading(false);
@@ -208,7 +206,7 @@ const CourseManagement = () => {
 
   const confirmDelete = async () => {
     try {
-      await courseService.deleteCourse(courseToDelete._id);
+      await api.delete(API_ENDPOINTS.courses.delete(courseToDelete._id));
       setCourses(courses.filter(c => c._id !== courseToDelete._id));
       toastSuccess('Course deleted successfully');
       setShowDeleteModal(false);
@@ -243,7 +241,7 @@ const CourseManagement = () => {
       let response;
       if (editingCourse) {
         console.log('Updating course with ID:', editingCourse._id);
-        response = await courseService.updateCourse(editingCourse._id, data);
+        response = await api.put(API_ENDPOINTS.courses.update(editingCourse._id), data);
         console.log('Update response:', response);
         // If response doesn't have success property, assume it's the course data
         const courseData = response?.success ? response.data : response;
@@ -252,7 +250,7 @@ const CourseManagement = () => {
         );
       } else {
         console.log('Creating new course');
-        response = await courseService.createCourse(data);
+        response = await api.post(API_ENDPOINTS.courses.create, data);
         console.log('Create response:', response);
         // If response doesn't have success property, assume it's the course data
         const courseData = response?.success ? response.data : response;

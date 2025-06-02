@@ -4,9 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { Eye, EyeOff, Mail, Lock, User, X, Check } from 'lucide-react';
 import { showToast } from '../utils/toast';
-import { validationUtils } from '../utils/validation';
-import { responseUtils } from '../utils/response';
-import { apiErrorUtils } from '../utils/apiError';
+import { formUtils } from '../utils/formUtils';
+import { api, API_ENDPOINTS, responseUtils } from '../utils/api';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -51,7 +50,7 @@ const Register = () => {
     setsLoading(true);
 
     // Validate form
-    const validation = validationUtils.validateRegister(formData);
+    const validation = formUtils.validateRegister(formData);
     if (!validation.isValid) {
       showToast.fromResponse(validation.toResponse());
       setsLoading(false);
@@ -68,7 +67,7 @@ const Register = () => {
         showToast.fromResponse(response);
       }
     } catch (error) {
-      const errorResponse = apiErrorUtils.handleAuthError(error);
+      const errorResponse = handleApiError(error);
       showToast.fromResponse(errorResponse);
     } finally {
       setsLoading(false);

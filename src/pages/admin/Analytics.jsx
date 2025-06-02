@@ -15,8 +15,7 @@ import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Users, TrendingUp, Star, BookOpen, GraduationCap } from 'lucide-react';
 import { analyticsService } from "../../services/analyticsService";
 import { showToast } from "../../utils/toast";
-import { responseUtils } from "../../utils/response";
-import { apiErrorUtils } from "../../utils/apiError";
+import { api, API_ENDPOINTS, responseUtils } from '../../utils/api';
 
 ChartJS.register(
   CategoryScale,
@@ -82,7 +81,7 @@ const Analytics = () => {
           });
         }
       } catch (error) {
-        const errorResponse = apiErrorUtils.handleApiError(error);
+        const errorResponse = handleApiError(error);
         showToast.fromResponse(errorResponse);
       }
     };

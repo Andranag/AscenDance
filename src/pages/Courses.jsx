@@ -3,11 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import CourseCard from "../components/cards/CourseCard";
 import { Loader } from "lucide-react";
-import { courseService } from "../services/api";
-import SearchBar from "../components/SearchBar";
+import { api, API_ENDPOINTS, handleApiError, responseUtils } from '../utils/api';
 import { showToast } from '../utils/toast';
-import { responseUtils } from '../utils/response';
-import { apiErrorUtils } from '../utils/apiError';
 
 const Courses = () => {
   console.log("Courses component mounted");
@@ -91,7 +88,7 @@ const Courses = () => {
         }
         setLoading(false);
       } catch (error) {
-        const errorResponse = apiErrorUtils.handleApiError(error);
+        const errorResponse = handleApiError(error, 'Failed to fetch courses');
         showToast.fromResponse(errorResponse);
         setCourses([]);
         setLoading(false);

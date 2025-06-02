@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { courseService } from '../services/api';
+import { api, API_ENDPOINTS, responseUtils } from '../utils/api';
 import { Clock, Loader, Award } from 'lucide-react';
 import { showToast } from '../utils/toast';
-import { responseUtils } from '../utils/response';
-import { apiErrorUtils } from '../utils/apiError';
 import LessonCard from '../components/course/LessonCard';
 import ProgressBar from '../components/course/ProgressBar';
 import QuizCard from '../components/course/QuizCard';
@@ -78,7 +76,7 @@ const CoursePage = () => {
         }
 
         console.log('Fetching course with ID:', courseId);
-        const response = await courseService.getCourse(courseId);
+        const response = await api.get(API_ENDPOINTS.courses.detail(courseId));
         if (responseUtils.isSuccess(response)) {
           const courseData = response.data;
           setCourse(courseData);
@@ -89,11 +87,11 @@ const CoursePage = () => {
           const completedLessons = courseData.lessons?.filter(l => l.completed)?.length || 0;
           setProgress(totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0);
         } else {
-          const errorResponse = apiErrorUtils.handleApiError(response);
+          const errorResponse = handleApiError(response);
           showToast.fromResponse(errorResponse);
         }
       } catch (error) {
-        const errorResponse = apiErrorUtils.handleApiError(error);
+        const errorResponse = handleApiError(error);
         showToast.fromResponse(errorResponse);
       } finally {
         setLoading(false);
@@ -127,7 +125,7 @@ const CoursePage = () => {
         updatedCourse.lessons[lessonIndex] = updatedLesson;
         
         // Update course in database
-        await courseService.updateCourse(courseId, updatedCourse);
+        await api.put(API_ENDPOINTS.courses.update(courseId), updatedCourse);
         
         // Update local state
         setCourse(updatedCourse);

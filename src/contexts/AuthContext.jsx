@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useToast } from './ToastContext';
-import { authService } from '../services/api';
+import { api, API_ENDPOINTS } from '../utils/api';
+import { showToast } from '../utils/toast';
 
 const AuthContext = createContext();
 
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (data) => {
     try {
-      const userData = await authService.updateProfile(data);
+      const userData = await api.put(API_ENDPOINTS.profile, data);
       
       // Update local storage
       const currentUser = JSON.parse(localStorage.getItem('user'));
@@ -51,13 +51,15 @@ export const AuthProvider = ({ children }) => {
       
       return userData;
     } catch (error) {
-      throw error;
+      const errorResponse = handleApiError(error);
+      showToast.error(errorResponse.message);
+      throw errorResponse;
     }
   };
 
   const login = async (credentials) => {
     try {
-      const data = await authService.login(credentials);
+      const data = await api.post(API_ENDPOINTS.login, credentials);
       
       // Store the token and user data
       localStorage.setItem('token', data.data.token);
@@ -77,14 +79,15 @@ export const AuthProvider = ({ children }) => {
       });
       return data;
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      const errorResponse = handleApiError(error);
+      showToast.error(errorResponse.message);
+      throw errorResponse;
     }
   };
 
   const register = async (userData) => {
     try {
-      const response = await authService.register(userData);
+      const response = await api.post(API_ENDPOINTS.register, userData);
       
       // Store token
       localStorage.setItem('token', response.token);
@@ -108,7 +111,9 @@ export const AuthProvider = ({ children }) => {
       
       return response;
     } catch (error) {
-      throw error;
+      const errorResponse = handleApiError(error);
+      showToast.error(errorResponse.message);
+      throw errorResponse;
     }
   };
 

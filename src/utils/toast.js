@@ -1,5 +1,4 @@
 import { useToast } from '../contexts/ToastContext';
-import { responseUtils } from './response';
 
 export const showToast = {
   success: (message, duration = 3000) => {
@@ -17,15 +16,6 @@ export const showToast = {
   info: (message, duration = 3000) => {
     const { toastInfo } = useToast();
     toastInfo(message);
-  },
-
-  // Show toast based on response type
-  fromResponse: (response) => {
-    if (responseUtils.isSuccess(response)) {
-      showToast.success(response.message);
-    } else {
-      showToast.error(response.message);
-    }
   }
 };
 
@@ -55,21 +45,6 @@ export const ERROR_MESSAGES = {
   NETWORK: 'Network error occurred',
   AUTH_REQUIRED: 'Authentication required',
   ACCESS_DENIED: 'Access denied'
-};
-
-// Response-based messages
-export const RESPONSE_MESSAGES = {
-  SUCCESS: {
-    LOGIN: responseUtils.success({ token: 'xxx' }, 'Successfully logged in'),
-    LOGOUT: responseUtils.success({}, 'Successfully logged out'),
-    REGISTER: responseUtils.success({ user: 'xxx' }, 'Successfully registered'),
-    UPDATE_PROFILE: responseUtils.success({ user: 'xxx' }, 'Profile updated successfully')
-  },
-  ERROR: {
-    LOGIN: responseUtils.error({}, 'Invalid credentials', 401),
-    REGISTER: responseUtils.error({}, 'Registration failed', 400),
-    UPDATE_PROFILE: responseUtils.error({}, 'Failed to update profile', 400)
-  }
 };
 
 // Common validation messages
